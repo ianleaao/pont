@@ -19,10 +19,17 @@ If it is unconfirmed whether a fee is already inside the cost of attendance (for
 
 ## 2. Program total (USD)
 years = 4 for a bachelor's (2 for an associate at ACC)
-yearly_increase = config value, default 0.03 (labeled in the UI as an assumption). Colleges with a frozen published rate for the year (ACC 2026-27) use 0 for that year.
-total = sum for y = 1..years of annual x (1 + yearly_increase)^(y - 1)
+yearly_increase = config value, default 0.03 (labeled in the UI as an assumption).
+base year = 2026-27 (the year of the published data in data/colleges.json).
+exponent = academic years since the base year. Fall 2027 start: year 1 = base x 1.03, year 2 = base x 1.03^2, and so on. A Spring start counts as the academic year it falls in (Spring 2028 = 2027-28).
+The same 3% assumption applies to ACC: its frozen rate is confirmed only for 2026-27, which is before any start date offered.
+total = sum for y = 1..years of annual x (1 + yearly_increase)^exponent(y)
       + one-time costs before arrival (only for visa students): SEVIS, visa application, Visa Integrity Fee where collected, tests, application fee.
+Visa Integrity Fee: added only where collection is confirmed for the country. If unconfirmed (Brazil today), do NOT add it: separate line "Not confirmed".
+Flights: start at 0 with the field "Add your flight estimate". No default value.
 The enrollment deposit is NOT added: it is credited to tuition.
+
+Community-college path (ACC, then UT): same exponent by calendar year. ACC years 1 and 2 (x1.03, x1.03^2) on the ACC estimate ("ACC estimate (9 months)"); UT years 3 and 4 (x1.03^3, x1.03^4) on the UT base cost. One-time costs are counted once, before arrival at ACC. At transfer: no new SEVIS fee (the transfer I-20 keeps the SEVIS ID), no new visa if still valid. The UT transfer application fee is not confirmed: separate line "Not confirmed", not added.
 
 ## 3. Monthly equivalent
 monthly_usd = total / (years x 12)
@@ -45,7 +52,14 @@ UI line: "For the I-20, you will need to show about X for the first year."
 - "Out of my budget" on any college: show cheaper colleges with the same program area, and the community-college path: 2 years at ACC (associate) then 2 years at the target university, with the combined total. If the cheaper path is still well above, say so plainly and show next steps (scholarship plan, starting later, other options). Never hide the original college.
 
 ## 7. Currency
-Rates live in data/fx.json with the date. The prototype uses a manually set sample rate, labeled "Sample rate for the prototype, set on DATE". Never round in the engine; round only for display (no cents for totals).
+The rate is fetched once per session by js/fx.js, before any family-currency amount is shown. The engine stays pure: it receives the rate as an input and never fetches anything.
+Order: Frankfurter (https://api.frankfurter.app/latest?from=USD&to=BRL), then the ExchangeRate-API open endpoint (with the credit link its terms require), then the fallback in data/fx.json (Banco Central PTAX sell rate, 5.5146, 9 Nov 2026) with the notice "Could not update the exchange rate. Using the rate from DATE."
+Time budget: 5 seconds in total, then the fallback. While waiting: "Updating the exchange rate...". The results screen appears only after a rate is ready.
+sessionStorage keeps the rate, source, rate date and time of the request. One request per session.
+Header and every family-currency amount: "1 USD = R$ X · source · rate from DATE".
+tests.html always uses the fixed rate 5.5146 so tests never change.
+INR stays null and is hidden in the prototype (India is not in the demo paths).
+Never round in the engine; round only for display (no cents for totals).
 
 ## 8. Tests (tests.html)
 At minimum: annual with and without extras, total with 0 and 3% increase, band edges (exactly equal, exactly 20% above, above 20%), skipped budget, unconfirmed fee not added, deposit not added.

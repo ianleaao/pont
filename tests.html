@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pont engine tests</title>
+  <link rel="stylesheet" href="css/tokens.css">
+  <style>
+    body { margin: 0; padding: var(--space-4); background: var(--paper); color: var(--ink);
+      font: 16px/1.5 var(--font-ui); }
+    main { max-width: 720px; margin: 0 auto; }
+    h1 { font-size: 24px; margin: 0 0 var(--space-2); }
+    #summary { padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); margin-bottom: var(--space-4); }
+    .ok { background: var(--green-tint); color: var(--green-text); }
+    .bad { background: var(--terracotta-tint); color: var(--terracotta-text); }
+    ol { padding-left: var(--space-6); }
+    li { margin: var(--space-1) 0; }
+    code { font-variant-numeric: tabular-nums; color: var(--slate); }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Pont engine tests</h1>
+  <p>Fixed rate: 1 USD = R$ 5.5146. Run with Live Server. Results also go to the console.</p>
+  <div id="summary">Running...</div>
+  <ol id="results"></ol>
+</main>
+
+<script src="js/engine.js"></script>
+<script id="engine-tests">
+// Test suite. Takes (E = engine, data = { colleges, fees, fx }) and returns [{ name, pass, detail }].
+function runPontTests(E, data) {
+  const FX = 5.5146; // fixed on purpose: tests must not change with the live rate
+  const out = [];
+  const near = (a, b, tol) => Math.abs(a - b) <= (tol === undefined ? 0.01 : tol);
+  const t = (name, fn) => {
+    try {
+      const info = fn(); // a returned string is extra info, not a failure
+      out.push({ name, pass: true, detail: typeof info === "string" ? info : "" });
+    } catch (e) {
+      out.push({ name, pass: false, detail: e.message });
+    }
+  };
+  const check = (cond, msg) => { if (!cond) throw new Error(msg); };
+
+  const LUCAS = { collegeId: "ut-austin", programId: "cs", status: "no_visa", country: "BR", term: "fall-2027", englishTest: "toefl", flights: 0 };
+  const LUCAS_ACC = Object.assign({}, LUCAS, { collegeId: "acc", programId: "cs-transfer" });
+  const IAN = { collegeId: "ut-austin", programId: "cs", status: "citizen_or_pr", country: "BR", term: "fall-2027", flights: 0 };
+  const G4 = 1.03 + Math.pow(1.03, 2) + Math.pow(1.03, 3) + Math.pow(1.03, 4); // 4.30913581
+  const ut = data.colleges.colleges.find((c) => c.id === "ut-austin");
+  const acc = data.colleges.colleges.find((c) => c.id === "acc");
+
+  // --- Data ---
+  t("fx.json fallback BRL rate is 5.5146 (PTAX, 2026-11-09)", () => {
+    check(data.fx.rates.BRL.rate === FX && data.fx.rates.BRL.set_on === "2026-11-09", "fx.json changed");
+  });
+  t("INR is hidden in the prototype", () => check(data.fx.rates.INR.hidden === true, "INR not hidden"));
+
+  // --- 1. Annual ---
+  t("Annual with extras (F-1 at UT): COA + ISSS + SHIP = 68,054 to 77,066", () => {
+    const a = E.annualCost(ut, "cs", { status: "no_visa" });
+    check(a.total.min === 68054 && a.total.max === 77066 && a.total.mid === 72560, JSON.stringify(a.total));
+  });
+  t("Annual without extras (U.S. citizen): no SHIP, no ISSS fee", () => {
+    const a = E.annualCost(ut, "cs", { status: "citizen_or_pr" });
+    check(a.total.min === 64204 && a.total.max === 72916, JSON.stringify(a.total));
+    check(!a.lines.some((l) => l.id === "ship" || l.id === "isss_fee"), "extras present");
+  });
+  t("Flights start at 0 and are added only when the user enters a value", () => {
+    const a0 = E.annualCost(ut, "cs", { status: "citizen_or_pr", flights: 0 });
+    const a1 = E.annualCost(ut, "cs", { status: "citizen_or_pr", flights: 1500 });
+    check(!a0.lines.some((l) => l.id === "flights"), "flight line with 0");
+    check(a1.total.min - a0.total.min === 1500, "flight not added");
+  });
+  t("Unconfirmed differential tuition is shown but NOT added", () => {
+    const a = E.annualCost(ut, "cs", { status: "no_visa" });
+    const d = a.notAdded.find((l) => l.id === "differential");
+    check(d && d.amount.min === 1000 && d.reason === "not_confirmed", "differential line missing");
+    check(d.note === "May already be included. Confirm with the college.", "wrong note");
+    check(!a.lines.some((l) => l.id === "differential"), "differential was added");
+  });
+  t("ACC uses its F-1 estimate with the label 'ACC estimate (9 months)'", () => {
+    const a = E.annualCost(acc, "cs-transfer", { status: "no_visa" });
+    check(a.total.mid === 29000 && a.lines[0].label === "ACC estimate (9 months)", JSON.stringify(a.lines[0]));
+  });
+  t("Unverified colleges return 'not_confirmed', never a number", () => {
+    const r = E.programTotal({ collegeId: "texas-am", programId: "cs", status: "no_visa", term: "fall-2027" }, data);
+    check(r.status === "not_confirmed" && r.total === undefined, r.status);
+  });
+
+  // --- 2. Program total ---
+  t("Base year: Fall 2027 year 1 = base x 1.03; Spring 2028 also 2027-28; Fall 2028 = x 1.03^2", () => {
+    check(E.termToAcademicYear("fall-2027") === 2027 && E.termToAcademicYear("spring-2028") === 2027, "term map");
+    check(E.growthFactor(2027).exp === 1 && E.growthFactor(2028).exp === 2, "exponent");
+  });
+  t("Total with 0% increase (Ian): 68,560 x 4 = 274,240", () => {
+    const r = E.programTotal(IAN, data, { yearlyIncrease: 0 });
+    check(r.total.mid === 274240, String(r.total.mid));
+  });
+  t("Total with 3% increase (Ian): 68,560 x 4.30913581 = 295,434.35", () => {
+    const r = E.programTotal(IAN, data);
+    check(near(r.total.mid, 68560 * G4) && near(r.total.mid, 295434.35), String(r.total.mid));
+  });
+  t("Ian has no one-time visa costs", () => {
+    const r = E.programTotal(IAN, data);
+    check(r.oneTime.lines.length === 0 && r.oneTime.total.mid === 0, "one-time costs present");
+  });
+  t("Lucas one-time costs: SEVIS 350 + visa 185 + TOEFL 240 + SAT 111 + UT app 90 = 976", () => {
+    const r = E.programTotal(LUCAS, data);
+    check(r.oneTime.total.mid === 976, String(r.oneTime.total.mid));
+  });
+  t("Visa Integrity Fee (Brazil unconfirmed) is shown but NOT added", () => {
+    const r = E.programTotal(LUCAS, data);
+    check(r.notAdded.some((l) => l.id === "visa_integrity" && l.reason === "not_confirmed"), "VIF line missing");
+    check(!r.oneTime.lines.some((l) => l.id === "visa_integrity"), "VIF added");
+  });
+  t("Enrollment deposit is NOT added (credited to tuition)", () => {
+    const r = E.programTotal(LUCAS, data);
+    check(r.notAdded.some((l) => l.id === "enrollment_deposit" && l.reason === "credited_to_tuition"), "deposit line missing");
+    check(!r.oneTime.lines.some((l) => l.id === "enrollment_deposit"), "deposit added");
+  });
+  t("Lucas UT total = 72,560 x 4.30913581 + 976 = 313,647", () => {
+    const r = E.programTotal(LUCAS, data);
+    check(near(r.total.mid, 72560 * G4 + 976) && near(r.total.mid, 313647, 1), String(r.total.mid));
+  });
+
+  // --- Community-college path ---
+  t("ACC + UT: ACC years 1-2 (x1.03, x1.03^2), UT years 3-4 (x1.03^3, x1.03^4)", () => {
+    const r = E.transferPath(LUCAS_ACC, data);
+    const ids = r.perYear.map((y) => y.collegeId + ":" + y.exponent).join(",");
+    check(ids === "acc:1,acc:2,ut-austin:3,ut-austin:4", ids);
+    const expected = 29000 * (1.03 + Math.pow(1.03, 2)) + 72560 * (Math.pow(1.03, 3) + Math.pow(1.03, 4)) + 875;
+    check(near(r.total.mid, expected) && near(r.total.mid, 222466, 1), String(r.total.mid));
+  });
+  t("ACC + UT: no new SEVIS or visa fee; UT transfer fee 'Not confirmed' and NOT added", () => {
+    const r = E.transferPath(LUCAS_ACC, data);
+    check(r.oneTime.lines.filter((l) => l.id === "sevis_f_m").length === 1, "SEVIS counted twice");
+    check(r.notes.some((n) => n.id === "transfer_sevis" && n.reason === "not_needed"), "SEVIS note missing");
+    check(r.notAdded.some((n) => n.id === "transfer_application_fee" && n.reason === "not_confirmed"), "transfer fee line missing");
+  });
+
+  // --- 3 and 4. Monthly and bands ---
+  t("Monthly: total / (years x 12), then x rate; engine does not round", () => {
+    const m = E.monthly(E.range(48000), 4, FX);
+    check(m.usd.mid === 1000 && near(m.family.mid, 5514.6, 1e-9), JSON.stringify(m));
+  });
+  t("Band edge: exactly equal -> within", () => check(E.budgetBand(1000, 1000) === "within", "not within"));
+  t("Band edge: exactly 20% above -> above", () => check(E.budgetBand(1200, 1000) === "above", "not above"));
+  t("Band edge: just over 20% above -> well_above", () => check(E.budgetBand(1200.01, 1000) === "well_above", "not well_above"));
+  t("Skipped budget -> none (null, undefined, empty, 0)", () => {
+    check([null, undefined, "", 0].every((v) => E.budgetBand(5000, v) === "none"), "not none");
+  });
+
+  // --- Demo: Lucas at 23,000 BRL ---
+  t("Demo Lucas (23,000 BRL): UT is well_above", () => {
+    const r = E.evaluate(E.programTotal(LUCAS, data), { fxRate: FX, monthlyAmount: 23000 });
+    check(r.band === "well_above", r.band + " " + r.monthly.family.mid);
+  });
+  t("Demo Lucas (23,000 BRL): ACC + UT is 'above' and between 5% and 15% above", () => {
+    const r = E.evaluate(E.transferPath(LUCAS_ACC, data), { fxRate: FX, monthlyAmount: 23000 });
+    check(r.band === "above", r.band);
+    check(r.gapVsAmount >= 0.05 && r.gapVsAmount <= 0.15,
+      "gap " + (r.gapVsAmount * 100).toFixed(1) + "%. Outside 5% to 15%: suggest " +
+      Math.round(r.monthly.family.mid / 1.10) + " BRL");
+    return "gap " + (r.gapVsAmount * 100).toFixed(1) + "%, R$ " + r.monthly.family.mid.toFixed(0) + " per month";
+  });
+  t("Demo Lucas (23,000 BRL): 'Out of my budget' lists ACC + UT first; original kept", () => {
+    const orig = E.evaluate(E.programTotal(LUCAS, data), { fxRate: FX, monthlyAmount: 23000 });
+    const o = E.outOfBudget(orig, LUCAS, data, { fxRate: FX, monthlyAmount: 23000 });
+    check(o.options.length >= 1 && o.options[0].kind === "transfer_path", "no transfer path first");
+    check(!o.options.some((x) => x.kind === "single" && x.collegeId === "acc"), "ACC alone listed as a bachelor's option");
+    check(o.stillWellAbove === false && o.original === orig, "flags");
+  });
+  t("Demo Lucas: I-20 amount = year 1 estimate (72,560 x 1.03 = 74,736.80)", () => {
+    const s = E.showForI20(E.programTotal(LUCAS, data));
+    check(s.estimate === true && near(s.amount.mid, 74736.8), JSON.stringify(s));
+    check(s.label === "Estimate. The college confirms the exact amount.", "label");
+  });
+
+  // --- Lucas at 2,000 BRL (old value, kept as a test case) ---
+  t("Lucas at 2,000 BRL: everything well_above and stillWellAbove (\"This path is also above...\")", () => {
+    const ctx = { fxRate: FX, monthlyAmount: 2000 };
+    const orig = E.evaluate(E.programTotal(LUCAS, data), ctx);
+    const o = E.outOfBudget(orig, LUCAS, data, ctx);
+    check(orig.band === "well_above" && o.options.every((x) => x.band === "well_above"), "bands");
+    check(o.stillWellAbove === true, "stillWellAbove false");
+  });
+  t("Recommendations with a budget: well_above goes to 'More colleges'", () => {
+    const ctx = { fxRate: FX, monthlyAmount: 2000 };
+    const rec = E.recommend([E.evaluate(E.programTotal(LUCAS, data), ctx)], true);
+    check(rec.main.length === 0 && rec.more.length === 1, JSON.stringify([rec.main.length, rec.more.length]));
+  });
+
+  // --- Demo: Ian ---
+  t("Demo Ian (skipped amount): band 'none' (Total cost); no I-20 amount", () => {
+    const r = E.evaluate(E.programTotal(IAN, data), { fxRate: FX, monthlyAmount: null });
+    check(r.band === "none" && r.gapVsAmount === null, r.band);
+    check(E.showForI20(r) === null, "I-20 shown to a citizen");
+  });
+  t("Ian residency check: both scenarios, engine does not pick one", () => {
+    const s = E.residencyScenarios(IAN, data);
+    check(s.nonresident.annual.total.min === 64204 && s.nonresident.annual.total.max === 72916, "nonresident");
+    check(s.resident.annual.total.min === 32508 && s.resident.annual.total.max === 35386, "resident");
+    check(!("chosen" in s) && s.sources[0].url === "https://onestop.utexas.edu", "source");
+  });
+  t("Recommendations without a budget: sorted by cost", () => {
+    const ctx = { fxRate: FX, monthlyAmount: null };
+    const a = E.evaluate(E.programTotal(IAN, data), ctx);
+    const b = E.evaluate(E.programTotal(Object.assign({}, IAN, { residency: "resident" }), data), ctx);
+    const rec = E.recommend([a, b], false);
+    check(rec.main[0] === b && rec.more.length === 0, "order");
+  });
+
+  // --- Sources ---
+  t("Every added line has a source and a date", () => {
+    const r = E.programTotal(LUCAS, data);
+    const lines = r.annual.lines.concat(r.oneTime.lines);
+    const missing = lines.filter((l) => !l.source || !l.source.checked_on).map((l) => l.id);
+    check(missing.length === 0, "no date: " + missing.join(", "));
+    const noUrl = lines.filter((l) => !l.source.url).map((l) => l.id);
+    return noUrl.length ? "no official link yet: " + noUrl.join(", ") : true;
+  });
+
+  return out;
+}
+</script>
+<script>
+(async function () {
+  const load = (p) => fetch(p, { cache: "no-store" }).then((r) => r.json());
+  const summary = document.getElementById("summary");
+  try {
+    const [colleges, fees, fx] = await Promise.all(["data/colleges.json", "data/fees.json", "data/fx.json"].map(load));
+    const results = runPontTests(window.PontEngine, { colleges, fees, fx });
+    const list = document.getElementById("results");
+    results.forEach((r) => {
+      const li = document.createElement("li");
+      li.textContent = (r.pass ? "PASS  " : "FAIL  ") + r.name;
+      if (r.detail) {
+        const c = document.createElement("code");
+        c.textContent = "  " + r.detail;
+        li.appendChild(c);
+      }
+      list.appendChild(li);
+      (r.pass ? console.log : console.error)("[Pont test]", r.pass ? "PASS" : "FAIL", r.name, r.detail || "");
+    });
+    const failed = results.filter((r) => !r.pass).length;
+    summary.textContent = failed ? failed + " of " + results.length + " tests failed." : "All " + results.length + " tests passed.";
+    summary.className = failed ? "bad" : "ok";
+  } catch (e) {
+    summary.textContent = "Could not run the tests: " + e.message + ". Open this page with Live Server.";
+    summary.className = "bad";
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+/* Pont brand tokens. Source of truth: docs/brand.md. Do not edit here without updating the doc. */
+:root {
+  --ink: #15233A;
+  --paper: #F5F1E9;
+  --sand: #E9E3D6;
+  --white: #FFFFFF;
+  --slate: #5A6475;
+  --green: #2E7D5B;
+  --green-text: #25684C;
+  --green-tint: #E3EFE8;
+  --amber: #E3A947;
+  --amber-tint: #FBEFD6;
+  --terracotta: #C2553A;
+  --terracotta-text: #A8442D;
+  --terracotta-tint: #F6E1DA;
+  --font-display: "DM Serif Display", Georgia, serif;
+  --font-ui: "Inter", system-ui, sans-serif;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-full: 999px;
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+  --space-6: 24px; --space-8: 32px; --space-12: 48px; --space-16: 64px;
+  --shadow-card: 0 1px 3px rgba(21, 35, 58, 0.08);
+}

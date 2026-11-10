@@ -1,6 +1,7 @@
 {
   "checked_on": "2026-11-08",
-  "note": "Only UT Austin and ACC are verified. Other colleges are placeholders: show 'Not confirmed' and the official link until data is filled.",
+  "base_year": "2026-27",
+  "note": "Only UT Austin and ACC are verified. Other colleges are placeholders: show 'Not confirmed' and the official link until data is filled. All amounts are for the base year 2026-27; js/engine.js applies the yearly increase assumption from there.",
   "colleges": [
     {
       "id": "ut-austin",
@@ -11,25 +12,29 @@
       "aid_for_internationals": "merit_limited",
       "aid_form": "own_process",
       "programs": [
-        { "id": "cs", "name": "Computer Science", "college_unit": "Natural Sciences", "years": 4, "differential_tuition_per_semester": 500 },
-        { "id": "business", "name": "Business", "college_unit": "McCombs School of Business", "years": 4, "differential_tuition_per_semester": 1100 },
-        { "id": "engineering", "name": "Engineering", "college_unit": "Cockrell School of Engineering", "years": 4, "differential_tuition_per_semester": 1100 }
+        { "id": "cs", "level": "bachelor", "name": "Computer Science", "area": "cs", "college_unit": "Natural Sciences", "years": 4, "differential_tuition_per_semester": 500 },
+        { "id": "business", "level": "bachelor", "name": "Business", "area": "business", "college_unit": "McCombs School of Business", "years": 4, "differential_tuition_per_semester": 1100 },
+        { "id": "engineering", "level": "bachelor", "name": "Engineering", "area": "engineering", "college_unit": "Cockrell School of Engineering", "years": 4, "differential_tuition_per_semester": 1100 }
       ],
       "differential_included_in_coa": null,
-      "cost_of_attendance_nonresident_2026_27": { "min": 64204, "max": 72916, "excludes": ["health insurance", "flights", "visa fees"] },
+      "cost_of_attendance_nonresident_2026_27": { "min": 64204, "max": 72916, "excludes": ["health insurance", "flights", "visa fees"], "source": "ut-coa", "checked_on": "2026-11-08" },
+      "cost_of_attendance_resident_2026_27": { "min": 32508, "max": 35386, "note": "Texas resident, living on or off campus. Shown only as a scenario: Pont never decides residency.", "source": "ut-residency", "checked_on": "2026-11-09" },
+      "residency_rule": "A dependent's domicile follows the parents; parents outside Texas means nonresident. An independent student (not claimed as a dependent) who lived and kept domicile in Texas for 12 months with employment (student jobs do not count) may qualify as a resident. Confirm with the UT residency office.",
       "required_extras_per_year": [
-        { "id": "isss_fee", "label": "ISSS Support Services Fee", "amount": 250, "note": "125 USD per semester, international students" },
-        { "id": "ship", "label": "UT student health insurance (SHIP)", "min": 3600, "max": 3900, "note": "Automatic for F and J students; 2025-26 rates: 286.50 new-student August, 1,114 fall, 1,392.50 spring, 835.50 summer, plus evacuation and 5% admin fee; 2026-27 rates to confirm" }
+        { "id": "isss_fee", "label": "ISSS Support Services Fee", "amount": 250, "applies_to": ["F", "J"], "note": "125 USD per semester, international students", "source": "ut-isss-finance", "checked_on": "2026-11-08" },
+        { "id": "ship", "label": "UT student health insurance (SHIP)", "min": 3600, "max": 3900, "applies_to": ["F", "J"], "note": "Automatic for F and J students; 2025-26 rates: 286.50 new-student August, 1,114 fall, 1,392.50 spring, 835.50 summer, plus evacuation and 5% admin fee; 2026-27 rates to confirm", "source": null, "checked_on": "2026-11-08" }
       ],
-      "application": { "fee": 90, "fee_waiver_internationals": false, "early_action": "10-15", "regular": "12-01", "decision_early": "01-15", "decision_regular": "02-15", "sat_or_act_required": true },
+      "application": { "fee": 90, "fee_waiver_internationals": false, "early_action": "10-15", "regular": "12-01", "decision_early": "01-15", "decision_regular": "02-15", "sat_or_act_required": true, "source": "ut-intl-admissions", "checked_on": "2026-11-08" },
+      "transfer_application": { "fee": null, "status": "not_confirmed", "label": "UT transfer application fee", "source": "ut-intl-admissions", "checked_on": "2026-11-09" },
       "enrollment_deposit": { "amount": 200, "refundable": false, "credited_to_tuition": true, "due": "05-01" },
       "i20": { "portal_only": true, "translation_rule": "separate_signed_translation", "first_year_amount_to_show": null },
       "scholarships": "Admitted freshmen are automatically considered for university and college scholarships; notifications February to April.",
       "after_graduation": { "opt_admin_fee": 150, "stem_extension_admin_fee": 300 },
       "sources": [
-        { "id": "ut-coa", "label": "UT Austin cost of attendance", "url": "https://finaid.utexas.edu" },
-        { "id": "ut-intl-admissions", "label": "UT international admissions", "url": "https://admissions.utexas.edu/apply/international-students/" },
-        { "id": "ut-isss-finance", "label": "UT ISSS financial information", "url": "https://global.utexas.edu/isss/immigration/f-1/financial-information" }
+        { "id": "ut-coa", "label": "UT Austin cost of attendance", "url": "https://finaid.utexas.edu", "checked_on": "2026-11-08" },
+        { "id": "ut-intl-admissions", "label": "UT international admissions", "url": "https://admissions.utexas.edu/apply/international-students/", "checked_on": "2026-11-08" },
+        { "id": "ut-isss-finance", "label": "UT ISSS financial information", "url": "https://global.utexas.edu/isss/immigration/f-1/financial-information", "checked_on": "2026-11-08" },
+        { "id": "ut-residency", "label": "UT residency office (One Stop)", "url": "https://onestop.utexas.edu", "checked_on": "2026-11-09" }
       ]
     },
     {
@@ -40,17 +45,21 @@
       "status": "verified",
       "aid_for_internationals": "none_for_f1",
       "programs": [
-        { "id": "cs-transfer", "name": "Computer Science (associate, transfer path)", "years": 2 }
+        { "id": "cs-transfer", "level": "associate", "name": "Computer Science (associate, transfer path)", "area": "cs", "years": 2, "transfers_to": "ut-austin" }
       ],
-      "tuition_per_credit_2026_27": { "in_district": 85, "out_of_district": 286, "international_living_in_district": 218, "international_living_out_of_district": 419, "frozen_for_year": true },
+      "tuition_per_credit_2026_27": { "in_district": 85, "out_of_district": 286, "international_living_in_district": 218, "international_living_out_of_district": 419, "frozen_only_for": "2026-27", "source": "acc-tuition", "checked_on": "2026-11-08" },
       "f1_estimated_annual_cost": 29000,
+      "f1_estimate_label": "ACC estimate (9 months)",
       "f1_estimate_note": "ACC estimate for tuition, college and living expenses for one academic year (nine months); many students may need more.",
+      "f1_estimate_source": "acc-intl-faq",
+      "f1_estimate_checked_on": "2026-11-08",
       "full_time_credits_f1": 12,
       "health_insurance_required": false,
-      "application": { "fee": 100, "fee_note": "From an older ACC catalog; verify before the demo." },
+      "application": { "fee": 100, "source": "acc-catalog-2026-27", "checked_on": "2026-11-09", "sat_or_act_required": false, "sat_note": "Prototype assumption approved on 2026-11-09, not from the catalog. Confirm with ACC." },
       "sources": [
-        { "id": "acc-tuition", "label": "ACC tuition table", "url": "https://admissions.austincc.edu/tuition-table/" },
-        { "id": "acc-intl-faq", "label": "ACC international students FAQ", "url": "https://admissions.austincc.edu/" }
+        { "id": "acc-tuition", "label": "ACC tuition table", "url": "https://admissions.austincc.edu/tuition-table/", "checked_on": "2026-11-08" },
+        { "id": "acc-intl-faq", "label": "ACC international students FAQ", "url": "https://admissions.austincc.edu/", "checked_on": "2026-11-08" },
+        { "id": "acc-catalog-2026-27", "label": "ACC 2026-27 catalog", "url": "https://instruction.austincc.edu/2026-27-catalog", "checked_on": "2026-11-09" }
       ]
     },
     { "id": "texas-state", "name": "Texas State University", "type": "public_university", "status": "pending_verification" },

@@ -1,8 +1,18 @@
 {
-  "note": "Sample rates for the prototype. Set manually and update the date. Label in UI: 'Sample rate for the prototype, set on DATE'.",
+  "note": "Fallback rates only. js/fx.js fetches a live rate once per session (Frankfurter, then ExchangeRate-API). This file is used only when both fail, with the message 'Could not update the exchange rate. Using the rate from DATE.' tests.html always uses the BRL rate below so tests never change.",
   "base": "USD",
+  "live_sources": [
+    { "id": "frankfurter", "label": "Frankfurter (European Central Bank data)", "url": "https://api.frankfurter.app/latest?from=USD&to={CUR}", "credit_url": "https://www.frankfurter.app" },
+    { "id": "exchangerate-api", "label": "ExchangeRate-API", "url": "https://open.er-api.com/v6/latest/USD", "credit_url": "https://www.exchangerate-api.com", "credit_text": "Rates By Exchange Rate API", "credit_required": true }
+  ],
   "rates": {
-    "BRL": { "rate": null, "set_on": null },
-    "INR": { "rate": null, "set_on": null }
+    "BRL": {
+      "rate": 5.5146,
+      "set_on": "2026-11-09",
+      "source": "Banco Central do Brasil, PTAX (sell rate)",
+      "url": "https://www.bcb.gov.br/estabilidadefinanceira/historicocotacoes",
+      "checked_on": "2026-11-09"
+    },
+    "INR": { "rate": null, "set_on": null, "hidden": true, "note": "India is not in the demo paths; hidden in the prototype." }
   }
 }

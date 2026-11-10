@@ -1,0 +1,8 @@
+{
+  "note": "Sample rates for the prototype. Set manually and update the date. Label in UI: 'Sample rate for the prototype, set on DATE'.",
+  "base": "USD",
+  "rates": {
+    "BRL": { "rate": null, "set_on": null },
+    "INR": { "rate": null, "set_on": null }
+  }
+}

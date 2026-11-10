@@ -1,0 +1,25 @@
+{
+  "checked_on": "2026-11-08",
+  "government": [
+    { "id": "sevis_f_m", "label": "SEVIS I-901 (F-1, M-1)", "amount": 350 },
+    { "id": "sevis_j", "label": "SEVIS I-901 (most J-1)", "amount": 220 },
+    { "id": "mrv", "label": "Visa application fee (F, M, J)", "amount": 185 },
+    { "id": "visa_integrity", "label": "Visa Integrity Fee", "amount": 250, "note": "Collection varies by country; confirm for Brazil and India" },
+    { "id": "i539_online", "label": "USCIS Form I-539 (online)", "amount": 420 },
+    { "id": "i539_paper", "label": "USCIS Form I-539 (paper)", "amount": 470 },
+    { "id": "i539_premium", "label": "I-539 premium processing (optional)", "amount": 2075 },
+    { "id": "i765_online", "label": "USCIS Form I-765 OPT (online)", "amount": 470 },
+    { "id": "i765_paper", "label": "USCIS Form I-765 OPT (paper)", "amount": 520 },
+    { "id": "i765_premium", "label": "I-765 premium processing (optional)", "amount": 1780 }
+  ],
+  "tests": [
+    { "id": "sat_abroad", "label": "SAT taken outside the U.S.", "amount": 111 },
+    { "id": "toefl_brazil", "label": "TOEFL iBT in Brazil", "min": 235, "max": 245, "note": "Verify on ETS" },
+    { "id": "det", "label": "Duolingo English Test", "min": 59, "max": 70, "note": "Verify on the official site" }
+  ],
+  "country_layer": {
+    "BR": { "esta": false, "visa_integrity_fee_collected": null, "reciprocity_fee_f1": null },
+    "IN": { "esta": false, "visa_integrity_fee_collected": false, "reciprocity_fee_f1": null },
+    "CA": { "esta": false, "visa_stamp_needed": false }
+  }
+}

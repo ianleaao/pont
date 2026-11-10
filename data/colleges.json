@@ -1,0 +1,61 @@
+{
+  "checked_on": "2026-11-08",
+  "note": "Only UT Austin and ACC are verified. Other colleges are placeholders: show 'Not confirmed' and the official link until data is filled.",
+  "colleges": [
+    {
+      "id": "ut-austin",
+      "name": "The University of Texas at Austin",
+      "type": "public_university",
+      "city": "Austin, TX",
+      "status": "verified",
+      "aid_for_internationals": "merit_limited",
+      "aid_form": "own_process",
+      "programs": [
+        { "id": "cs", "name": "Computer Science", "college_unit": "Natural Sciences", "years": 4, "differential_tuition_per_semester": 500 },
+        { "id": "business", "name": "Business", "college_unit": "McCombs School of Business", "years": 4, "differential_tuition_per_semester": 1100 },
+        { "id": "engineering", "name": "Engineering", "college_unit": "Cockrell School of Engineering", "years": 4, "differential_tuition_per_semester": 1100 }
+      ],
+      "differential_included_in_coa": null,
+      "cost_of_attendance_nonresident_2026_27": { "min": 64204, "max": 72916, "excludes": ["health insurance", "flights", "visa fees"] },
+      "required_extras_per_year": [
+        { "id": "isss_fee", "label": "ISSS Support Services Fee", "amount": 250, "note": "125 USD per semester, international students" },
+        { "id": "ship", "label": "UT student health insurance (SHIP)", "min": 3600, "max": 3900, "note": "Automatic for F and J students; 2025-26 rates: 286.50 new-student August, 1,114 fall, 1,392.50 spring, 835.50 summer, plus evacuation and 5% admin fee; 2026-27 rates to confirm" }
+      ],
+      "application": { "fee": 90, "fee_waiver_internationals": false, "early_action": "10-15", "regular": "12-01", "decision_early": "01-15", "decision_regular": "02-15", "sat_or_act_required": true },
+      "enrollment_deposit": { "amount": 200, "refundable": false, "credited_to_tuition": true, "due": "05-01" },
+      "i20": { "portal_only": true, "translation_rule": "separate_signed_translation", "first_year_amount_to_show": null },
+      "scholarships": "Admitted freshmen are automatically considered for university and college scholarships; notifications February to April.",
+      "after_graduation": { "opt_admin_fee": 150, "stem_extension_admin_fee": 300 },
+      "sources": [
+        { "id": "ut-coa", "label": "UT Austin cost of attendance", "url": "https://finaid.utexas.edu" },
+        { "id": "ut-intl-admissions", "label": "UT international admissions", "url": "https://admissions.utexas.edu/apply/international-students/" },
+        { "id": "ut-isss-finance", "label": "UT ISSS financial information", "url": "https://global.utexas.edu/isss/immigration/f-1/financial-information" }
+      ]
+    },
+    {
+      "id": "acc",
+      "name": "Austin Community College",
+      "type": "community_college",
+      "city": "Austin, TX",
+      "status": "verified",
+      "aid_for_internationals": "none_for_f1",
+      "programs": [
+        { "id": "cs-transfer", "name": "Computer Science (associate, transfer path)", "years": 2 }
+      ],
+      "tuition_per_credit_2026_27": { "in_district": 85, "out_of_district": 286, "international_living_in_district": 218, "international_living_out_of_district": 419, "frozen_for_year": true },
+      "f1_estimated_annual_cost": 29000,
+      "f1_estimate_note": "ACC estimate for tuition, college and living expenses for one academic year (nine months); many students may need more.",
+      "full_time_credits_f1": 12,
+      "health_insurance_required": false,
+      "application": { "fee": 100, "fee_note": "From an older ACC catalog; verify before the demo." },
+      "sources": [
+        { "id": "acc-tuition", "label": "ACC tuition table", "url": "https://admissions.austincc.edu/tuition-table/" },
+        { "id": "acc-intl-faq", "label": "ACC international students FAQ", "url": "https://admissions.austincc.edu/" }
+      ]
+    },
+    { "id": "texas-state", "name": "Texas State University", "type": "public_university", "status": "pending_verification" },
+    { "id": "texas-am", "name": "Texas A&M University", "type": "public_university", "status": "pending_verification" },
+    { "id": "uh", "name": "University of Houston", "type": "public_university", "status": "pending_verification" },
+    { "id": "hcc", "name": "Houston Community College", "type": "community_college", "status": "pending_verification" }
+  ]
+}

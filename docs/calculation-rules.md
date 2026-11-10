@@ -17,6 +17,10 @@ If a college publishes a range, compute min and max separately and show the rang
 
 If it is unconfirmed whether a fee is already inside the cost of attendance (for example UT differential tuition), do NOT add it. Show it as a separate line: "May already be included. Confirm with the college."
 
+Student extras (UT SHIP, ISSS fee) apply only to F and J students. U.S. citizens and permanent residents do not pay them.
+
+Residency (U.S. citizens and permanent residents): default is nonresident. A dependent's domicile follows the parents; parents outside Texas means nonresident. The engine NEVER decides residency. When the college publishes a resident figure (UT 2026-27: 32,508 to 35,386 USD), the engine computes both scenarios (resident and nonresident) for the "Residency check" card; the main result stays nonresident.
+
 ## 2. Program total (USD)
 years = 4 for a bachelor's (2 for an associate at ACC)
 yearly_increase = config value, default 0.03 (labeled in the UI as an assumption).
@@ -43,7 +47,9 @@ Otherwise compare monthly_family with the amount the user shared:
 - well_above: everything else
 
 ## 5. Show for the I-20 (visa students only)
-show_for_i20 = the college's published first-year amount for the I-20 if available, otherwise the first-year annual cost estimate, labeled "Estimate. The college confirms the exact amount."
+show_for_i20 = the college's published amount for the I-20 when available. Only when there is none: the MAX of the year 1 estimate range (showing too little delays the I-20), labeled "Estimate. The college confirms the exact amount."
+UT publishes 71,912 USD for 2026-27, undergraduate, nonresident: 49,912 tuition and fees (2 semesters) + 22,000 living expenses (12 months). Source: UT ISSS financial information, checked 10 Nov 2026. Note shown with it: "2026-27 amount. The amount for your start year is not published yet and may be higher."
+The published amount is not inflated by the engine: it is shown as published, with its year.
 UI line: "For the I-20, you will need to show about X for the first year."
 
 ## 6. Recommendations

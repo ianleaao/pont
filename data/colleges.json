@@ -27,13 +27,40 @@
       "application": { "fee": 90, "fee_waiver_internationals": false, "early_action": "10-15", "regular": "12-01", "decision_early": "01-15", "decision_regular": "02-15", "sat_or_act_required": true, "source": "ut-intl-admissions", "checked_on": "2026-11-08" },
       "transfer_application": { "fee": null, "status": "not_confirmed", "label": "UT transfer application fee", "source": "ut-intl-admissions", "checked_on": "2026-11-09" },
       "enrollment_deposit": { "amount": 200, "refundable": false, "credited_to_tuition": true, "due": "05-01" },
-      "i20": { "portal_only": true, "translation_rule": "separate_signed_translation", "first_year_amount_to_show": null },
+      "i20": {
+        "portal_only": true,
+        "translation_rule": "separate_signed_translation",
+        "first_year_amount_to_show": 71912,
+        "first_year_amount_year": "2026-27",
+        "first_year_amount_breakdown": [
+          { "label": "Tuition and fees (2 semesters)", "amount": 49912 },
+          { "label": "Living expenses (12 months)", "amount": 22000 }
+        ],
+        "first_year_amount_note": "2026-27 amount. The amount for your start year is not published yet and may be higher.",
+        "first_year_amount_level": "undergraduate, nonresident",
+        "source": "ut-isss-finance",
+        "checked_on": "2026-11-10",
+        "document_rules": {
+          "source": "ut-isss-finance",
+          "checked_on": "2026-11-10",
+          "upload": { "rule": "Upload only through the Admissions Checklist in myIO. Documents sent by mail, email or fax are not accepted.", "channel": "myIO" },
+          "language": { "rule": "Must be in English, or include a separate signed translation." },
+          "name": { "rule": "Must contain the student's name. If the funds belong to someone else, the supporter must also sign a Statement of Financial Support." },
+          "max_age_months": 6,
+          "max_age_rule": "Must be current. Proof of funding older than 6 months is not accepted.",
+          "liquid": { "rule": "Must be liquid. Funds that cannot be drawn on or converted into cash without penalty are not accepted." },
+          "not_accepted": ["Auto/Home Deeds", "Crypto currency", "Lines of Credit", "Mutual Funds", "Parent/Sponsor Paycheck/Stub", "Term Life Insurance Policies", "U.S./Foreign Stocks", "U.S./Foreign Tax Returns"],
+          "max_pages": 10
+        }
+      },
       "scholarships": "Admitted freshmen are automatically considered for university and college scholarships; notifications February to April.",
-      "after_graduation": { "opt_admin_fee": 150, "stem_extension_admin_fee": 300 },
+      "after_graduation": { "opt_admin_fee": 150, "stem_extension_admin_fee": 300, "source": "ut-isss-fees", "checked_on": "2026-11-10" },
       "sources": [
         { "id": "ut-coa", "label": "UT Austin cost of attendance", "url": "https://finaid.utexas.edu", "checked_on": "2026-11-08" },
         { "id": "ut-intl-admissions", "label": "UT international admissions", "url": "https://admissions.utexas.edu/apply/international-students/", "checked_on": "2026-11-08" },
-        { "id": "ut-isss-finance", "label": "UT ISSS financial information", "url": "https://global.utexas.edu/isss/immigration/f-1/financial-information", "checked_on": "2026-11-08" },
+        { "id": "ut-isss-finance", "label": "UT ISSS financial information", "url": "https://global.utexas.edu/isss/immigration/f-1/financial-information", "checked_on": "2026-11-10" },
+        { "id": "ut-isss-fees", "label": "UT ISSS fees", "url": "https://global.utexas.edu/isss/about/fees", "checked_on": "2026-11-10" },
+        { "id": "ut-ship-costs", "label": "UT student health insurance costs", "url": "https://global.utexas.edu/isss/advising-services/insurance/costs", "checked_on": "2026-11-10" },
         { "id": "ut-residency", "label": "UT residency office (One Stop)", "url": "https://onestop.utexas.edu", "checked_on": "2026-11-09" }
       ]
     },

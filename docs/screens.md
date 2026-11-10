@@ -21,7 +21,8 @@ Mobile first. One question per screen in onboarding with Back and Continue. Copy
 8. Results list
    Title: "Your colleges". Each card: college, program, total for the whole program (USD and family currency), band badge, "Out of my budget" button. Section "More colleges" when a budget was given.
 9. College detail: full cost by phase
-   Tabs or sections: Before applying, Before travel, First semester, Every year, After graduation. Each line: amount, source, date. Clear split between "You pay" and "You show (I-20)". Note line for assumptions (3% yearly increase, sample exchange rate).
+   Tabs or sections: Before applying, Before travel, First semester, Every year, After graduation. Each line: amount, source, date. Clear split between "You pay" and "You show (I-20)". Note line for assumptions (3% yearly increase, exchange rate source and date).
+   Residency check card (U.S. citizens and permanent residents only, path Ian): shows both official UT 2026-27 ranges side by side: Texas resident, on or off campus, 32,508 to 35,386 USD; nonresident, 64,204 to 72,916 USD. Text: "You may qualify for Texas resident tuition. Confirm with the UT residency office." Link: onestop.utexas.edu. Pont never decides residency; the main result stays nonresident.
 10. Out of my budget
    "Here are options with the same program area." Cheaper colleges, plus "Start at ACC, then transfer to UT" with combined total and band. If still well above: "This path is also above the amount you shared. Here is what can help:" scholarship plan, later start.
 11. Scholarship and application timeline

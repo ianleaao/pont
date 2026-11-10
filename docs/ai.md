@@ -30,7 +30,15 @@ Each scripted output has: id, function, path (lucas or ian), text (with variable
 ## Prototype AI screens (must exist)
 1. Family mode (path Lucas): Portuguese summary for parents, total in BRL, next three steps. Failure variant: a term without a safe translation keeps the English term with a plain explanation.
 2. What-if simulator: controls for exchange rate (+/- 10%), scholarship amount, "start at ACC". Engine recalculates band; AI explains in two sentences what changed. Failure variant: scenario outside the data shows a range, never a promise.
-3. Document check (I-20 kit): student uploads a sample bank letter (fake demo file). AI flags issues: statement older than 6 months, currency not shown, no signature, balance below the amount to show. Failure variant: low-confidence reading highlights the field and asks the student to confirm.
+3. Document check (I-20 kit): student uploads a sample bank letter (fake demo file, marked "SAMPLE"). AI flags issues: statement older than 6 months, currency not shown, no signature, balance below the amount to show. Failure variant: low-confidence reading highlights the field and asks the student to confirm.
+   UT document rules (data/colleges.json, i20.document_rules; source UT ISSS financial information, checked 10 Nov 2026). The check flags each case:
+   - Upload only through myIO. Mail, email or fax are not accepted.
+   - In English, or with a separate signed translation.
+   - Must contain the student's name. If the money belongs to someone else, a signed Statement of Financial Support is also needed.
+   - Older than 6 months: not accepted.
+   - Must be liquid. Not accepted (official list): Auto/Home Deeds, Crypto currency, Lines of Credit, Mutual Funds, Parent/Sponsor Paycheck/Stub, Term Life Insurance Policies, U.S./Foreign Stocks, U.S./Foreign Tax Returns.
+   - At most 10 pages.
+   The AI only flags and explains. It never edits the document and never says the document will be accepted.
 4. Bank letter request draft: message in Portuguese to the family's bank asking for an English-language letter with balance, currency, date and signature.
 5. Essay request declined: "I can help you plan and review your ideas, but I can't write your essay. Colleges require it to be your own work."
 6. Data not confirmed: "Not confirmed. See the official page." with link.

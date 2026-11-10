@@ -378,12 +378,24 @@
 
   /* ---------- 5. Show for the I-20 (visa students only) ---------- */
 
-  function showForI20(result) {
+  // Rule: the college's published amount first. Only without one, the MAX of the
+  // year 1 estimate (showing too little delays the I-20).
+  function showForI20(result, data) {
     if (result.status !== "ok" || !result.visaStudent) return null;
-    const published = result.i20 && result.i20.first_year_amount_to_show;
-    if (published) return { amount: range(published), estimate: false, label: null };
-    return { amount: result.perYear[0].amount, estimate: true,
-      label: "Estimate. The college confirms the exact amount." };
+    const i20 = result.i20;
+    if (i20 && i20.first_year_amount_to_show) {
+      const college = data ? findCollege(data, result.collegeId) : null;
+      return {
+        amount: i20.first_year_amount_to_show,
+        estimate: false,
+        year: i20.first_year_amount_year || null,
+        breakdown: i20.first_year_amount_breakdown || [],
+        label: i20.first_year_amount_note || null,
+        source: college ? collegeSource(college, i20.source, i20.checked_on) : { id: i20.source, checked_on: i20.checked_on },
+      };
+    }
+    return { amount: result.perYear[0].amount.max, estimate: true, year: result.perYear[0].academicYear,
+      breakdown: [], label: "Estimate. The college confirms the exact amount.", source: null };
   }
 
   /* ---------- Residency scenarios (the engine never decides residency) ---------- */

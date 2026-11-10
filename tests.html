@@ -171,9 +171,16 @@ function runPontTests(E, data) {
     check(!o.options.some((x) => x.kind === "single" && x.collegeId === "acc"), "ACC alone listed as a bachelor's option");
     check(o.stillWellAbove === false && o.original === orig, "flags");
   });
-  t("Demo Lucas: I-20 amount = year 1 estimate (72,560 x 1.03 = 74,736.80)", () => {
-    const s = E.showForI20(E.programTotal(LUCAS, data));
-    check(s.estimate === true && near(s.amount.mid, 74736.8), JSON.stringify(s));
+  t("Demo Lucas: I-20 uses the UT published amount 71,912 (2026-27), not the estimate", () => {
+    const s = E.showForI20(E.programTotal(LUCAS, data), data);
+    check(s.estimate === false && s.amount === 71912 && s.year === "2026-27", JSON.stringify(s));
+    check(s.breakdown[0].amount + s.breakdown[1].amount === 71912, "breakdown does not add up");
+    check(s.label === "2026-27 amount. The amount for your start year is not published yet and may be higher.", "note");
+    check(s.source.url === "https://global.utexas.edu/isss/immigration/f-1/financial-information", "source");
+  });
+  t("I-20 without a published amount: MAX of the year 1 estimate (ACC: 29,000 x 1.03 = 29,870)", () => {
+    const s = E.showForI20(E.transferPath(LUCAS_ACC, data), data);
+    check(s.estimate === true && near(s.amount, 29870), JSON.stringify(s));
     check(s.label === "Estimate. The college confirms the exact amount.", "label");
   });
 

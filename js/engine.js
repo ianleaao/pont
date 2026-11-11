@@ -25,8 +25,11 @@
   const addRanges = (a, b) => range(a.min + b.min, a.max + b.max);
   const scaleRange = (r, k) => range(r.min * k, r.max * k);
   const sumLines = (lines) => lines.reduce((acc, l) => addRanges(acc, l.amount), ZERO);
-  const amountOf = (item) =>
-    item.amount !== undefined && item.amount !== null ? range(item.amount) : range(item.min, item.max);
+  // firstYear: the student's first year at this college (some items cost more then, e.g. UT SHIP).
+  function amountOf(item, firstYear) {
+    if (firstYear && item.first_year_amount !== undefined && item.first_year_amount !== null) return range(item.first_year_amount);
+    return item.amount !== undefined && item.amount !== null ? range(item.amount) : range(item.min, item.max);
+  }
 
   /* ---------- Sources ---------- */
 
@@ -38,7 +41,9 @@
   }
 
   function feeSource(fees, fee) {
-    return { id: "fees:" + fee.id, label: fee.label, url: fee.url || null, checked_on: fees.checked_on };
+    const s = (fees.sources || []).find((x) => x.id === fee.source);
+    if (!s) return { id: "fees:" + fee.id, label: fee.label, url: null, checked_on: fee.checked_on || fees.checked_on };
+    return Object.assign({}, s, { checked_on: fee.checked_on || s.checked_on || fees.checked_on });
   }
 
   const USER_SOURCE = { id: "user", label: "Your estimate", url: null, checked_on: null };
@@ -112,8 +117,9 @@
 
   /* ---------- 1. Annual cost (USD) ---------- */
 
-  // opts: { status, residency: "nonresident" | "resident", flights }
+  // opts: { status, residency: "nonresident" | "resident", flights, yearAtCollege (1 = first year there, default 1) }
   function annualCost(college, programId, opts) {
+    const firstYear = (opts.yearAtCollege || 1) === 1;
     if (college.status !== "verified") return notConfirmedResult(college, programId, "college_not_verified");
     const program = findProgram(college, programId);
     if (!program) return notConfirmedResult(college, programId, "program_not_found");
@@ -138,7 +144,7 @@
 
       (college.required_extras_per_year || []).forEach((x) => {
         if (x.applies_to && !x.applies_to.includes(profile.visaClass)) return;
-        lines.push(line(x.id, x.label, amountOf(x), collegeSource(college, x.source, x.checked_on), x.note));
+        lines.push(line(x.id, x.label, amountOf(x, firstYear), collegeSource(college, x.source, x.checked_on), x.note));
       });
 
       // Differential tuition: add only if we know it is NOT inside the cost of attendance.
@@ -176,8 +182,14 @@
     const notAdded = [];
     if (!profile.oneTime) return { lines, notAdded, total: ZERO };
 
+    // Unconfirmed fees are shown with the official link and never added.
     const addFee = (id) => {
       const f = findFee(fees, id);
+      if (f.status === "not_confirmed" || (f.amount == null && f.min == null)) {
+        notAdded.push(shownNotAdded(f.id, f.label, null, feeSource(fees, f), "not_confirmed",
+          "Not confirmed. See the official page."));
+        return;
+      }
       lines.push(line(f.id, f.label, amountOf(f), feeSource(fees, f), f.note));
     };
 
@@ -241,8 +253,9 @@
     const perYear = [];
     for (let i = 0; i < program.years; i++) {
       const g = growthFactor(start + i, config);
+      const base = i === 0 ? annual : annualCost(college, input.programId, Object.assign({}, input, { yearAtCollege: i + 1 }));
       perYear.push({ year: i + 1, academicYear: academicLabel(start + i), collegeId: college.id,
-        exponent: g.exp, factor: g.factor, amount: scaleRange(annual.total, g.factor) });
+        exponent: g.exp, factor: g.factor, base: base.total, amount: scaleRange(base.total, g.factor) });
     }
     const recurring = perYear.reduce((acc, y) => addRanges(acc, y.amount), ZERO);
     const once = oneTimeCosts(college, input, data.fees);
@@ -286,7 +299,8 @@
     const targetProgram = (target.programs || []).find((p) => p.area === ccProgram.area && p.level === "bachelor");
 
     const ccAnnual = annualCost(cc, ccProgram.id, input);
-    const tAnnual = annualCost(target, targetProgram.id, input);
+    // The student arrives at the target as a new student: year 3 of the path is year 1 there.
+    const tAnnual = annualCost(target, targetProgram.id, Object.assign({}, input, { yearAtCollege: 1 }));
     if (ccAnnual.status !== "ok") return ccAnnual;
     if (tAnnual.status !== "ok") return tAnnual;
 
@@ -296,8 +310,15 @@
     for (let i = 0; i < totalYears; i++) {
       const atCC = i < ccProgram.years;
       const g = growthFactor(start + i, config);
+      let base;
+      if (atCC) base = i === 0 ? ccAnnual : annualCost(cc, ccProgram.id, Object.assign({}, input, { yearAtCollege: i + 1 }));
+      else {
+        const yearAtTarget = i - ccProgram.years + 1;
+        base = yearAtTarget === 1 ? tAnnual
+          : annualCost(target, targetProgram.id, Object.assign({}, input, { yearAtCollege: yearAtTarget }));
+      }
       perYear.push({ year: i + 1, academicYear: academicLabel(start + i), collegeId: atCC ? cc.id : target.id,
-        exponent: g.exp, factor: g.factor, amount: scaleRange((atCC ? ccAnnual : tAnnual).total, g.factor) });
+        exponent: g.exp, factor: g.factor, base: base.total, amount: scaleRange(base.total, g.factor) });
     }
     const recurring = perYear.reduce((acc, y) => addRanges(acc, y.amount), ZERO);
 

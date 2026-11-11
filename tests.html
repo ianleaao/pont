@@ -57,9 +57,13 @@ function runPontTests(E, data) {
   t("INR is hidden in the prototype", () => check(data.fx.rates.INR.hidden === true, "INR not hidden"));
 
   // --- 1. Annual ---
-  t("Annual with extras (F-1 at UT): COA + ISSS + SHIP = 68,054 to 77,066", () => {
+  t("Annual with extras, first year at UT (F-1): COA + ISSS 450 + SHIP 4,217.85 = 68,871.85 to 77,583.85", () => {
     const a = E.annualCost(ut, "cs", { status: "no_visa" });
-    check(a.total.min === 68054 && a.total.max === 77066 && a.total.mid === 72560, JSON.stringify(a.total));
+    check(near(a.total.min, 68871.85) && near(a.total.max, 77583.85) && near(a.total.mid, 73227.85), JSON.stringify(a.total));
+  });
+  t("Annual with extras, later years at UT: SHIP 3,893.40 (mid 72,903.40)", () => {
+    const a = E.annualCost(ut, "cs", { status: "no_visa", yearAtCollege: 2 });
+    check(near(a.total.mid, 72903.40), JSON.stringify(a.total));
   });
   t("Annual without extras (U.S. citizen): no SHIP, no ISSS fee", () => {
     const a = E.annualCost(ut, "cs", { status: "citizen_or_pr" });
@@ -105,9 +109,17 @@ function runPontTests(E, data) {
     const r = E.programTotal(IAN, data);
     check(r.oneTime.lines.length === 0 && r.oneTime.total.mid === 0, "one-time costs present");
   });
-  t("Lucas one-time costs: SEVIS 350 + visa 185 + TOEFL 240 + SAT 111 + UT app 90 = 976", () => {
+  t("Lucas one-time costs: SEVIS 350 + visa 185 + UT app 90 = 625 (TOEFL and SAT not confirmed)", () => {
     const r = E.programTotal(LUCAS, data);
-    check(r.oneTime.total.mid === 976, String(r.oneTime.total.mid));
+    check(r.oneTime.total.mid === 625, String(r.oneTime.total.mid));
+  });
+  t("TOEFL and SAT are 'Not confirmed': shown with the official link, NOT added", () => {
+    const r = E.programTotal(LUCAS, data);
+    ["toefl_brazil", "sat_abroad"].forEach((id) => {
+      const l = r.notAdded.find((x) => x.id === id);
+      check(l && l.reason === "not_confirmed" && l.source.url, id + " line missing or no link");
+      check(!r.oneTime.lines.some((x) => x.id === id), id + " was added");
+    });
   });
   t("Visa Integrity Fee (Brazil unconfirmed) is shown but NOT added", () => {
     const r = E.programTotal(LUCAS, data);
@@ -119,9 +131,11 @@ function runPontTests(E, data) {
     check(r.notAdded.some((l) => l.id === "enrollment_deposit" && l.reason === "credited_to_tuition"), "deposit line missing");
     check(!r.oneTime.lines.some((l) => l.id === "enrollment_deposit"), "deposit added");
   });
-  t("Lucas UT total = 72,560 x 4.30913581 + 976 = 313,647", () => {
+  t("Lucas UT total = 73,227.85 x 1.03 + 72,903.40 x (1.03^2 + 1.03^3 + 1.03^4) + 625", () => {
     const r = E.programTotal(LUCAS, data);
-    check(near(r.total.mid, 72560 * G4 + 976) && near(r.total.mid, 313647, 1), String(r.total.mid));
+    const expected = 73227.85 * 1.03 + 72903.40 * (G4 - 1.03) + 625;
+    check(near(r.total.mid, expected), r.total.mid + " vs " + expected);
+    return "total " + r.total.mid.toFixed(2);
   });
 
   // --- Community-college path ---
@@ -129,8 +143,10 @@ function runPontTests(E, data) {
     const r = E.transferPath(LUCAS_ACC, data);
     const ids = r.perYear.map((y) => y.collegeId + ":" + y.exponent).join(",");
     check(ids === "acc:1,acc:2,ut-austin:3,ut-austin:4", ids);
-    const expected = 29000 * (1.03 + Math.pow(1.03, 2)) + 72560 * (Math.pow(1.03, 3) + Math.pow(1.03, 4)) + 875;
-    check(near(r.total.mid, expected) && near(r.total.mid, 222466, 1), String(r.total.mid));
+    // Year 3 is the first year at UT: SHIP 4,217.85. Year 4: SHIP 3,893.40. One-time: SEVIS + visa + ACC app = 635.
+    const expected = 29000 * (1.03 + Math.pow(1.03, 2)) + 73227.85 * Math.pow(1.03, 3) + 72903.40 * Math.pow(1.03, 4) + 635;
+    check(near(r.total.mid, expected), r.total.mid + " vs " + expected);
+    return "total " + r.total.mid.toFixed(2);
   });
   t("ACC + UT: no new SEVIS or visa fee; UT transfer fee 'Not confirmed' and NOT added", () => {
     const r = E.transferPath(LUCAS_ACC, data);

@@ -1,21 +1,30 @@
 {
   "checked_on": "2026-11-08",
+  "note": "Fees with status 'not_confirmed' are shown with the official link and are NOT added to any total.",
+  "sources": [
+    { "id": "ice-i901", "label": "ICE: I-901 SEVIS fee", "url": "https://www.ice.gov/sevis/i901", "checked_on": "2026-11-10", "note": "Official page blocked automated access; confirmed via sources citing it." },
+    { "id": "dos-visa-fees", "label": "U.S. Department of State: visa fees", "url": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/fees/fees-visa-services.html", "checked_on": "2026-11-10", "note": "Official page blocked automated access; confirmed via sources citing it." },
+    { "id": "uscis-g1055", "label": "USCIS fee schedule (G-1055, edition 10/16/26)", "url": "https://www.uscis.gov/g-1055", "checked_on": "2026-11-10" },
+    { "id": "ets-toefl", "label": "ETS: TOEFL iBT fees", "url": "https://www.ets.org/toefl/test-takers/ibt/register/fees.html", "checked_on": "2026-11-10" },
+    { "id": "collegeboard-sat", "label": "College Board: SAT fees", "url": "https://satsuite.collegeboard.org/", "checked_on": "2026-11-10" },
+    { "id": "duolingo-det", "label": "Duolingo English Test", "url": "https://englishtest.duolingo.com/", "checked_on": "2026-11-10" }
+  ],
   "government": [
-    { "id": "sevis_f_m", "label": "SEVIS I-901 (F-1, M-1)", "amount": 350 },
-    { "id": "sevis_j", "label": "SEVIS I-901 (most J-1)", "amount": 220 },
-    { "id": "mrv", "label": "Visa application fee (F, M, J)", "amount": 185 },
+    { "id": "sevis_f_m", "label": "SEVIS I-901 (F-1, M-1)", "amount": 350, "source": "ice-i901", "checked_on": "2026-11-10" },
+    { "id": "sevis_j", "label": "SEVIS I-901 (most J-1)", "amount": 220, "note": "Not checked on 2026-11-10; not used by the demo paths." },
+    { "id": "mrv", "label": "Visa application fee (F, M, J)", "amount": 185, "source": "dos-visa-fees", "checked_on": "2026-11-10" },
     { "id": "visa_integrity", "label": "Visa Integrity Fee", "amount": 250, "note": "Collection varies by country; confirm for Brazil and India" },
-    { "id": "i539_online", "label": "USCIS Form I-539 (online)", "amount": 420 },
-    { "id": "i539_paper", "label": "USCIS Form I-539 (paper)", "amount": 470 },
-    { "id": "i539_premium", "label": "I-539 premium processing (optional)", "amount": 2075 },
-    { "id": "i765_online", "label": "USCIS Form I-765 OPT (online)", "amount": 470 },
-    { "id": "i765_paper", "label": "USCIS Form I-765 OPT (paper)", "amount": 520 },
-    { "id": "i765_premium", "label": "I-765 premium processing (optional)", "amount": 1780 }
+    { "id": "i539_online", "label": "USCIS Form I-539 (online)", "amount": 420, "source": "uscis-g1055", "checked_on": "2026-11-10" },
+    { "id": "i539_paper", "label": "USCIS Form I-539 (paper)", "amount": 470, "source": "uscis-g1055", "checked_on": "2026-11-10" },
+    { "id": "i539_premium", "label": "I-539 premium processing (optional)", "amount": 2075, "source": "uscis-g1055", "checked_on": "2026-11-10" },
+    { "id": "i765_online", "label": "USCIS Form I-765 OPT (online)", "amount": 470, "source": "uscis-g1055", "checked_on": "2026-11-10" },
+    { "id": "i765_paper", "label": "USCIS Form I-765 OPT (paper)", "amount": 520, "source": "uscis-g1055", "checked_on": "2026-11-10" },
+    { "id": "i765_premium", "label": "I-765 premium processing (optional)", "amount": 1780, "source": "uscis-g1055", "checked_on": "2026-11-10", "note": "The 16 Oct 2026 inflation adjustment changed only asylum, parole and TPS fees." }
   ],
   "tests": [
-    { "id": "sat_abroad", "label": "SAT taken outside the U.S.", "amount": 111 },
-    { "id": "toefl_brazil", "label": "TOEFL iBT in Brazil", "min": 235, "max": 245, "note": "Verify on ETS" },
-    { "id": "det", "label": "Duolingo English Test", "min": 59, "max": 70, "note": "Verify on the official site" }
+    { "id": "sat_abroad", "label": "SAT taken outside the U.S.", "amount": null, "status": "not_confirmed", "source": "collegeboard-sat", "checked_on": "2026-11-10", "note": "Earlier value 111 USD could not be confirmed. Not added." },
+    { "id": "toefl_brazil", "label": "TOEFL iBT in Brazil", "amount": null, "status": "not_confirmed", "source": "ets-toefl", "checked_on": "2026-11-10", "note": "Earlier value 235 to 245 USD could not be confirmed. Not added." },
+    { "id": "det", "label": "Duolingo English Test", "amount": null, "status": "not_confirmed", "source": "duolingo-det", "checked_on": "2026-11-10", "note": "Earlier value 59 to 70 USD could not be confirmed. Not added." }
   ],
   "country_layer": {
     "BR": { "esta": false, "visa_integrity_fee_collected": null, "reciprocity_fee_f1": null },

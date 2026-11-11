@@ -18,6 +18,7 @@ If a college publishes a range, compute min and max separately and show the rang
 If it is unconfirmed whether a fee is already inside the cost of attendance (for example UT differential tuition), do NOT add it. Show it as a separate line: "May already be included. Confirm with the college."
 
 Student extras (UT SHIP, ISSS fee) apply only to F and J students. U.S. citizens and permanent residents do not pay them.
+UT 2026-27: ISSS fee 450 USD per year (225 per semester). SHIP has two fixed values: 4,217.85 USD in the student's first year at UT (includes New Student Fall) and 3,893.40 USD in the other years.
 
 Residency (U.S. citizens and permanent residents): default is nonresident. A dependent's domicile follows the parents; parents outside Texas means nonresident. The engine NEVER decides residency. When the college publishes a resident figure (UT 2026-27: 32,508 to 35,386 USD), the engine computes both scenarios (resident and nonresident) for the "Residency check" card; the main result stays nonresident.
 
@@ -33,7 +34,7 @@ Visa Integrity Fee: added only where collection is confirmed for the country. If
 Flights: start at 0 with the field "Add your flight estimate". No default value.
 The enrollment deposit is NOT added: it is credited to tuition.
 
-Community-college path (ACC, then UT): same exponent by calendar year. ACC years 1 and 2 (x1.03, x1.03^2) on the ACC estimate ("ACC estimate (9 months)"); UT years 3 and 4 (x1.03^3, x1.03^4) on the UT base cost. One-time costs are counted once, before arrival at ACC. At transfer: no new SEVIS fee (the transfer I-20 keeps the SEVIS ID), no new visa if still valid. The UT transfer application fee is not confirmed: separate line "Not confirmed", not added.
+Community-college path (ACC, then UT): same exponent by calendar year. ACC years 1 and 2 (x1.03, x1.03^2) on the ACC estimate ("ACC estimate (9 months)"); UT years 3 and 4 (x1.03^3, x1.03^4) on the UT base cost. Year 3 is the student's first year at UT, so it uses the first-year SHIP (4,217.85); year 4 uses 3,893.40. One-time costs are counted once, before arrival at ACC. At transfer: no new SEVIS fee (the transfer I-20 keeps the SEVIS ID), no new visa if still valid. The UT transfer application fee is not confirmed: separate line "Not confirmed", not added.
 
 ## 3. Monthly equivalent
 monthly_usd = total / (years x 12)

@@ -1,6 +1,7 @@
-# Visa paths, I-20 steps and fees (verified 8 Nov 2026)
+# Visa paths, I-20 steps and fees (verified 8 Nov 2026; fees rechecked 10 Nov 2026)
 
 Show steps, fees and official links only. No legal advice. Fees change: always show source and date checked.
+Amounts and sources live in data/fees.json and data/colleges.json. This doc must match them.
 
 ## Visa situations (onboarding question 6)
 | Situation | Can study? | Pont shows |
@@ -38,11 +39,12 @@ Program type: degree = F-1 (college issues I-20); vocational = M-1 (I-20); excha
 1. ESTA entrants cannot change status inside the U.S. 2. Admission and I-20. 3. SEVIS fee. 4. USCIS Form I-539. 5. B-1/B-2 holders cannot start classes until approved.
 
 ## Fees by phase (example: Lucas, Brazil, UT Austin CS)
-Phase 1, before applying: passport (home country), SAT abroad 111 USD, TOEFL iBT about 235 to 245 USD in Brazil or Duolingo English Test about 59 to 70 USD (verify), UT application 90 USD (no waivers for internationals).
-Phase 2, after admission: enrollment deposit 200 USD (credited to tuition), SEVIS 350 USD, visa 185 USD, Visa Integrity Fee 250 USD where collected (check Brazil), reciprocity varies, consulate trip, flight, housing deposit. SHOW for I-20: about one year of cost.
-Phase 3, first semester: cost of attendance items, ISSS fee 125 USD per semester, UT student health insurance (automatic for F and J; about 3,600 to 3,900 USD per year at 2025-26 rates).
+Phase 1, before applying: passport (home country), SAT abroad: Not confirmed (collegeboard.org), TOEFL iBT in Brazil: Not confirmed (ets.org), Duolingo English Test: Not confirmed (englishtest.duolingo.com), UT application 90 USD (no waivers for internationals). Not confirmed test fees are shown with the official link and are not added to the total.
+Phase 2, after admission: enrollment deposit 200 USD (credited to tuition), SEVIS 350 USD (ice.gov I-901 page), visa 185 USD (travel.state.gov visa fees), both checked 10 Nov 2026 (official pages blocked automated access; confirmed via sources citing them), Visa Integrity Fee 250 USD where collected (Brazil: Not confirmed, not added), reciprocity varies, consulate trip, flight, housing deposit. SHOW for I-20: UT publishes 71,912 USD for 2026-27 (undergraduate, nonresident; see docs/calculation-rules.md section 5).
+Phase 3, first semester: cost of attendance items, ISSS Support Services Fee 225 USD per semester (450 USD per year; global.utexas.edu/isss/about/fees), UT student health insurance, automatic for F and J (2026-27, global.utexas.edu/isss/advising-services/insurance/costs): first year at UT 4,217.85 USD (New Student Fall 324.45 + Fall 1,297.80 + Spring and Summer 2,595.60); other years 3,893.40 USD. In the ACC path, year 3 is the first year at UT.
 Phase 4, every year: repeats with increases and exchange rate; visa renewal only if it expires and the student travels; rule-change risk (USCIS I-539 extension if the end of duration of status returns; blocked by a federal court on 14 Sep 2026).
-Phase 5, after graduation: OPT I-765 470 USD online or 520 paper; UT OPT admin fee 150 USD (STEM extension 300 USD).
+Phase 5, after graduation: OPT I-765 470 USD online or 520 paper (premium processing 1,780 USD, optional); UT OPT admin fee 150 USD (STEM extension 300 USD).
+USCIS fees (I-539 420 online / 470 paper, premium 2,075; I-765 470 online / 520 paper, premium 1,780): uscis.gov G-1055, edition 10/16/26, checked 10 Nov 2026. The 16 Oct 2026 inflation adjustment changed only asylum, parole and TPS fees.
 
 ## Rule-change alerts (show as alert banners)
 - Duration of status rule: final rule published, blocked nationwide by a federal court on 14 Sep 2026; litigation continues.

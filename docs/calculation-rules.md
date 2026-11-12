@@ -63,7 +63,10 @@ The rate is fetched once per session by js/fx.js, before any family-currency amo
 Order: Frankfurter (https://api.frankfurter.app/latest?from=USD&to=BRL), then the ExchangeRate-API open endpoint (with the credit link its terms require), then the fallback in data/fx.json (Banco Central PTAX sell rate, 5.5146, 9 Nov 2026) with the notice "Could not update the exchange rate. Using the rate from DATE."
 Time budget: 5 seconds in total, then the fallback. While waiting: "Updating the exchange rate...". The results screen appears only after a rate is ready.
 sessionStorage keeps the rate, source, rate date and time of the request. One request per session.
-Header and every family-currency amount: "1 USD = R$ X · source · rate from DATE".
+Header and every family-currency amount show the rate in two lines (no dot separators):
+  "1 USD = R$ 5,55"
+  "Source: Frankfurter, Nov 10, 2026"
+Display format: each currency in its own country's format with Intl.NumberFormat. USD in en-US ("$315,110"), BRL in pt-BR ("R$ 36.200"), so Brazilian families never read "R$ 36,200" as 36 reais and 20 centavos. Totals without cents; exchange rate with 2 decimals. (Implemented in js/fx.js and the header in build step c.)
 tests.html always uses the fixed rate 5.5146 so tests never change.
 INR stays null and is hidden in the prototype (India is not in the demo paths).
 Never round in the engine; round only for display (no cents for totals).

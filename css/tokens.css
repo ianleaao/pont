@@ -1,24 +1,49 @@
-/* Pont brand tokens. Source of truth: docs/brand.md. Do not edit here without updating the doc. */
+/* Pont brand tokens, version 2. Source of truth: docs/brand.md. Change both together. */
 :root {
-  --ink: #15233A;
-  --paper: #F5F1E9;
-  --sand: #E9E3D6;
-  --white: #FFFFFF;
-  --slate: #5A6475;
-  --green: #2E7D5B;
-  --green-text: #25684C;
-  --green-tint: #E3EFE8;
-  --amber: #E3A947;
-  --amber-tint: #FBEFD6;
-  --terracotta: #C2553A;
-  --terracotta-text: #A8442D;
-  --terracotta-tint: #F6E1DA;
-  --font-display: "DM Serif Display", Georgia, serif;
-  --font-ui: "Inter", system-ui, sans-serif;
+  /* Color */
+  --ink: #15233A;          /* main text, primary button, focus ring */
+  --bg: #F4F6F8;           /* page background */
+  --surface: #FFFFFF;      /* panels, inputs */
+  --line: #D5DCE4;         /* decorative dividers only (1.38:1, not for input borders) */
+  --line-strong: #7B8794;  /* borders of inputs, question options, checkboxes (3.66:1) */
+  --slate: #5A6475;        /* secondary text */
+  --green: #2E7D5B;        /* family-country dot, icons */
+  --green-text: #25684C;   /* green text */
+  --green-tint: #E3EFE8;   /* badge "Fits your monthly amount" */
+  --amber: #E3A947;        /* U.S. dot, fills only; never text on light backgrounds */
+  --amber-tint: #FBEFD6;   /* badge "A bit above your amount" */
+  --plum: #8A2E5C;         /* "Well above" text and icon */
+  --plum-tint: #F3E4EC;    /* badge "Well above your amount" */
+  --focus: #15233A;
+
+  /* Type */
+  --font: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --weight-heavy: 800;
+  --tracking-tight: -0.015em; /* headlines */
+  --text-12: 12px; --text-14: 14px; --text-16: 16px; --text-18: 18px;
+  --text-20: 20px; --text-24: 24px; --text-32: 32px; --text-40: 40px;
+
+  /* Shape and space */
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-full: 999px;
   --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
   --space-6: 24px; --space-8: 32px; --space-12: 48px; --space-16: 64px;
-  --shadow-card: 0 1px 3px rgba(21, 35, 58, 0.08);
+  --shadow-raised: 0 1px 3px rgba(21, 35, 58, 0.08); /* used sparingly, not on every block */
+
+  /* Motion: only in response to a user action */
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+    --duration-base: 0ms;
+  }
 }

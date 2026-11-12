@@ -11,7 +11,7 @@ This is a Harvard DGMD E-1 ("Interactive Prototyping & Creative AI") portfolio p
 - Vanilla HTML, CSS, JavaScript. No frameworks, no build step.
 - Runs with VS Code Live Server.
 - Data in JSON files under `data/`.
-- Fonts: DM Serif Display (headlines) and Inter (UI), Google Fonts.
+- Font: Public Sans (Google Fonts), weights 400 to 800, for headlines and UI.
 - Icons: Lucide (CDN).
 
 ## Folder structure

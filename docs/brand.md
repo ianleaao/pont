@@ -61,6 +61,7 @@ Text needs 4.5:1. Non-text elements that identify a control (input borders, icon
 - --line never marks a control. Inputs, question options and checkboxes use --line-strong.
 - Amber never as text on light backgrounds; use as fill with ink text. The amber dot always has the text "USD" next to it.
 - Green as text uses --green-text.
+- Form errors use ink: a 2 px ink border, an icon and a message. Never plum, so "Well above your amount" is never read as an error.
 
 ## Budget band badges
 | Band | Label | Background | Text | Icon (Lucide) |

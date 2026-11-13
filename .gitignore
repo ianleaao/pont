@@ -3,3 +3,14 @@ Thumbs.db
 .vscode/
 node_modules/
 *.log
+
+# Secrets: never commit (the Anthropic key lives only in the Worker secret)
+proxy/.dev.vars
+.dev.vars
+.env
+.env.*
+proxy/.wrangler/
+.wrangler/
+
+# Temporary test harness pages
+.appframe-tmp.html

@@ -1,66 +1,78 @@
-# Pont: study-in-the-U.S. cost planner (E-1 prototype)
+# Pont: AI funding advisor for international students (E-1 prototype)
 
-## What this is
-Pont helps international and cross-border students see the real, full cost of a U.S. college program in their family's currency, compare it with what the family can pay per month, and get a clear plan (applications, scholarships, I-20 and visa steps, documents). Prototype scope: Texas only, undergraduate only.
+## What this is (direction approved 13 Nov 2026)
+Pont works like a consultant. It learns the student's goal (for example "I want Harvard"), finds which financial aid and scholarships this exact profile can get, builds the routes to fund it (dream school, strong-aid match, affordable path), and prepares the financial documents with AI (read, translate, convert to USD, flag problems).
 
-Tagline: "Others help you get in. Pont shows the real cost, in your currency, and builds the plan."
+Pont is NOT a cost calculator. Cost is one input to the funding strategy, never the headline.
 
-This is a Harvard DGMD E-1 ("Interactive Prototyping & Creative AI") portfolio prototype. It must look high-fidelity and work end to end for two demo paths. A production app comes later (E-11, Next.js + Convex).
+Tagline: "Tell us your dream school. We find the path to pay for it."
+
+Users: international students from ANY country applying to U.S. colleges (undergraduate first), plus cross-border students (U.S. citizen or resident with parents abroad). Never Brazil-only. Europe comes later.
+
+This is a Harvard DGMD E-1 ("Digital Media: From Ideas to Designs and Prototypes") equivalency prototype: concept, brand, personas and stories, storyboard, component pattern library, and an interactive high-fidelity prototype with live data. A production app comes later (E-11, Next.js + Convex + Agent Component).
+
+The previous direction ("See the real cost of studying in the U.S.") is replaced. Full decision record: Notion, Project HQ, page "12 Pivot Proposal".
 
 ## Stack
-- Vanilla HTML, CSS, JavaScript. No frameworks, no build step.
-- Runs with VS Code Live Server.
+- Vanilla HTML, CSS, JavaScript. No frameworks, no build step. Runs with VS Code Live Server.
 - Data in JSON files under `data/`.
-- Font: Public Sans (Google Fonts), weights 400 to 800, for headlines and UI.
-- Icons: Lucide (CDN).
+- Live data: exchange rates (Frankfurter v2, then ExchangeRate-API, then data/fx.json) and live Claude calls through a small proxy in `proxy/` (Cloudflare Worker). The API key lives only in the Worker secret, never in the browser or the repo.
+- Font: Public Sans (Google Fonts). Icons: Lucide (CDN, pinned version).
 
 ## Folder structure
 ```
-index.html          app shell: header, progress, screen, footer
-components.html     design system proof (every component, every state)
-tests.html          engine checks (console), fixed rate 5.5146
-assets/favicon.svg  bridge symbol
-css/tokens.css      brand variables (copy from docs/brand.md)
-css/app.css         layout and components
-js/engine.js        calculation engine: pure functions only, no DOM
-js/app.js           screens, navigation, state
-js/fx.js            exchange rate once per session, money and rate formats
-js/ai.js            AI layer (scripted responses for the prototype)
-data/colleges.json  college costs, rules, sources, dates
-data/fees.json      government and test fees
-data/fx.json        live rate sources and the fallback rate
-data/ai-scripts.json scripted AI outputs and failure states
-docs/               specs: read the relevant file before each task
+index.html
+components.html        design system proof (every component in every state)
+tests.html             engine tests (console + page)
+assets/                favicon and images
+css/tokens.css         brand variables (copy of docs/brand.md)
+css/app.css            layout and components
+js/engine.js           pure functions only: costs, funding profile, net price, gap, routes
+js/fx.js               exchange rate loader and money formatting (any currency)
+js/ai.js               AI client: calls the proxy, validates JSON, falls back to scripts
+js/app.js              screens, navigation, state
+data/colleges.json     costs, aid policies, forms, deadlines, document rules, sources, dates
+data/fees.json         government and test fees
+data/countries.json    country -> currency, locale, language, ESTA, country notes
+data/fx.json           fallback rates
+data/ai-scripts.json   scripted fallback answers and failure states
+proxy/                 Cloudflare Worker that calls the Claude API
+docs/                  specs: read the relevant file before each task
 ```
 
 ## Non-negotiable rules
-1. The AI never does the math. All amounts come from `js/engine.js`. The AI layer only explains, organizes and drafts text from numbers it receives.
-2. Never judge the family. Never write "you can't afford this". Use the neutral budget bands in docs/calculation-rules.md.
-3. Never ask income or savings. The only money question is optional: "How much could your family pay per month?"
-4. Every amount shows its source and the date it was checked. Missing data shows "Not confirmed" plus the official link. Never invent a number.
+1. The AI never does the math. Every amount comes from js/engine.js. The AI explains, organizes, extracts and drafts text from numbers it receives.
+2. Never judge the family. Never write "you can't afford this". Show the funding gap per route and what can close it.
+3. Money questions are optional and coarse: family income band (ranges, needed for need-based aid estimates) and "How much could your family pay per month?". Never exact income, savings balances, SSN or account numbers. Answers are never stored outside the browser tab.
+4. Every amount and every aid rule shows its source and the date it was checked. Missing data shows "Not confirmed" plus the official link. Never invent a number or a policy.
 5. No legal or visa advice. Show steps, fees and official links; route decisions to the college international office or an attorney.
-6. The AI never writes admission essays, never edits or creates official documents, never changes amounts.
-7. Do not store sensitive data: no SSN, bank account numbers or immigration documents.
-8. UI copy: plain English, short sentences, one question per screen. Never use em dashes (the long dash). Use commas, colons or periods.
+6. The AI never writes admission essays, never edits or creates official documents, never changes amounts, never promises aid. Translations are labeled "Working translation, not certified."
+7. Do not store sensitive data. Documents are processed for the session only; the document reader is instructed to drop account numbers and ID numbers.
+8. UI copy: plain English, short sentences, one question per screen in forms. Never use em dashes (the long dash). Use commas, colons or periods.
 9. Mobile first (380 px base), accessible (WCAG AA contrast, labels on inputs, color never the only signal).
-10. The page is English (`lang="en"`). Every Portuguese block (Family mode, bank letter) sets `lang="pt-BR"` on its own element.
+10. Country-agnostic: currency, number format and family language come from data/countries.json. No Brazil defaults anywhere.
+11. The page is English (`lang="en"`). Every block in the family language (family mode, bank letter, drafts) sets its own `lang` on its element (for example `lang="pt-BR"`, `lang="hi"`).
 
 ## Demo paths (must work end to end)
-- Lucas: Brazil, no visa (starting from zero), Computer Science at UT Austin, pays 2,000 BRL per month. Result: well above budget, then "Out of my budget" shows ACC first, then transfer to UT, plus the full I-20 and visa checklist.
-- Ian: U.S. citizen, parents in Brazil, UT Austin. No visa steps; cost and scholarship plan.
+- Path 1, dream school: Ananya, India (INR), no visa, wants Harvard, income band under 100,000 USD. Result: Harvard is need-blind for internationals and meets full need; estimated family cost near 0 under Harvard's published threshold; plan with CSS Profile, documents and deadlines; backups at MIT and Amherst; documents studio with an Indian bank statement sample.
+- Path 2, funding gap: Lucas, Brazil (BRL), no visa, Computer Science at UT Austin, can pay about 23,000 BRL per month (same value as the current tests). Result: UT gives internationals merit scholarships only; gap shown; routes: ACC then UT transfer, outside scholarships, full-need colleges as reach; I-20 documents converted to USD.
+- Path 3, cross-border: Ian, U.S. citizen, parents in Brazil, UT Austin. FAFSA path with foreign income, residency check card, parents' documents converted to USD.
 
-Demo shortcuts: `index.html?demo=lucas` and `index.html?demo=ian`. They fill the onboarding answers, open the last question (7b) and replace any saved session without a message. Nothing about them is visible in the UI.
+Demo shortcuts: `index.html?demo=ananya`, `index.html?demo=lucas` and `index.html?demo=ian`. They fill the intake answers, open the profile confirm screen and replace any saved session without a message. Nothing about them is visible in the UI.
 
 ## Which doc to read
-- Product, flows, onboarding questions: docs/product.md
+- Product, journey, intake questions: docs/product.md
 - Screens and exact copy: docs/screens.md
-- Colors, type, tokens, components: docs/brand.md
-- Formulas, budget bands, currency: docs/calculation-rules.md
+- Funding profile, aid policies, net price, gap, routes, currency by country: docs/funding-and-currency.md
+- Cost formulas (still valid for the cost part): docs/calculation-rules.md. Sections 4 (budget band) and 7 (BRL-only currency) are replaced by docs/funding-and-currency.md.
 - Visa paths, I-20 steps, fees by phase: docs/visa-and-fees.md
-- AI functions and failure states: docs/ai.md
+- AI functions, proxy, guardrails and failure states: docs/ai.md
+- Colors, type, tokens, components: docs/brand.md
 
 ## How to work
 - Build one screen or one function per task. Do not build the whole app at once.
 - Before coding, restate the task and list the files you will touch. Wait for approval.
-- Keep `js/engine.js` pure and testable; add a small test page `tests.html` that runs engine checks in the console.
+- Keep js/engine.js pure and testable; every new engine function gets tests in tests.html. Existing tests must keep passing.
+- New data must come from official pages, with source URL and checked date. If you cannot confirm a value, store null with status "not_confirmed". Never guess.
 - If a doc is unclear or two docs conflict, stop and ask. Do not guess.
+- Interface polish comes later (separate UI agents). Now: correct flows, real data, real AI, accessible and clean.

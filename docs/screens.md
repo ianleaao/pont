@@ -1,52 +1,43 @@
-# Screens (prototype, about 17)
+# Screens (prototype, about 14)
 
-Mobile first. One question per screen in onboarding with Back and Continue. Copy below is the default English text. Never use em dashes in copy.
+Mobile first. Copy below is the default English text. Never use em dashes in copy. Every AI block is labeled "Written by AI. Check the source." with a confidence level and its sources. Every number is tappable for "Source and date".
 
 App frame (index.html, every screen):
-- Header: Pont logo on the left; exchange rate in two lines on the right ("1 USD = R$ 5,55" and "Source: Frankfurter, Nov 10, 2026"). Hidden when the family currency is USD.
-- Progress bar: counts only the questions, screens 2 to 7b ("Question 1 of 7" to "Question 7 of 7"). Not shown on screen 1 or after the last question.
-- Footer: Back and Continue (Skip on 7b). A discreet "Start over" link clears all answers; not shown on screen 1.
-- Language: the page is English (lang="en"). Every Portuguese block (Family mode, bank letter) sets lang="pt-BR" on its own element.
+- Header: Pont logo on the left; after the family country is known, the exchange rate in two lines on the right ("1 USD = <rate in family currency>" and "Source: <provider>, <date>"). Hidden for USD families and before the country is known.
+- Progress: in the chat, a small "Step X of Y" for the intake topics; in form mode, "Question X of Y". Not shown on the welcome screen or after the profile confirm.
+- Footer: Back and Continue in form screens. A discreet "Start over" link clears all answers; not shown on screen 1.
+- Language: the page is English (lang="en"). Every block in the family language sets its own lang attribute.
 
 1. Welcome
-   Title: "See the real cost of studying in the U.S."
-   Body: "In your family's currency, with a clear plan. No login needed."
-   Privacy line: "Answers are never sent to or saved on a server. They stay only in this browser tab and are cleared when the tab closes."
+   Title: "Tell us your dream school. We find the path to pay for it."
+   Body: "Scholarships, financial aid and the documents you need, in your family's currency. No login needed."
+   Privacy line: "Your answers stay only in this browser tab and are cleared when the tab closes."
    Button: "Start"
-2. Area
-   "What do you want to study?" Context line: "Bachelor's degree in Texas. More levels and states are coming." Area: Computer Science, Business, Engineering, Other. Level and state are not screens: each has only one active option.
-3. College and program
-   "Which colleges are you thinking about?" UT Austin selectable, program per college. The 4 pending colleges are visible, marked "Not confirmed", with the official link. ACC is not listed here: it appears only from "Out of my budget". Link: "Help me choose".
-4. Nationality
-   "Which passport or passports do you have?"
-5. Visa or status
-   "What is your situation in the U.S. today?" Six options from docs/visa-and-fees.md.
-6. Start date
-   "When do you want to start?" Fall 2027, Spring 2028, Fall 2028.
-7a. Currency
-   "Which currency does your family use?" BRL or USD. With USD the rate is 1 and nothing is fetched.
-7b. Monthly amount
-   "How much could your family pay per month?" Helper: "Optional. It helps us sort colleges. You can skip it." Buttons: Continue, Skip. While the rate loads: "Updating the exchange rate...". Results appear only after a rate is ready.
-8. Results list
-   Title: "Your colleges". Each card: college, program, total for the whole program (USD and family currency), band badge, "Out of my budget" button. Section "More colleges" when a budget was given.
-9. College detail: full cost by phase
-   Tabs or sections: Before applying, Before travel, First semester, Every year, After graduation. Each line: amount, source, date. Clear split between "You pay" and "You show (I-20)". Note line for assumptions (3% yearly increase, exchange rate source and date).
-   Residency check card (U.S. citizens and permanent residents only, path Ian): shows both official UT 2026-27 ranges side by side: Texas resident, on or off campus, 32,508 to 35,386 USD; nonresident, 64,204 to 72,916 USD. Text: "You may qualify for Texas resident tuition. Confirm with the UT residency office." Link: onestop.utexas.edu. Pont never decides residency; the main result stays nonresident.
-10. Out of my budget
-   "Here are options with the same program area." Cheaper colleges, plus "Start at ACC, then transfer to UT" with combined total and band. If still well above: "This path is also above the amount you shared. Here is what can help:" scholarship plan, later start.
-11. Scholarship and application timeline
-   UT: Early Action 15 Oct, Regular 1 Dec; automatic scholarship consideration; notifications Feb to Apr.
-12. Visa path checklist
-   Checklist from docs/visa-and-fees.md for the user's situation, with fees and official links. Rule-change alert banners where relevant.
-13. I-20 request kit
-   Checklist: bank letter, sponsor form, passport copy, translation rule for this college. Button: "Check my documents".
-14. AI document check
-   Upload sample, results with flagged issues (see docs/ai.md). Failure state: low confidence.
-15. AI drafts
-   Bank letter request in Portuguese; family mode summary. Copy and share buttons.
-16. What-if simulator
-   Controls and recalculated band with AI explanation.
-17. Save plan
+2. AI intake (chat)
+   Pont asks the intake questions from docs/product.md one at a time, with quick-answer chips under each question (countries, statuses, terms, income bands, "Prefer not to say"). Free text is allowed; Claude turns it into structured answers. A small "Use a form instead" link opens the same questions as one-question-per-screen forms (accessibility and fallback when the AI is offline).
+3. Profile confirm
+   "Here is what we understood. Edit anything that is wrong." Editable summary: dream colleges and program, citizenship, status, where parents earn, currencies, start term, income band, monthly amount. Button: "Build my funding plan".
+4. Funding map (dream school first)
+   For each dream college: aid policy in plain words ("Need-blind for international students and meets full need"), estimated net price range per year in USD and family currency, method label (published threshold, calculator link or full cost), gap label, forms, next deadline. Section "Doors open for you" from the funding profile.
+5. Routes
+   Three groups: Reach, Match, Affordable. Route cards with net price range, gap label, one-line AI explanation of why this route fits. Dream colleges never hidden.
+6. College detail
+   Aid policy with source, thresholds, forms, deadlines, full cost by phase (pay versus show for the I-20), scholarships, residency check card for U.S. citizens and residents (UT), I-20 amount for visa students.
+7. Scholarships
+   College scholarships (automatic or separate application) and outside scholarship categories that match the profile. Never counted in totals. Link to each official page.
+8. Plan timeline
+   Month by month until the start term: tests, applications, CSS Profile or ISFAA or college form, scholarship deadlines, I-20 request, SEVIS, visa interview. Items depend on the profile.
+9. Documents studio: upload
+   "Upload a bank statement or income document. We read it, translate it and convert it to USD." Sample files available for each demo path (marked SAMPLE). Notice: "Do not upload real account numbers in this prototype."
+10. Document result
+   Extracted fields (holder name, date, currency, balance or income), working English translation (labeled "Working translation, not certified"), USD value with rate and date (engine), flags against the college's rules (age, liquidity, name, language, page limit). Low-confidence fields highlighted with "Please confirm this value."
+11. Drafts
+   Bank letter request in the family language; message to the college aid office in English. Copy and share buttons. The AI never sends anything.
+12. Essay coach
+   Student pastes a draft; AI suggests what to highlight and what to cut. A request to write the essay is declined: "I can help you plan and review your ideas, but I can't write your essay. Colleges require it to be your own work."
+13. Family mode
+   Plan summary for parents in their language and currency: dream school, what it would cost the family, the next three steps.
+14. Save plan
    "Save your plan to come back later." Email login only here.
 
-Global: currency toggle in the header; every AI block labeled; every number tappable for "Source and date".
+Global: currency toggle (USD and family currencies) in the header after the country is known; offline AI banner when the proxy fails ("AI is offline. Showing a prepared answer.").

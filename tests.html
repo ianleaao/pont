@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Pont engine tests</title>
+  <title>Pont tests</title>
   <link rel="stylesheet" href="css/tokens.css">
   <style>
     body { margin: 0; padding: var(--space-4); background: var(--bg); color: var(--ink);
@@ -20,13 +20,14 @@
 </head>
 <body>
 <main>
-  <h1>Pont engine tests</h1>
-  <p>Fixed rate: 1 USD = R$ 5.5146. Run with Live Server. Results also go to the console.</p>
+  <h1>Pont tests</h1>
+  <p>Engine and money format. Fixed rates: 1 USD = R$ 5.5146 and 1 USD = ₹94 (INR test only). Run with Live Server. Results also go to the console.</p>
   <div id="summary">Running...</div>
   <ol id="results"></ol>
 </main>
 
 <script src="js/engine.js"></script>
+<script src="js/fx.js"></script>
 <script id="engine-tests">
 // Test suite. Takes (E = engine, data = { colleges, fees, fx }) and returns [{ name, pass, detail }].
 function runPontTests(E, data) {
@@ -54,7 +55,10 @@ function runPontTests(E, data) {
   t("fx.json fallback BRL rate is 5.5146 (PTAX, 2026-11-09)", () => {
     check(data.fx.rates.BRL.rate === FX && data.fx.rates.BRL.set_on === "2026-11-09", "fx.json changed");
   });
-  t("INR is hidden in the prototype", () => check(data.fx.rates.INR.hidden === true, "INR not hidden"));
+  t("INR fallback is null, Not confirmed, with the official link (FBIL)", () => {
+    const r = data.fx.rates.INR;
+    check(r.rate === null && r.status === "not_confirmed" && /fbil\.org\.in/.test(r.url), JSON.stringify(r));
+  });
 
   // --- 1. Annual ---
   t("Annual with extras, first year at UT (F-1): COA + ISSS 450 + SHIP 4,217.85 = 68,871.85 to 77,583.85", () => {
@@ -247,13 +251,109 @@ function runPontTests(E, data) {
   return out;
 }
 </script>
+<script id="fx-tests">
+// Money format and currency tests. Takes (F = PontFx, data = { countries, fx }) and returns [{ name, pass, detail }].
+// No network: only formatting, currency mapping and the fallback file.
+function runFxTests(F, data) {
+  const BRL = 5.5146;  // BCB PTAX fallback, same as the engine tests
+  const INR = 94;      // TEST ONLY. Not a confirmed rate (the INR fallback in fx.json is null).
+  const out = [];
+  const t = (name, fn) => {
+    try {
+      const info = fn();
+      out.push({ name, pass: true, detail: typeof info === "string" ? info : "" });
+    } catch (e) {
+      out.push({ name, pass: false, detail: e.message });
+    }
+  };
+  const check = (cond, msg) => { if (!cond) throw new Error(msg); };
+  // Intl puts no-break spaces in some formats; compare with plain spaces.
+  const plain = (s) => String(s).replace(/[  ]/g, " ");
+  const eq = (got, want) => check(plain(got) === want, "got \"" + plain(got) + "\", want \"" + want + "\"");
+  const info = (currency, rate, extra) => Object.assign({ currency, rate, rateDate: "2026-11-10",
+    sourceLabel: "Frankfurter (central bank data)", credit: null, notice: null, status: "ok" }, extra || {});
+
+  F.configure(data.countries);
+
+  t("countries.json has the 9 prototype countries, each with currency and locale", () => {
+    const codes = Object.keys(data.countries.countries).sort().join(",");
+    check(codes === "BR,CN,CO,IN,KR,MX,NG,US,VN", codes);
+    Object.values(data.countries.countries).forEach((c) => check(c.currency && c.locale, c.name));
+  });
+  t("India: family language en by default, Hindi as alternative", () => {
+    const c = data.countries.countries.IN;
+    check(c.family_language === "en" && c.family_language_alternatives.join() === "hi", JSON.stringify(c));
+  });
+  t("ESTA and home scholarships: never invented (null with a status)", () => {
+    Object.entries(data.countries.countries).forEach(([k, c]) => {
+      check(c.esta.value === null && c.esta.status, k + " esta");
+      check(c.home_scholarships === null, k + " scholarships");
+    });
+  });
+  t("fx.json: only BRL and INR may have a fallback; the other 6 are null, Not confirmed", () => {
+    ["MXN", "COP", "NGN", "VND", "CNY", "KRW"].forEach((c) => {
+      const r = data.fx.rates[c];
+      check(r && r.rate === null && r.status === "not_confirmed", c);
+    });
+  });
+
+  t("USD in en-US, no cents: $315,110", () => eq(F.formatMoney(315109.84, "USD"), "$315,110"));
+  t("BRL in pt-BR, no cents: R$ 36.202", () => eq(F.formatMoney(36202.4, "BRL"), "R$ 36.202"));
+  t("INR in en-IN, lakh grouping: ₹29,62,050", () => eq(F.formatMoney(2962050, "INR"), "₹29,62,050"));
+  t("VND in vi-VN: 93.000.000 ₫", () => eq(F.formatMoney(93000000, "VND"), "93.000.000 ₫"));
+  t("MXN shows the code, never a bare $: MXN 150,000", () => eq(F.formatMoney(150000, "MXN"), "MXN 150,000"));
+
+  t("Rate below 1,000 has 2 decimals: R$ 5,51 and ₹94.00", () => {
+    eq(F.formatRate(BRL, "BRL"), "R$ 5,51");
+    eq(F.formatRate(INR, "INR"), "₹94.00");
+  });
+  t("Rate at 1,000 and above has no decimals: 25.750 ₫ and ₦1,354", () => {
+    eq(F.formatRate(25750, "VND"), "25.750 ₫");
+    eq(F.formatRate(1354.15, "NGN"), "₦1,354");
+    check(F.rateDigits(999.99) === 2 && F.rateDigits(1000) === 0, "edge at 1,000");
+  });
+  t("Rate in two lines: value and source with date", () => {
+    const l = F.rateLines(info("BRL", BRL));
+    eq(l.value, "1 USD = R$ 5,51");
+    eq(l.source.text, "Source: Frankfurter (central bank data), Nov 10, 2026");
+  });
+  t("ExchangeRate-API source is a credit link", () => {
+    const l = F.rateLines(info("INR", INR, { credit: { text: "Rates By Exchange Rate API", url: "https://www.exchangerate-api.com" } }));
+    check(l.source.url === "https://www.exchangerate-api.com" && l.source.name === "Rates By Exchange Rate API", JSON.stringify(l.source));
+  });
+  t("Currency without any rate: no value, notice says Not confirmed", () => {
+    const l = F.rateLines(info("NGN", null, { status: "not_confirmed", notice: "Could not get an exchange rate for NGN. Not confirmed." }));
+    check(l.value === null && /Not confirmed/.test(l.notice), JSON.stringify(l));
+  });
+
+  t("Family currencies come from the parents' countries; USD families get none", () => {
+    check(F.familyCurrencies(["US"], data.countries).length === 0, "USD family has a rate");
+    check(F.familyCurrencies([], data.countries).length === 0, "no country yet, but a rate");
+    check(F.familyCurrencies(["IN"], data.countries).join() === "INR", "IN");
+  });
+  t("Two-currency family (parents in Brazil and India): both currencies, no duplicates", () => {
+    const cur = F.familyCurrencies(["BR", "IN", "BR", "US"], data.countries);
+    check(cur.join() === "BRL,INR", cur.join());
+    const lines = [F.rateLines(info("BRL", BRL)).value, F.rateLines(info("INR", INR)).value].map(plain);
+    check(lines.join(" | ") === "1 USD = R$ 5,51 | 1 USD = ₹94.00", lines.join(" | "));
+  });
+  t("Same USD amount in both family currencies (36,202 USD)", () => {
+    eq(F.formatMoney(36202 * BRL, "BRL"), "R$ 199.640");
+    eq(F.formatMoney(36202 * INR, "INR"), "₹34,02,988");
+  });
+
+  return out;
+}
+</script>
 <script>
 (async function () {
   const load = (p) => fetch(p, { cache: "no-store" }).then((r) => r.json());
   const summary = document.getElementById("summary");
   try {
-    const [colleges, fees, fx] = await Promise.all(["data/colleges.json", "data/fees.json", "data/fx.json"].map(load));
-    const results = runPontTests(window.PontEngine, { colleges, fees, fx });
+    const [colleges, fees, fx, countries] = await Promise.all(
+      ["data/colleges.json", "data/fees.json", "data/fx.json", "data/countries.json"].map(load));
+    const results = runPontTests(window.PontEngine, { colleges, fees, fx })
+      .concat(runFxTests(window.PontFx, { countries, fx }));
     const list = document.getElementById("results");
     results.forEach((r) => {
       const li = document.createElement("li");

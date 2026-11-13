@@ -1,8 +1,8 @@
 {
-  "note": "Fallback rates only. js/fx.js fetches a live rate once per session (Frankfurter, then ExchangeRate-API). This file is used only when both fail, with the message 'Could not update the exchange rate. Using the rate from DATE.' tests.html always uses the BRL rate below so tests never change.",
+  "note": "Fallback rates only. js/fx.js fetches a live rate per currency, once per session, after the family country is known (Frankfurter v2, then ExchangeRate-API). This file is used only when both fail, with the message 'Could not update the exchange rate. Using the rate from DATE.' Only the demo currencies (BRL, INR) have a fallback, each from its official source. Every other currency is null and shows 'Not confirmed'. tests.html uses fixed rates so tests never change.",
   "base": "USD",
   "live_sources": [
-    { "id": "frankfurter", "label": "Frankfurter (European Central Bank data)", "url": "https://api.frankfurter.dev/v1/latest?from=USD&to={CUR}", "credit_url": "https://frankfurter.dev" },
+    { "id": "frankfurter", "label": "Frankfurter (central bank data)", "url": "https://api.frankfurter.dev/v2/rate/usd/{cur}", "credit_url": "https://frankfurter.dev" },
     { "id": "exchangerate-api", "label": "ExchangeRate-API", "url": "https://open.er-api.com/v6/latest/USD", "credit_url": "https://www.exchangerate-api.com", "credit_text": "Rates By Exchange Rate API", "credit_required": true }
   ],
   "rates": {
@@ -13,6 +13,21 @@
       "url": "https://www.bcb.gov.br/estabilidadefinanceira/historicocotacoes",
       "checked_on": "2026-11-09"
     },
-    "INR": { "rate": null, "set_on": null, "hidden": true, "note": "India is not in the demo paths; hidden in the prototype." }
+    "INR": {
+      "rate": null,
+      "set_on": null,
+      "status": "not_confirmed",
+      "source": "FBIL USD/INR reference rate (RBI keeps an archive)",
+      "url": "https://www.fbil.org.in/",
+      "archive_url": "https://www.rbi.org.in/scripts/ReferenceRateArchive.aspx",
+      "checked_on": "2026-11-13",
+      "note": "FBIL page needs JavaScript and a captcha; the RBI archive needs a form. Not read automatically. Value to be sent by hand."
+    },
+    "MXN": { "rate": null, "status": "not_confirmed" },
+    "COP": { "rate": null, "status": "not_confirmed" },
+    "NGN": { "rate": null, "status": "not_confirmed" },
+    "VND": { "rate": null, "status": "not_confirmed" },
+    "CNY": { "rate": null, "status": "not_confirmed" },
+    "KRW": { "rate": null, "status": "not_confirmed" }
   }
 }

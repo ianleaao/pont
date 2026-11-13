@@ -23,6 +23,7 @@
       area: "cs",
       colleges: [{ collegeId: "ut-austin", programId: "cs" }],
       passports: ["BR"],
+      parentCountries: ["BR"],
       status: "no_visa",
       term: "fall-2027",
       currency: "BRL",
@@ -32,6 +33,7 @@
       area: "cs",
       colleges: [{ collegeId: "ut-austin", programId: "cs" }],
       passports: ["US"],
+      parentCountries: ["BR"],
       status: "citizen_or_pr",
       term: "fall-2027",
       currency: "BRL",
@@ -66,9 +68,10 @@
   const state = {
     answers: load(KEY_ANSWERS, {}),
     screen: load(KEY_SCREEN, "welcome"),
-    fx: null,        // rate info from PontFx.getRate, once ready
-    fxPromise: null, // shared by every screen that needs the rate
-    fxStatus: null,  // "Updating the exchange rate..." while waiting
+    countries: null,  // data/countries.json
+    rates: {},        // currency -> rate info from PontFx.getRate, once ready
+    ratePromises: {}, // currency -> promise, shared by every screen that needs it
+    fxStatus: null,   // "Updating the exchange rate..." while waiting
   };
 
   function setAnswer(key, value) {
@@ -181,46 +184,69 @@
     startOver: $("btn-start-over"),
   };
 
-  /* ---------- Header: exchange rate in two lines ---------- */
+  /* ---------- Header: exchange rate in two lines, per family currency ---------- */
+  // Family currencies come from the parents' countries of income. USD families get none.
+  const familyCurrencies = () =>
+    typeof PontFx === "undefined" || !state.countries ? []
+      : PontFx.familyCurrencies(state.answers.parentCountries, state.countries);
+
   function renderRate() {
-    // USD families need no rate.
-    if (state.answers.currency === "USD") {
+    const currencies = familyCurrencies();
+    if (!currencies.length) {
       el.rate.innerHTML = "";
       return;
     }
-    if (!state.fx) {
-      el.rate.innerHTML = state.fxStatus ? `<p class="rate-source">${esc(state.fxStatus)}</p>` : "";
-      return;
-    }
-    const l = PontFx.rateLines(state.fx);
-    const name = l.source.url
-      ? `<a href="${esc(l.source.url)}" target="_blank" rel="noopener">${esc(l.source.name)}</a>`
-      : esc(l.source.name);
-    el.rate.innerHTML = `
-      <div class="rate">
-        <span class="rate-value">${esc(l.value)}</span>
-        <span class="rate-source">Source: ${name}, ${esc(l.source.date)}</span>
-        ${l.notice ? `<span class="rate-notice">${esc(l.notice)}</span>` : ""}
-      </div>`;
+    el.rate.innerHTML = currencies.map((cur) => {
+      const info = state.rates[cur];
+      if (!info) return state.fxStatus ? `<p class="rate-source">${esc(state.fxStatus)}</p>` : "";
+      const l = PontFx.rateLines(info);
+      if (!l.value) {
+        const link = l.officialUrl ? ` <a href="${esc(l.officialUrl)}" target="_blank" rel="noopener">Official rate</a>` : "";
+        return `<div class="rate"><span class="rate-notice">${esc(l.notice)}${link}</span></div>`;
+      }
+      const name = l.source.url
+        ? `<a href="${esc(l.source.url)}" target="_blank" rel="noopener">${esc(l.source.name)}</a>`
+        : esc(l.source.name);
+      return `
+        <div class="rate">
+          <span class="rate-value">${esc(l.value)}</span>
+          <span class="rate-source">Source: ${name}, ${esc(l.source.date)}</span>
+          ${l.notice ? `<span class="rate-notice">${esc(l.notice)}</span>` : ""}
+        </div>`;
+    }).join("");
   }
 
-  // Fetched once per session, as soon as the app opens (docs/calculation-rules.md, section 7).
-  function startFx() {
-    if (typeof PontFx === "undefined") return;
-    state.fxPromise = PontFx.getRate("BRL", {
-      fxJsonUrl: "data/fx.json",
-      onStatus: (msg) => { state.fxStatus = msg; renderRate(); },
-    }).then((info) => {
-      state.fx = info;
-      state.fxStatus = null;
-      renderRate();
-      return info;
-    }).catch((e) => {
-      console.error("[Pont] exchange rate unavailable", e);
-      state.fxStatus = null;
-      renderRate();
-      return null;
+  // Rates are fetched only after the family country is known, once per currency per session
+  // (docs/funding-and-currency.md section 6). Never at startup.
+  function ensureRates() {
+    familyCurrencies().forEach((cur) => {
+      if (state.ratePromises[cur]) return;
+      state.ratePromises[cur] = PontFx.getRate(cur, {
+        fxJsonUrl: "data/fx.json",
+        onStatus: (msg) => { state.fxStatus = msg; renderRate(); },
+      }).then((info) => {
+        state.rates[cur] = info;
+        state.fxStatus = null;
+        renderRate();
+        return info;
+      }).catch((e) => {
+        console.error("[Pont] exchange rate unavailable", cur, e);
+        state.fxStatus = null;
+        renderRate();
+        return null;
+      });
     });
+  }
+
+  // Local data file, not a rate: needed to map countries to currencies and locales.
+  function loadCountries() {
+    return fetch("data/countries.json", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((json) => {
+        state.countries = json;
+        if (typeof PontFx !== "undefined") PontFx.configure(json);
+      })
+      .catch((e) => console.error("[Pont] could not load data/countries.json", e));
   }
 
   /* ---------- Screens ---------- */
@@ -258,6 +284,7 @@
     el.startOver.hidden = i === 0;
 
     document.title = i === 0 ? "Pont" : `${s.title} | Pont`;
+    ensureRates();
     renderRate();
     if (window.lucide) window.lucide.createIcons({ attrs: { "aria-hidden": "true" } });
 
@@ -286,7 +313,7 @@
   function startOver() {
     clearAnswers();
     state.answers = {};
-    go("welcome");
+    go("welcome"); // rates already fetched stay cached: one request per currency per session
   }
 
   /* ---------- Demo shortcuts ---------- */
@@ -322,14 +349,14 @@
 
   applyDemo();
   if (indexOf(state.screen) < 0) state.screen = "welcome";
-  startFx();
   render(false);
+  loadCountries().then(() => render(false));
 
   // For later steps and for checks in the console. Read only.
   window.PontApp = {
     get answers() { return JSON.parse(JSON.stringify(state.answers)); },
     get screen() { return state.screen; },
-    get fx() { return state.fx; },
-    fxReady: () => state.fxPromise,
+    get rates() { return Object.assign({}, state.rates); },
+    ratesReady: () => Promise.all(Object.values(state.ratePromises)),
   };
 })();

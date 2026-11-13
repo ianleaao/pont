@@ -1,30 +1,69 @@
 /*
-  Pont exchange rate loader (browser only; this is NOT part of the pure engine).
-  Once per session, before any family-currency amount is shown:
-    1. Frankfurter (ECB data)
+  Pont exchange rates and money formatting (docs/funding-and-currency.md section 6).
+  This is NOT part of the pure engine: the engine receives rates as input.
+
+  Rates: fetched per currency, once per session, only after the family country
+  is known. Never at startup. USD needs no rate.
+    1. Frankfurter v2 (central bank data): /v2/rate/usd/{cur}
     2. ExchangeRate-API open endpoint (credit link required by its terms)
-    3. Fallback: data/fx.json (BCB PTAX sell rate) with a visible notice
-  Total time budget: 5 seconds, then the fallback.
-  The engine receives the rate as input; it never fetches anything.
-  Display: each currency in its own country's format (USD en-US, BRL pt-BR),
-  totals without cents, the rate with 2 decimals, shown in two lines.
+    3. data/fx.json fallback (BRL and INR only), with a visible notice
+    4. Nothing left: status "not_confirmed"
+  Time budget: 5 seconds per currency, then the fallback.
+
+  Format: each currency in its own country's locale (data/countries.json),
+  USD always en-US. Totals without cents. Rates with 2 decimals below 1,000
+  and none at 1,000 and above (VND, NGN, COP, KRW). Shown in two lines.
+
+  Works in the browser (window.PontFx) and in Node (module.exports) for tests.
 */
-(function (root) {
+(function (root, factory) {
+  if (typeof module === "object" && module.exports) module.exports = factory();
+  else root.PontFx = factory();
+})(typeof self !== "undefined" ? self : this, function () {
   "use strict";
 
   const TIMEOUT_MS = 5000;
   const STORAGE_PREFIX = "pont.fx.";
+  const FRANKFURTER = { label: "Frankfurter (central bank data)", url: "https://frankfurter.dev" };
 
   const COPY = {
     updating: "Updating the exchange rate...",
     fallback: "Could not update the exchange rate. Using the rate from DATE.",
+    notConfirmed: "Could not get an exchange rate for CUR. Not confirmed.",
     erCredit: "Rates By Exchange Rate API",
   };
 
-  // Each currency in its own country's format (docs/brand.md, "Money and exchange rate format").
-  const LOCALES = { USD: "en-US", BRL: "pt-BR", INR: "en-IN" };
-  const localeOf = (currency) => LOCALES[currency] || "en-US";
+  /* ---------- Locales from data/countries.json ---------- */
+  // currency -> { locale, display }. USD is always en-US.
+  let currencyFormats = { USD: { locale: "en-US", display: "symbol" } };
 
+  function configure(countriesJson) {
+    const map = { USD: { locale: "en-US", display: "symbol" } };
+    const countries = (countriesJson && countriesJson.countries) || {};
+    Object.keys(countries).forEach((code) => {
+      const c = countries[code];
+      if (c.currency && !map[c.currency]) {
+        map[c.currency] = { locale: c.locale || "en-US", display: c.currency_display || "symbol" };
+      }
+    });
+    currencyFormats = map;
+  }
+
+  const formatOf = (currency) => currencyFormats[currency] || { locale: "en-US", display: "code" };
+
+  // Family currencies, without duplicates and without USD:
+  // familyCurrencies(["IN", "US"], countries) -> ["INR"]; (["BR", "IN"]) -> ["BRL", "INR"]
+  function familyCurrencies(countryCodes, countriesJson) {
+    const countries = (countriesJson && countriesJson.countries) || {};
+    const out = [];
+    (countryCodes || []).forEach((code) => {
+      const c = countries[code];
+      if (c && c.currency && c.currency !== "USD" && out.indexOf(c.currency) < 0) out.push(c.currency);
+    });
+    return out;
+  }
+
+  /* ---------- Formatting ---------- */
   // "2026-11-09" -> "Nov 9, 2026" (read as a calendar date, no time zone shift)
   function formatDate(iso) {
     const [y, m, d] = String(iso).slice(0, 10).split("-").map(Number);
@@ -32,24 +71,31 @@
       { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
   }
 
-  // Totals without cents: formatMoney(315109.84, "USD") -> "$315,110"; (36202, "BRL") -> "R$ 36.202"
+  // Totals without cents: (315109.84, "USD") -> "$315,110"; (36202, "BRL") -> "R$ 36.202"
   function formatMoney(amount, currency, options) {
     const digits = (options && options.digits) || 0;
-    return new Intl.NumberFormat(localeOf(currency), {
-      style: "currency", currency, minimumFractionDigits: digits, maximumFractionDigits: digits,
+    const f = formatOf(currency);
+    return new Intl.NumberFormat(f.locale, {
+      style: "currency", currency, currencyDisplay: f.display,
+      minimumFractionDigits: digits, maximumFractionDigits: digits,
     }).format(amount);
   }
 
-  // The rate always has 2 decimals: 5.5146 BRL -> "R$ 5,51"
-  const formatRate = (rate, currency) => formatMoney(rate, currency, { digits: 2 });
+  // 2 decimals below 1,000; none at 1,000 and above.
+  const rateDigits = (rate) => (rate >= 1000 ? 0 : 2);
+  const formatRate = (rate, currency) => formatMoney(rate, currency, { digits: rateDigits(rate) });
 
   /*
     The two lines shown in the header and next to every family-currency amount:
       value:  "1 USD = R$ 5,55"
-      source: "Source: Frankfurter, Nov 10, 2026"
+      source: "Source: Frankfurter (central bank data), Nov 10, 2026"
     source.url is set when the source must be a link (ExchangeRate-API credit).
+    When no rate exists: value is null and notice says "Not confirmed".
   */
   function rateLines(info) {
+    if (!info || info.status === "not_confirmed" || !(info.rate > 0)) {
+      return { value: null, source: null, notice: info && info.notice, officialUrl: info && info.sourceUrl };
+    }
     const credit = info.credit;
     const name = credit ? credit.text : info.sourceLabel;
     const date = formatDate(info.rateDate);
@@ -60,12 +106,13 @@
     };
   }
 
-  // Plain text version of rateLines, one line each (for copy and for the AI layer).
+  // Plain text version of rateLines (for copy and for the AI layer).
   function label(info) {
     const l = rateLines(info);
-    return l.value + "\n" + l.source.text;
+    return l.value ? l.value + "\n" + l.source.text : l.notice || "";
   }
 
+  /* ---------- Session cache ---------- */
   function readCache(currency) {
     try {
       const raw = sessionStorage.getItem(STORAGE_PREFIX + currency);
@@ -83,6 +130,7 @@
     }
   }
 
+  /* ---------- Sources ---------- */
   async function fetchJson(url, ms) {
     if (ms <= 0) throw new Error("No time left");
     const ctrl = new AbortController();
@@ -98,12 +146,12 @@
 
   const validRate = (r) => typeof r === "number" && isFinite(r) && r > 0;
 
+  // Returns { date, base, quote, rate }; rate = units of the currency per 1 USD.
   async function fromFrankfurter(currency, ms) {
-    const j = await fetchJson("https://api.frankfurter.dev/v1/latest?from=USD&to=" + currency, ms);
-    const rate = j && j.rates && j.rates[currency];
-    if (!validRate(rate)) throw new Error("Frankfurter: no rate");
-    return { rate, rateDate: j.date, source: "frankfurter", sourceLabel: "Frankfurter",
-      sourceUrl: "https://frankfurter.dev", credit: null };
+    const j = await fetchJson("https://api.frankfurter.dev/v2/rate/usd/" + currency.toLowerCase(), ms);
+    if (!j || String(j.quote).toUpperCase() !== currency || !validRate(j.rate)) throw new Error("Frankfurter: no rate");
+    return { rate: j.rate, rateDate: j.date, source: "frankfurter", sourceLabel: FRANKFURTER.label,
+      sourceUrl: FRANKFURTER.url, credit: null };
   }
 
   async function fromExchangeRateApi(currency, ms) {
@@ -116,26 +164,38 @@
       credit: { text: COPY.erCredit, url: "https://www.exchangerate-api.com" } };
   }
 
+  // Fallback file. A currency without a confirmed rate returns status "not_confirmed".
   async function fromFile(currency, fxJsonUrl) {
-    const res = await fetch(fxJsonUrl, { cache: "no-store" });
-    const j = await res.json();
-    const r = j.rates && j.rates[currency];
-    if (!r || !validRate(r.rate)) throw new Error("No fallback rate for " + currency);
-    return { rate: r.rate, rateDate: r.set_on, source: "fallback", sourceLabel: r.source, sourceUrl: r.url,
-      credit: null, fallback: true, notice: COPY.fallback.replace("DATE", formatDate(r.set_on)) };
+    let r = null;
+    try {
+      const res = await fetch(fxJsonUrl, { cache: "no-store" });
+      const j = await res.json();
+      r = j.rates && j.rates[currency];
+    } catch (e) {
+      console.warn("[Pont fx] fallback file unavailable", e.message);
+    }
+    if (r && validRate(r.rate)) {
+      return { rate: r.rate, rateDate: r.set_on, source: "fallback", sourceLabel: r.source, sourceUrl: r.url,
+        credit: null, fallback: true, notice: COPY.fallback.replace("DATE", formatDate(r.set_on)) };
+    }
+    return { rate: null, rateDate: null, source: "none", sourceLabel: null, sourceUrl: (r && r.url) || null,
+      credit: null, fallback: true, status: "not_confirmed", notice: COPY.notConfirmed.replace("CUR", currency) };
   }
 
+  /* ---------- Public API ---------- */
   /*
-    Returns { currency, rate, rateDate, fetchedAt, source, sourceLabel, sourceUrl, credit, fallback, notice }.
-    options: { fxJsonUrl, onStatus(message) }
+    getRate(currency, options) -> { currency, rate, rateDate, fetchedAt, source, sourceLabel,
+      sourceUrl, credit, fallback, notice, status }
+    status: "ok" or "not_confirmed". options: { fxJsonUrl, onStatus(message) }
+    There is no default currency: call it only once the family country is known.
   */
   async function getRate(currency, options) {
-    currency = currency || "BRL";
+    if (!currency) throw new Error("getRate needs a currency. Fetch only after the family country is known.");
+    currency = String(currency).toUpperCase();
     options = options || {};
-    // USD families: rate 1, nothing to fetch.
     if (currency === "USD") {
       return { currency, rate: 1, rateDate: null, fetchedAt: null, source: "none", sourceLabel: null,
-        sourceUrl: null, credit: null, fallback: false, notice: null };
+        sourceUrl: null, credit: null, fallback: false, notice: null, status: "ok" };
     }
     const cached = readCache(currency);
     if (cached) return cached;
@@ -150,19 +210,30 @@
         info = await attempt(currency, left());
         break;
       } catch (e) {
-        console.warn("[Pont fx]", e.message);
+        console.warn("[Pont fx]", currency, e.message);
       }
     }
     if (!info) info = await fromFile(currency, options.fxJsonUrl || "data/fx.json");
 
-    info = Object.assign({ fallback: false, notice: null }, info, { currency, fetchedAt: new Date().toISOString() });
+    info = Object.assign({ fallback: false, notice: null, status: "ok" }, info,
+      { currency, fetchedAt: new Date().toISOString() });
     writeCache(info);
     return info;
   }
 
-  // Currencies offered in the prototype (INR is hidden).
-  const visibleCurrencies = (fxJson) =>
-    Object.keys(fxJson.rates).filter((c) => !fxJson.rates[c].hidden);
+  // Two-currency families: one request per currency, in parallel. Returns { BRL: info, INR: info }.
+  async function getRates(currencies, options) {
+    const list = [];
+    (currencies || []).forEach((c) => {
+      const cur = String(c).toUpperCase();
+      if (cur !== "USD" && list.indexOf(cur) < 0) list.push(cur);
+    });
+    const infos = await Promise.all(list.map((c) => getRate(c, options)));
+    const out = {};
+    list.forEach((c, i) => { out[c] = infos[i]; });
+    return out;
+  }
 
-  root.PontFx = { getRate, rateLines, label, formatMoney, formatRate, formatDate, visibleCurrencies, COPY, TIMEOUT_MS };
-})(window);
+  return { configure, familyCurrencies, getRate, getRates, rateLines, label, formatMoney, formatRate,
+    rateDigits, formatDate, COPY, TIMEOUT_MS };
+});

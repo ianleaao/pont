@@ -5,7 +5,7 @@ Pont works like a consultant. It learns the student's goal (for example "I want 
 
 Pont is NOT a cost calculator. Cost is one input to the funding strategy, never the headline.
 
-Tagline: "Tell us your dream school. We find the path to pay for it."
+Tagline: "Tell us your dream school. We find the scholarships to get you there."
 
 Users: international students from ANY country applying to U.S. colleges (undergraduate first), plus cross-border students (U.S. citizen or resident with parents abroad). Never Brazil-only. Europe comes later.
 
@@ -54,7 +54,7 @@ docs/                  specs: read the relevant file before each task
 11. The page is English (`lang="en"`). Every block in the family language (family mode, bank letter, drafts) sets its own `lang` on its element (for example `lang="pt-BR"`, `lang="hi"`).
 
 ## Demo paths (must work end to end)
-- Path 1, dream school: Ananya, India (INR), no visa, wants Harvard, income band under 100,000 USD. Result: Harvard is need-blind for internationals and meets full need; estimated family cost near 0 under Harvard's published threshold; plan with CSS Profile, documents and deadlines; backups at MIT and Amherst; documents studio with an Indian bank statement sample.
+- Path 1, dream school: Ananya, India (INR), no visa, wants Harvard, income band under 100,000 USD. Result: Harvard is need-blind for internationals and meets full need; estimated family cost near 0 under Harvard's published threshold; plan with CSS Profile, documents and deadlines; backups at MIT and Amherst; documents studio with an Indian bank statement sample; family mode in Hindi.
 - Path 2, funding gap: Lucas, Brazil (BRL), no visa, Computer Science at UT Austin, can pay about 23,000 BRL per month (same value as the current tests). Result: UT gives internationals merit scholarships only; gap shown; routes: ACC then UT transfer, outside scholarships, full-need colleges as reach; I-20 documents converted to USD.
 - Path 3, cross-border: Ian, U.S. citizen, parents in Brazil, UT Austin. FAFSA path with foreign income, residency check card, parents' documents converted to USD.
 

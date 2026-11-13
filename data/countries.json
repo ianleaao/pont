@@ -1,0 +1,114 @@
+{
+  "note": "Country layer (docs/funding-and-currency.md section 6). The family currency and number format come from the parents' country of income. family_language is the default for family mode; family_language_alternatives are offered in the language selector. currency_display 'code' is used where the local symbol is '$', so it is never confused with USD. Unconfirmed values are null with status 'not_confirmed' and the official URL.",
+  "checked_on": "2026-11-13",
+  "sources": [
+    {
+      "id": "dos-vwp",
+      "name": "U.S. Department of State, Visa Waiver Program",
+      "url": "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visa-waiver-program.html",
+      "checked_on": "2026-11-13",
+      "note": "Official page blocked automated access (403). ESTA values are not confirmed until checked by hand."
+    }
+  ],
+  "countries": {
+    "BR": {
+      "name": "Brazil",
+      "currency": "BRL",
+      "locale": "pt-BR",
+      "currency_display": "symbol",
+      "family_language": "pt-BR",
+      "family_language_alternatives": [],
+      "esta": { "value": null, "status": "not_confirmed", "source": "dos-vwp" },
+      "home_scholarships": null,
+      "notes": null
+    },
+    "IN": {
+      "name": "India",
+      "currency": "INR",
+      "locale": "en-IN",
+      "currency_display": "symbol",
+      "family_language": "en",
+      "family_language_alternatives": ["hi"],
+      "esta": { "value": null, "status": "not_confirmed", "source": "dos-vwp" },
+      "home_scholarships": null,
+      "notes": null
+    },
+    "MX": {
+      "name": "Mexico",
+      "currency": "MXN",
+      "locale": "es-MX",
+      "currency_display": "code",
+      "family_language": "es-MX",
+      "family_language_alternatives": [],
+      "esta": { "value": null, "status": "not_confirmed", "source": "dos-vwp" },
+      "home_scholarships": null,
+      "notes": null
+    },
+    "CO": {
+      "name": "Colombia",
+      "currency": "COP",
+      "locale": "es-CO",
+      "currency_display": "code",
+      "family_language": "es-CO",
+      "family_language_alternatives": [],
+      "esta": { "value": null, "status": "not_confirmed", "source": "dos-vwp" },
+      "home_scholarships": null,
+      "notes": null
+    },
+    "NG": {
+      "name": "Nigeria",
+      "currency": "NGN",
+      "locale": "en-NG",
+      "currency_display": "symbol",
+      "family_language": "en",
+      "family_language_alternatives": [],
+      "esta": { "value": null, "status": "not_confirmed", "source": "dos-vwp" },
+      "home_scholarships": null,
+      "notes": null
+    },
+    "VN": {
+      "name": "Vietnam",
+      "currency": "VND",
+      "locale": "vi-VN",
+      "currency_display": "symbol",
+      "family_language": "vi",
+      "family_language_alternatives": [],
+      "esta": { "value": null, "status": "not_confirmed", "source": "dos-vwp" },
+      "home_scholarships": null,
+      "notes": null
+    },
+    "CN": {
+      "name": "China",
+      "currency": "CNY",
+      "locale": "zh-CN",
+      "currency_display": "symbol",
+      "family_language": "zh-CN",
+      "family_language_alternatives": [],
+      "esta": { "value": null, "status": "not_confirmed", "source": "dos-vwp" },
+      "home_scholarships": null,
+      "notes": null
+    },
+    "KR": {
+      "name": "South Korea",
+      "currency": "KRW",
+      "locale": "ko-KR",
+      "currency_display": "symbol",
+      "family_language": "ko",
+      "family_language_alternatives": [],
+      "esta": { "value": null, "status": "not_confirmed", "source": "dos-vwp" },
+      "home_scholarships": null,
+      "notes": null
+    },
+    "US": {
+      "name": "United States",
+      "currency": "USD",
+      "locale": "en-US",
+      "currency_display": "symbol",
+      "family_language": "en",
+      "family_language_alternatives": [],
+      "esta": { "value": null, "status": "not_applicable" },
+      "home_scholarships": null,
+      "notes": null
+    }
+  }
+}

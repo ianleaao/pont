@@ -40,12 +40,8 @@ Community-college path (ACC, then UT): same exponent by calendar year. ACC years
 monthly_usd = total / (years x 12)
 monthly_family = monthly_usd x fx_rate
 
-## 4. Budget band (neutral, never a verdict)
-If the user skipped the monthly question: band = "none" (show "Total cost").
-Otherwise compare monthly_family with the amount the user shared:
-- within: monthly_family <= amount
-- above: monthly_family <= amount x 1.20 (the 20% margin is a config value to test in interviews)
-- well_above: everything else
+## 4. Budget band: replaced
+Replaced by docs/funding-and-currency.md section 4 (funding gap). js/engine.js keeps budgetBand only so the existing tests keep passing; the app does not use it.
 
 ## 5. Show for the I-20 (visa students only)
 show_for_i20 = the college's published amount for the I-20 when available. Only when there is none: the MAX of the year 1 estimate range (showing too little delays the I-20), labeled "Estimate. The college confirms the exact amount."
@@ -53,23 +49,12 @@ UT publishes 71,912 USD for 2026-27, undergraduate, nonresident: 49,912 tuition 
 The published amount is not inflated by the engine: it is shown as published, with its year.
 UI line: "For the I-20, you will need to show about X for the first year."
 
-## 6. Recommendations
-- With a monthly amount: main list = colleges with band within or above, sorted by monthly cost; others go to "More colleges" (still visible).
-- Without: all colleges sorted by total cost.
-- "Out of my budget" on any college: show cheaper colleges with the same program area, and the community-college path: 2 years at ACC (associate) then 2 years at the target university, with the combined total. If the cheaper path is still well above, say so plainly and show next steps (scholarship plan, starting later, other options). Never hide the original college.
+## 6. Recommendations: replaced
+Replaced by docs/funding-and-currency.md section 5 (Routes). Only this rule stays:
+- Community-college path: 2 years at ACC (associate) then 2 years at the target university, with the combined total (see section 2). Transfer admission to UT is not guaranteed.
 
-## 7. Currency
-The rate is fetched once per session by js/fx.js, before any family-currency amount is shown. The engine stays pure: it receives the rate as an input and never fetches anything.
-Order: Frankfurter (https://api.frankfurter.dev/v1/latest?from=USD&to=BRL), then the ExchangeRate-API open endpoint (with the credit link its terms require), then the fallback in data/fx.json (Banco Central PTAX sell rate, 5.5146, 9 Nov 2026) with the notice "Could not update the exchange rate. Using the rate from DATE."
-Time budget: 5 seconds in total, then the fallback. While waiting: "Updating the exchange rate...". The results screen appears only after a rate is ready.
-sessionStorage keeps the rate, source, rate date and time of the request. One request per session.
-Header and every family-currency amount show the rate in two lines (no dot separators):
-  "1 USD = R$ 5,55"
-  "Source: Frankfurter, Nov 10, 2026"
-Display format: each currency in its own country's format with Intl.NumberFormat. USD in en-US ("$315,110"), BRL in pt-BR ("R$ 36.200"), so Brazilian families never read "R$ 36,200" as 36 reais and 20 centavos. Totals without cents; exchange rate with 2 decimals. Implemented in js/fx.js (rateLines, formatMoney, formatRate) and shown in the app header.
-tests.html always uses the fixed rate 5.5146 so tests never change.
-INR stays null and is hidden in the prototype (India is not in the demo paths).
-Never round in the engine; round only for display (no cents for totals).
+## 7. Currency: replaced
+Replaced by docs/funding-and-currency.md section 6 (currency by country). Still valid here: the engine stays pure, receives rates as input and never fetches anything; never round in the engine, round only for display.
 
 ## 8. Tests (tests.html)
 At minimum: annual with and without extras, total with 0 and 3% increase, band edges (exactly equal, exactly 20% above, above 20%), skipped budget, unconfirmed fee not added, deposit not added.

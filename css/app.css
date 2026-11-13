@@ -328,7 +328,7 @@ a:hover { text-decoration-thickness: 2px; }
   font-size: var(--text-20); font-weight: var(--weight-heavy); letter-spacing: var(--tracking-tight);
 }
 .app-logo svg { width: 36px; height: 23px; }
-.app-rate { min-width: 0; max-width: 60%; text-align: right; padding-top: 2px; }
+.app-rate { display: grid; gap: var(--space-2); min-width: 0; max-width: 60%; text-align: right; padding-top: 2px; }
 .app-rate .rate-source { overflow-wrap: anywhere; }
 
 .app-progress { padding-top: var(--space-6); }

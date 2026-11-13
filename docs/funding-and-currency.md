@@ -42,13 +42,14 @@ Example values above are placeholders. Fill every value from the official page o
 Output: { min, max, method: "threshold" | "calculator_link" | "full_cost", lines, sources }.
 
 ## 4. Funding gap (replaces the budget band)
-gap = estimated net price (per year) minus what the family can pay (monthly amount x 12, converted to USD).
+gap = estimated net price, average per year over the program, minus what the family can pay per year (monthly amount x 12, converted to USD).
+The average per year is the program total divided by the program years, so the 3% yearly increase is included. The UI labels it "average per year over the program". The college detail also shows year 1.
 Labels, neutral:
 - "Funded": gap <= 0
 - "Small gap": gap <= 20% of the net price (margin in config)
 - "Gap": everything else
 Without a monthly amount: no gap label, show the net price only.
-Copy never says "can't afford". It always lists what can close the gap.
+Copy never says "can't afford". It always lists what can close it.
 
 ## 5. Routes
 `routes(answers, data)` returns three groups, each item with net price range, gap label, forms and next deadline:
@@ -58,13 +59,19 @@ Copy never says "can't afford". It always lists what can close the gap.
 Sorted inside each group by gap, then by net price midpoint.
 
 ## 6. Currency by country (js/fx.js)
-- data/countries.json maps country code to { currency, locale, family_language, esta, notes }. Start with: BR, IN, MX, CO, NG, VN, CN, KR, US.
+- data/countries.json maps country code to { currency, locale, currency_display, family_language, family_language_alternatives, esta, home_scholarships, notes }. Countries: BR, IN, MX, CO, NG, VN, CN, KR, US.
+- India: family_language "en", alternative "hi". Family mode always shows a language selector with the country's alternatives. In the Ananya demo, family mode uses Hindi.
+- ESTA and home-country scholarships: null until confirmed on the official page (ESTA: State Department Visa Waiver Program page). The UI shows "Check your government's scholarship programs", with no invented names.
 - The family currency comes from the parents' country of income. Two countries means two currencies, both shown.
-- Fetch order per currency: Frankfurter v2 (https://api.frankfurter.dev, no key, 200+ currencies, central bank data), then ExchangeRate-API open endpoint (credit link required), then data/fx.json fallback with the notice "Could not update the exchange rate. Using the rate from DATE."
-- Fetch only after the country is known, once per currency per session, 5 second budget. No rate is fetched at startup and USD families see no rate.
-- Format each currency with its own locale through Intl.NumberFormat (USD en-US, BRL pt-BR, INR en-IN, and so on). Totals without cents; rates with 2 decimals (more decimals when the rate is above 1,000, for example VND).
-- Header and every family-currency amount show the rate in two lines: "1 USD = <rate in family currency>" and "Source: <provider>, <date>" (same layout as today).
-- tests.html keeps fixed rates (BRL 5.5146 and one fixed INR rate) so tests never change.
+- Fetch order per currency:
+  1. Frankfurter v2: https://api.frankfurter.dev/v2/rate/usd/{currency}. Returns { date, base, quote, rate }; rate = units of the currency per 1 USD. No provider parameter (the default blends central bank providers). Source line: "Frankfurter (central bank data)".
+  2. ExchangeRate-API open endpoint (credit link "Rates By Exchange Rate API" required).
+  3. data/fx.json fallback, only for the demo currencies, each from its official source with date: BRL (Banco Central do Brasil, PTAX sell rate) and INR (FBIL USD/INR reference rate; RBI keeps an archive). Notice: "Could not update the exchange rate. Using the rate from DATE." Every other currency is null: "Not confirmed" with the official link when known.
+- Fetch only after the country is known, once per currency per session, 5 second budget per currency. No rate is fetched at startup and USD families see no rate.
+- Format each currency with its own locale through Intl.NumberFormat (USD en-US, BRL pt-BR, INR en-IN, VND vi-VN, and so on). Where the local symbol is "$" (MXN, COP), show the currency code ("MXN 150,000") so it is never confused with USD.
+- Totals without cents. Rates with 2 decimals below 1,000 ("1 USD = ₹94.00") and no decimals at 1,000 and above ("1 USD = 25.750 ₫").
+- Header and every family-currency amount show the rate in two lines: "1 USD = <rate in family currency>" and "Source: <provider>, <date>".
+- tests.html keeps fixed rates (BRL 5.5146 and INR 94, test only) so tests never change.
 
 ## 7. Tests to add
 fundingProfile for the three demo paths; FAFSA closed for F-1; threshold net price for path 1; full-cost net price for UT (path 2); gap labels at the edges (0, exactly 20%, above 20%); no income band; routes keep the dream college first; currency formatting for BRL, INR and VND; two-currency family.

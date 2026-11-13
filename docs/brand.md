@@ -80,14 +80,17 @@ Always icon plus text, never color alone.
 - Scale: 12, 14, 16, 18, 20, 24, 32, 40.
 
 ## Money and exchange rate format
-- Each currency in its own country's format, with Intl.NumberFormat:
+- Each currency in its own country's format, with Intl.NumberFormat and the locale from data/countries.json. Examples:
   - USD in en-US: "$315,110"
   - BRL in pt-BR: "R$ 36.200"
-  Reason: Brazilian families read the BRL amounts; "R$ 36,200" in U.S. format can be read as 36 reais and 20 centavos.
-- Totals without cents. Exchange rate with 2 decimals.
-- Exchange rate in two lines, no dot separators:
+  - INR in en-IN: "₹29,62,050"
+  - VND in vi-VN: "93.000.000 ₫"
+  Reason: each family reads amounts in its own format; "R$ 36,200" in U.S. format can be read as 36 reais and 20 centavos.
+- Where the local symbol is "$" (MXN, COP), show the code ("MXN 150,000"), never a bare "$" next to USD.
+- Totals without cents. Exchange rate with 2 decimals below 1,000, no decimals at 1,000 and above.
+- Exchange rate in two lines, no dot separators, one block per family currency:
   "1 USD = R$ 5,55"
-  "Source: Frankfurter, Nov 10, 2026"
+  "Source: Frankfurter (central bank data), Nov 10, 2026"
 
 ## Avoid generic patterns
 - No dot separators (A · B · C). Use separate lines or plain sentences.

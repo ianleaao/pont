@@ -9,8 +9,8 @@ App frame (index.html, every screen):
 - Language: the page is English (lang="en"). Every block in the family language sets its own lang attribute.
 
 1. Welcome
-   Title: "Tell us your dream school. We find the path to pay for it."
-   Body: "Scholarships, financial aid and the documents you need, in your family's currency. No login needed."
+   Title: "Tell us your dream school. We find the scholarships to get you there."
+   Body: "Scholarships, financial aid and the documents you need, in your family's currency. Powered by AI. No login needed."
    Privacy line: "Your answers stay only in this browser tab and are cleared when the tab closes."
    Button: "Start"
 2. AI intake (chat)
@@ -37,6 +37,7 @@ App frame (index.html, every screen):
    Student pastes a draft; AI suggests what to highlight and what to cut. A request to write the essay is declined: "I can help you plan and review your ideas, but I can't write your essay. Colleges require it to be your own work."
 13. Family mode
    Plan summary for parents in their language and currency: dream school, what it would cost the family, the next three steps.
+   Language selector with the country's family languages (data/countries.json). The Ananya demo uses Hindi (lang="hi").
 14. Save plan
    "Save your plan to come back later." Email login only here.
 

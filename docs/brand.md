@@ -100,7 +100,8 @@ The only bold element. The program total is drawn as the logo arch: the BRL amou
 Accessibility: the amounts are real text (not inside the SVG drawing), the arch is aria-hidden, and the reading order is BRL amount, USD amount, band.
 
 ## Layout
-Mobile first, 380 px base, centered, content max 720 px. Visible keyboard focus on every control (2 px --focus outline with offset).
+Mobile first, 380 px base, centered, content max 720 px, 16 px side gutter. Visible keyboard focus on every control (2 px --focus outline with offset).
+Language: the page is English (`<html lang="en">`). Every Portuguese block (Family mode, bank letter) sets lang="pt-BR" on its own element so screen readers pronounce it correctly.
 
 ## Components
 Buttons (primary, secondary, link), question option (single and multiple choice), input, progress bar, band badges, cost line (label, amount, source and date in slate), alert (info, rule change, missing data), AI note (label "Written by AI. Check the source.", confidence, source link), cost bridge, checklist item (todo, done, warning), currency toggle (USD and family currency), timeline. components.html shows every component in every state.

@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pont</title>
+  <meta name="description" content="See the real cost of studying in the U.S., in your family's currency, with a clear plan.">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <!--
+    Language: the page is English. Every Portuguese block (Family mode, bank letter)
+    sets lang="pt-BR" on its own element so screen readers pronounce it correctly.
+  -->
+  <div class="app">
+    <header class="app-header">
+      <a class="app-logo" href="./" aria-label="Pont, home">
+        <svg viewBox="0 0 64 40" aria-hidden="true"><path d="M8 32 Q32 0 56 32" fill="none" stroke="#15233A" stroke-width="4" stroke-linecap="round"/><line x1="8" y1="32" x2="56" y2="32" stroke="#15233A" stroke-width="2.5" stroke-linecap="round"/><circle cx="8" cy="32" r="5.5" fill="#2E7D5B"/><circle cx="56" cy="32" r="5.5" fill="#E3A947"/></svg>
+        <span>Pont</span>
+      </a>
+      <div class="app-rate" id="app-rate" aria-live="polite"></div>
+    </header>
+
+    <div class="app-progress" id="app-progress" hidden>
+      <div class="progress">
+        <span class="progress-text" id="progress-text"></span>
+        <div class="progress-track" aria-hidden="true"><div class="progress-fill" id="progress-fill"></div></div>
+      </div>
+    </div>
+
+    <main class="app-main" id="app-main">
+      <section class="screen" id="screen" aria-labelledby="screen-title"></section>
+    </main>
+
+    <footer class="app-footer" id="app-footer">
+      <div class="app-nav" id="app-nav">
+        <button type="button" class="btn btn-secondary" id="btn-back">Back</button>
+        <button type="button" class="btn btn-link" id="btn-skip" hidden>Skip</button>
+        <button type="button" class="btn btn-primary" id="btn-next">Continue</button>
+      </div>
+      <button type="button" class="btn btn-link app-start-over" id="btn-start-over" hidden>Start over</button>
+    </footer>
+  </div>
+
+  <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/fx.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

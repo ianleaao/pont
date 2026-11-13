@@ -1,7 +1,7 @@
 /*
   Pont app styles. Tokens come from css/tokens.css (docs/brand.md).
   Part 1: base. Part 2: components (shown in components.html).
-  Part 3: app layout (added in build step c).
+  Part 3: app layout (index.html).
 
   State preview classes (.is-hover, .is-focus, .is-active) exist only so
   components.html can show every state side by side. They mirror the real
@@ -13,6 +13,8 @@
 *, *::before, *::after { box-sizing: border-box; }
 
 html { -webkit-text-size-adjust: 100%; }
+
+[hidden] { display: none !important; }
 
 body {
   margin: 0;
@@ -301,4 +303,64 @@ a:hover { text-decoration-thickness: 2px; }
   h1 { font-size: var(--text-40); }
   .bridge-family { font-size: var(--text-40); }
   .bridge-usd { font-size: var(--text-20); }
+}
+
+/* ---------- Part 3: app layout (index.html) ---------- */
+
+/* One centered column: 380 px base, content up to 720 px, 16 px side gutter */
+.app {
+  display: flex; flex-direction: column;
+  min-height: 100vh; min-height: 100dvh;
+  max-width: 720px; margin: 0 auto;
+  padding: 0 var(--space-4);
+}
+
+/* Header: logo on the left, exchange rate in two lines on the right */
+.app-header {
+  display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-4);
+  padding: var(--space-4) 0;
+  border-bottom: 1px solid var(--line);
+}
+.app-logo {
+  display: inline-flex; align-items: center; gap: var(--space-2); flex: none;
+  min-height: 44px;
+  color: var(--ink); text-decoration: none;
+  font-size: var(--text-20); font-weight: var(--weight-heavy); letter-spacing: var(--tracking-tight);
+}
+.app-logo svg { width: 36px; height: 23px; }
+.app-rate { min-width: 0; max-width: 60%; text-align: right; padding-top: 2px; }
+.app-rate .rate-source { overflow-wrap: anywhere; }
+
+.app-progress { padding-top: var(--space-6); }
+
+/* Screen: hierarchy by size, weight and space, not by cards */
+.app-main { flex: 1; padding: var(--space-8) 0 var(--space-6); }
+.screen { display: grid; gap: var(--space-6); }
+.screen h1:focus { outline: none; }
+.screen h1:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; }
+.screen-body { display: grid; gap: var(--space-6); }
+.screen-lead { font-size: var(--text-18); color: var(--slate); }
+
+/* Placeholder for screens built in step d */
+.screen-skeleton {
+  padding: var(--space-6) var(--space-4);
+  border: 1px dashed var(--line-strong); border-radius: var(--radius-sm);
+  color: var(--slate); font-size: var(--text-14);
+}
+
+/* Footer: Back and Continue, then the discreet Start over */
+.app-footer {
+  display: grid; gap: var(--space-2);
+  padding: var(--space-4) 0 var(--space-6);
+  border-top: 1px solid var(--line);
+}
+.app-nav { display: flex; align-items: center; gap: var(--space-3); }
+.app-nav #btn-next { margin-left: auto; min-width: 140px; }
+.app-nav--single #btn-next { flex: 1; margin-left: 0; }
+.app-start-over { justify-self: start; font-size: var(--text-14); color: var(--slate); padding-left: 0; }
+
+@media (min-width: 560px) {
+  .app { padding: 0 var(--space-6); }
+  .app-main { padding-top: var(--space-12); }
+  .app-nav--single #btn-next { flex: none; min-width: 200px; }
 }

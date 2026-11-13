@@ -2,7 +2,7 @@
   "note": "Fallback rates only. js/fx.js fetches a live rate once per session (Frankfurter, then ExchangeRate-API). This file is used only when both fail, with the message 'Could not update the exchange rate. Using the rate from DATE.' tests.html always uses the BRL rate below so tests never change.",
   "base": "USD",
   "live_sources": [
-    { "id": "frankfurter", "label": "Frankfurter (European Central Bank data)", "url": "https://api.frankfurter.app/latest?from=USD&to={CUR}", "credit_url": "https://www.frankfurter.app" },
+    { "id": "frankfurter", "label": "Frankfurter (European Central Bank data)", "url": "https://api.frankfurter.dev/v1/latest?from=USD&to={CUR}", "credit_url": "https://frankfurter.dev" },
     { "id": "exchangerate-api", "label": "ExchangeRate-API", "url": "https://open.er-api.com/v6/latest/USD", "credit_url": "https://www.exchangerate-api.com", "credit_text": "Rates By Exchange Rate API", "credit_required": true }
   ],
   "rates": {

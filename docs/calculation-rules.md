@@ -60,13 +60,13 @@ UI line: "For the I-20, you will need to show about X for the first year."
 
 ## 7. Currency
 The rate is fetched once per session by js/fx.js, before any family-currency amount is shown. The engine stays pure: it receives the rate as an input and never fetches anything.
-Order: Frankfurter (https://api.frankfurter.app/latest?from=USD&to=BRL), then the ExchangeRate-API open endpoint (with the credit link its terms require), then the fallback in data/fx.json (Banco Central PTAX sell rate, 5.5146, 9 Nov 2026) with the notice "Could not update the exchange rate. Using the rate from DATE."
+Order: Frankfurter (https://api.frankfurter.dev/v1/latest?from=USD&to=BRL), then the ExchangeRate-API open endpoint (with the credit link its terms require), then the fallback in data/fx.json (Banco Central PTAX sell rate, 5.5146, 9 Nov 2026) with the notice "Could not update the exchange rate. Using the rate from DATE."
 Time budget: 5 seconds in total, then the fallback. While waiting: "Updating the exchange rate...". The results screen appears only after a rate is ready.
 sessionStorage keeps the rate, source, rate date and time of the request. One request per session.
 Header and every family-currency amount show the rate in two lines (no dot separators):
   "1 USD = R$ 5,55"
   "Source: Frankfurter, Nov 10, 2026"
-Display format: each currency in its own country's format with Intl.NumberFormat. USD in en-US ("$315,110"), BRL in pt-BR ("R$ 36.200"), so Brazilian families never read "R$ 36,200" as 36 reais and 20 centavos. Totals without cents; exchange rate with 2 decimals. (Implemented in js/fx.js and the header in build step c.)
+Display format: each currency in its own country's format with Intl.NumberFormat. USD in en-US ("$315,110"), BRL in pt-BR ("R$ 36.200"), so Brazilian families never read "R$ 36,200" as 36 reais and 20 centavos. Totals without cents; exchange rate with 2 decimals. Implemented in js/fx.js (rateLines, formatMoney, formatRate) and shown in the app header.
 tests.html always uses the fixed rate 5.5146 so tests never change.
 INR stays null and is hidden in the prototype (India is not in the demo paths).
 Never round in the engine; round only for display (no cents for totals).

@@ -26,9 +26,9 @@ Visa types are the same for every nationality. A country layer adjusts: ESTA acc
 
 ## Onboarding questions
 Block 0, interest:
-1. Level: bachelor's (prototype), graduate or MBA, continuing education.
+1. Level: bachelor's (prototype), graduate or MBA, continuing education. Not a screen in the prototype: only one option is active.
 2. Area of study.
-3. State or city (prototype: Texas).
+3. State or city (prototype: Texas). Not a screen in the prototype: only one option is active.
 4. Colleges and program for each, or "help me choose". Program is required because cost varies by program.
 
 Block 1, before the result:
@@ -51,4 +51,5 @@ Block 3, only at documents:
 Aid form used (FAFSA, CSS Profile, own form), aid for internationals (need, merit, both, none), cost, location, college type.
 
 ## Privacy and limits
-No income, savings, SSN or account numbers. Status is used only for routing and not stored. No legal or visa advice. Every number has source and date.
+Answers are never sent to or saved on a server. They stay only in this browser tab (sessionStorage) and are cleared when the tab closes. A discreet "Start over" button clears them at any time.
+No income, savings, SSN or account numbers. No legal or visa advice. Every number has source and date.

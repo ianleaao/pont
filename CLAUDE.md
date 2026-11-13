@@ -16,14 +16,19 @@ This is a Harvard DGMD E-1 ("Interactive Prototyping & Creative AI") portfolio p
 
 ## Folder structure
 ```
-index.html
+index.html          app shell: header, progress, screen, footer
+components.html     design system proof (every component, every state)
+tests.html          engine checks (console), fixed rate 5.5146
+assets/favicon.svg  bridge symbol
 css/tokens.css      brand variables (copy from docs/brand.md)
 css/app.css         layout and components
 js/engine.js        calculation engine: pure functions only, no DOM
 js/app.js           screens, navigation, state
+js/fx.js            exchange rate once per session, money and rate formats
 js/ai.js            AI layer (scripted responses for the prototype)
 data/colleges.json  college costs, rules, sources, dates
 data/fees.json      government and test fees
+data/fx.json        live rate sources and the fallback rate
 data/ai-scripts.json scripted AI outputs and failure states
 docs/               specs: read the relevant file before each task
 ```
@@ -38,10 +43,13 @@ docs/               specs: read the relevant file before each task
 7. Do not store sensitive data: no SSN, bank account numbers or immigration documents.
 8. UI copy: plain English, short sentences, one question per screen. Never use em dashes (the long dash). Use commas, colons or periods.
 9. Mobile first (380 px base), accessible (WCAG AA contrast, labels on inputs, color never the only signal).
+10. The page is English (`lang="en"`). Every Portuguese block (Family mode, bank letter) sets `lang="pt-BR"` on its own element.
 
 ## Demo paths (must work end to end)
 - Lucas: Brazil, no visa (starting from zero), Computer Science at UT Austin, pays 2,000 BRL per month. Result: well above budget, then "Out of my budget" shows ACC first, then transfer to UT, plus the full I-20 and visa checklist.
 - Ian: U.S. citizen, parents in Brazil, UT Austin. No visa steps; cost and scholarship plan.
+
+Demo shortcuts: `index.html?demo=lucas` and `index.html?demo=ian`. They fill the onboarding answers, open the last question (7b) and replace any saved session without a message. Nothing about them is visible in the UI.
 
 ## Which doc to read
 - Product, flows, onboarding questions: docs/product.md

@@ -1,23 +1,32 @@
-# Screens (prototype, about 16)
+# Screens (prototype, about 17)
 
 Mobile first. One question per screen in onboarding with Back and Continue. Copy below is the default English text. Never use em dashes in copy.
+
+App frame (index.html, every screen):
+- Header: Pont logo on the left; exchange rate in two lines on the right ("1 USD = R$ 5,55" and "Source: Frankfurter, Nov 10, 2026"). Hidden when the family currency is USD.
+- Progress bar: counts only the questions, screens 2 to 7b ("Question 1 of 7" to "Question 7 of 7"). Not shown on screen 1 or after the last question.
+- Footer: Back and Continue (Skip on 7b). A discreet "Start over" link clears all answers; not shown on screen 1.
+- Language: the page is English (lang="en"). Every Portuguese block (Family mode, bank letter) sets lang="pt-BR" on its own element.
 
 1. Welcome
    Title: "See the real cost of studying in the U.S."
    Body: "In your family's currency, with a clear plan. No login needed."
+   Privacy line: "Answers are never sent to or saved on a server. They stay only in this browser tab and are cleared when the tab closes."
    Button: "Start"
-2. Level, area, state
-   "What do you want to study?" Level (Bachelor's only active), area (Computer Science, Business, Engineering, Other), state (Texas).
+2. Area
+   "What do you want to study?" Context line: "Bachelor's degree in Texas. More levels and states are coming." Area: Computer Science, Business, Engineering, Other. Level and state are not screens: each has only one active option.
 3. College and program
-   "Which colleges are you thinking about?" Pick from data/colleges.json; program per college. Link: "Help me choose".
+   "Which colleges are you thinking about?" UT Austin selectable, program per college. The 4 pending colleges are visible, marked "Not confirmed", with the official link. ACC is not listed here: it appears only from "Out of my budget". Link: "Help me choose".
 4. Nationality
    "Which passport or passports do you have?"
 5. Visa or status
    "What is your situation in the U.S. today?" Six options from docs/visa-and-fees.md.
 6. Start date
    "When do you want to start?" Fall 2027, Spring 2028, Fall 2028.
-7. Currency and monthly amount
-   "Which currency does your family use?" then "How much could your family pay per month?" Helper: "Optional. It helps us sort colleges. You can skip it." Buttons: Continue, Skip.
+7a. Currency
+   "Which currency does your family use?" BRL or USD. With USD the rate is 1 and nothing is fetched.
+7b. Monthly amount
+   "How much could your family pay per month?" Helper: "Optional. It helps us sort colleges. You can skip it." Buttons: Continue, Skip. While the rate loads: "Updating the exchange rate...". Results appear only after a rate is ready.
 8. Results list
    Title: "Your colleges". Each card: college, program, total for the whole program (USD and family currency), band badge, "Out of my budget" button. Section "More colleges" when a budget was given.
 9. College detail: full cost by phase

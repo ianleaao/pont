@@ -45,10 +45,16 @@ Example values in the sketch are placeholders. Every stored value comes from doc
 ## 3. Estimated net price (range, never a promise)
 `netPrice(college, profile, costResult)`:
 - If the income band falls fully under a published threshold that applies to this student, use the threshold rule (for example family pays 0 for the covered items) and keep uncovered items (flights, visa fees, personal costs) as lines the family pays.
-- If the college meets full need but the band is above all thresholds, show a range from "Not confirmed" to full cost, with the link to the college's net price calculator. No formula of our own.
+- Threshold `parent_contribution_zero` (Harvard under 100,000 USD): parent contribution 0 for the cost of attendance. The family pays the one-time visa fees (lines). Student contribution, travel, personal costs and the student health insurance are listed as "Not confirmed", never added.
+- Threshold `covers_full_tuition_at_least` or `tuition_free` (Harvard 100,000 to 200,000 USD): the family pays AT MOST the full cost minus tuition (`atMost: true`). "Aid above tuition" is listed as not confirmed. The gap uses the cap.
+- Thresholds with `applies_to_intl` not true are never used for international students (MIT). They apply to U.S. citizens and residents.
+- The band must fall fully under the threshold (bands are [min, max) in USD: under 65k, 65k to 100k, 100k to 150k, 150k to 200k, over 200k).
+- If the college meets full need but the band is above all usable thresholds (or it has none: MIT and Amherst for internationals), method `calculator_link`: no estimate, the message "No estimate yet. See the official aid page." and the link labeled "Official aid page" (the college's aid page from the data). No formula of our own.
+- U.S. citizens and residents (FAFSA open): need-based aid is open at every college with an aid block. Without a usable threshold, method `calculator_link` (UT for Ian: the Texas One Stop aid page).
 - Merit-only colleges: net price = full cost; merit shown as "possible, not guaranteed" with the published range only if the college publishes one.
-- No income band given: show full cost plus "Share an income range to see aid estimates."
-Output: { min, max, method: "threshold" | "calculator_link" | "full_cost", lines, sources }.
+- No income band given: international students see full cost plus "Share an income range to see aid estimates."; U.S. citizens and residents get `calculator_link`.
+- Transfer paths (community college then transfer) use full cost.
+Output: { method: "threshold" | "calculator_link" | "full_cost", hasEstimate, atMost, total, averagePerYear, year1, lines, notConfirmed, message, aidPage, merit, sources }. Ranges are { min, max, mid } in USD; null when there is no estimate.
 
 ## 4. Funding gap (replaces the budget band)
 gap = estimated net price, average per year over the program, minus what the family can pay per year (monthly amount x 12, converted to USD).
@@ -58,14 +64,20 @@ Labels, neutral:
 - "Small gap": gap <= 20% of the net price (margin in config)
 - "Gap": everything else
 Without a monthly amount: no gap label, show the net price only.
+Without an estimate (`calculator_link`): no gap label; the result says "No estimate yet. See the official aid page."
+Only confirmed lines count. The not-confirmed list always travels with the label, as one line under it:
+- "Funded": "Covers every confirmed cost." plus " Still to confirm: <lines>." when lines are pending. Never shown alone.
+- "Small gap" and "Gap": "Still to confirm: <lines>." when lines are pending.
+`fundingGap(net, monthlyAmount, fxRate)` returns { label, note, notConfirmed, gapUsd, gapShare, gapFamily, netPerYear, basis, year1 }.
 Copy never says "can't afford". It always lists what can close it.
 
 ## 5. Routes
-`routes(answers, data)` returns three groups, each item with net price range, gap label, forms and next deadline:
-- Reach: the dream colleges, always shown first and never hidden.
-- Match: colleges in data with need-based aid for this profile.
-- Affordable: community college then transfer to the dream or a public university (uses transferPath), and public universities with merit aid.
-Sorted inside each group by gap, then by net price midpoint.
+`routes(answers, data, { fxRate, today })` returns three groups, named for money, not admission chances. Each item has net price, gap label with its not-confirmed list, forms and next aid deadline:
+- "Your dream" (id `dream`): the dream colleges, always shown first and never hidden.
+- "Strong aid for you" (id `strong_aid`): verified colleges with need-based aid open for this profile that meet full need (Harvard, MIT and Amherst for Ananya, Lucas and Ian).
+- "Lower-cost path" (id `lower_cost`): community college then transfer to a dream college (uses transferPath), and public universities with merit aid.
+Sorted inside each group: colleges with an estimate first, then colleges without an estimate, then unconfirmed ones; within those, by gap, then by net price midpoint.
+Next aid deadline: "MM-DD" dates fall in the application cycle (August to December of the year before the start, January to July of the start year). Dates before `today` are returned as past (Amherst ED aid deadline 2026-11-13).
 
 ## 6. Currency by country (js/fx.js)
 - data/countries.json maps country code to { currency, locale, currency_display, family_language, family_language_alternatives, esta, home_scholarships, notes }. Countries: BR, IN, MX, CO, NG, VN, CN, KR, US.

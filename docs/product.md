@@ -21,7 +21,7 @@ International students know which college they dream of, but not how to pay for 
 A. Goal intake: short AI conversation, then a confirm screen.
 B. Funding profile: which aid doors are open (engine, deterministic).
 C. Funding map for the dream school: aid policy, published thresholds, estimated net price range, forms, deadlines, the gap.
-D. Routes: Reach (dream), Match (strong aid for internationals), Affordable path (community college then transfer, public universities with merit aid). Later options listed only: graduate, continuing education, Europe.
+D. Routes, named for money, not admission chances: "Your dream" (the dream colleges), "Strong aid for you" (colleges that meet full need for this profile), "Lower-cost path" (community college then transfer, public universities with merit aid). Later options listed only: graduate, continuing education, Europe.
 E. Plan: timeline with tests, applications, aid forms, scholarships, I-20, visa.
 F. Documents studio: upload, AI reads and translates, engine converts to USD, AI flags problems against the college's rules, drafts requests to the bank.
 G. Family mode: summary for parents in their language and currency.

@@ -20,7 +20,9 @@ App frame (index.html, every screen):
 4. Funding map (dream school first)
    For each dream college: aid policy in plain words ("Need-blind for international students and meets full need"), estimated net price range per year in USD and family currency, method label (published threshold, calculator link or full cost), gap label, forms, next deadline. Section "Doors open for you" from the funding profile.
 5. Routes
-   Three groups: Reach, Match, Affordable. Route cards with net price range, gap label, one-line AI explanation of why this route fits. Dream colleges never hidden.
+   Three groups, named for money, not admission chances: "Your dream", "Strong aid for you", "Lower-cost path". Route cards with net price range, gap label, one-line AI explanation of why this route fits. Dream colleges never hidden.
+   Under every gap label, one line with what is still to confirm: "Funded" always shows "Covers every confirmed cost." plus "Still to confirm: <lines>." when lines are pending; "Small gap" and "Gap" show "Still to confirm: <lines>." when lines are pending.
+   No estimate (net price method calculator_link): no gap label, the card says "No estimate yet. See the official aid page." with the link labeled "Official aid page".
 6. College detail
    Aid policy with source, thresholds, forms, deadlines, full cost by phase (pay versus show for the I-20), scholarships, residency check card for U.S. citizens and residents (UT), I-20 amount for visa students.
 7. Scholarships

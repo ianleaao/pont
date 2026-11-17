@@ -1,7 +1,7 @@
 # Pont: AI funding advisor for international students (E-1 prototype)
 
 ## What this is (direction approved 13 Nov 2026)
-Pont works like a consultant. It learns the student's goal (for example "I want Harvard"), finds which financial aid and scholarships this exact profile can get, builds the routes to fund it (dream school, strong-aid match, affordable path), and prepares the financial documents with AI (read, translate, convert to USD, flag problems).
+Pont works like a consultant. It learns the student's goal (for example "I want Harvard"), finds which financial aid and scholarships this exact profile can get, builds the routes to fund it ("Your dream", "Strong aid for you", "Lower-cost path"), and prepares the financial documents with AI (read, translate, convert to USD, flag problems).
 
 Pont is NOT a cost calculator. Cost is one input to the funding strategy, never the headline.
 
@@ -55,9 +55,9 @@ docs/                  specs: read the relevant file before each task
 11. The page is English (`lang="en"`). Every block in the family language (family mode, bank letter, drafts) sets its own `lang` on its element (for example `lang="pt-BR"`, `lang="hi"`).
 
 ## Demo paths (must work end to end)
-- Path 1, dream school: Ananya, India (INR), no visa, wants Harvard, income band under 100,000 USD. Result: Harvard is need-blind for internationals and meets full need; estimated family cost near 0 under Harvard's published threshold; plan with CSS Profile, documents and deadlines; backups at MIT and Amherst; documents studio with an Indian bank statement sample; family mode in Hindi.
-- Path 2, funding gap: Lucas, Brazil (BRL), no visa, Computer Science at UT Austin, can pay about 23,000 BRL per month (same value as the current tests). Result: UT gives internationals merit scholarships only; gap shown; routes: ACC then UT transfer, outside scholarships, full-need colleges as reach; I-20 documents converted to USD.
-- Path 3, cross-border: Ian, U.S. citizen, parents in Brazil, UT Austin. FAFSA path with foreign income, residency check card, parents' documents converted to USD.
+- Path 1, dream school: Ananya, India (INR), no visa, wants Harvard, income band under 65,000 USD, can pay about 10,000 INR per month. Result: Harvard is need-blind for internationals and meets full need; estimated family cost near 0 under Harvard's published threshold, label "Funded" with the lines still to confirm; plan with CSS Profile, documents and deadlines; MIT and Amherst in "Strong aid for you" (no estimate yet, official aid page); documents studio with an Indian bank statement sample; family mode in Hindi.
+- Path 2, funding gap: Lucas, Brazil (BRL), no visa, Computer Science at UT Austin, can pay about 23,000 BRL per month (same value as the current tests). Result: UT gives internationals merit scholarships only; gap shown; routes: ACC then UT transfer in "Lower-cost path", outside scholarships, full-need colleges (Harvard, MIT, Amherst) in "Strong aid for you"; I-20 documents converted to USD.
+- Path 3, cross-border: Ian, U.S. citizen, parents in Brazil, UT Austin. FAFSA path with foreign income (UT net price: no estimate, link to the Texas One Stop aid page), residency check card, parents' documents converted to USD.
 
 Demo shortcuts: `index.html?demo=ananya`, `index.html?demo=lucas` and `index.html?demo=ian`. They fill the intake answers, open the profile confirm screen and replace any saved session without a message. Nothing about them is visible in the UI.
 

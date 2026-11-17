@@ -128,7 +128,22 @@
     const lines = [];
     const notAdded = [];
 
-    if (college.id === "acc") {
+    if (college.cost_of_attendance_2026_27) {
+      // Line-by-line cost (Harvard, MIT, Amherst). Lines with added: false are shown, never added.
+      const coa = college.cost_of_attendance_2026_27;
+      const src = collegeSource(college, coa.source, coa.checked_on);
+      coa.lines.forEach((l) => {
+        if (l.added) lines.push(line(l.id, l.label, amountOf(l), src, l.note));
+        else notAdded.push(shownNotAdded(l.id, l.label, null, src, "not_confirmed", l.note));
+      });
+      (college.required_extras_per_year || []).forEach((x) => {
+        if (x.applies_to && !x.applies_to.includes(profile.visaClass)) return;
+        lines.push(line(x.id, x.label, amountOf(x, firstYear), collegeSource(college, x.source, x.checked_on), x.note));
+      });
+      (college.shown_not_added_per_year || []).forEach((x) => {
+        notAdded.push(shownNotAdded(x.id, x.label, null, collegeSource(college, x.source, x.checked_on), "not_confirmed", x.note));
+      });
+    } else if (college.id === "acc") {
       // ACC publishes one F-1 estimate. Other situations are not in the prototype data.
       if (profile.visaClass !== "F") return notConfirmedResult(college, programId, "no_data_for_situation");
       lines.push(line("acc_f1_estimate", college.f1_estimate_label, range(college.f1_estimated_annual_cost),
@@ -431,6 +446,312 @@
     };
   }
 
+  /* ---------- 7. Funding profile (docs/funding-and-currency.md section 2) ---------- */
+
+  // Income bands from docs/product.md, in USD. max is exclusive: "under 65k" is [0, 65,000).
+  const INCOME_BANDS = {
+    under_65k: { min: 0, max: 65000, label: "Under 65,000 USD" },
+    "65k_100k": { min: 65000, max: 100000, label: "65,000 to 100,000 USD" },
+    "100k_150k": { min: 100000, max: 150000, label: "100,000 to 150,000 USD" },
+    "150k_200k": { min: 150000, max: 200000, label: "150,000 to 200,000 USD" },
+    over_200k: { min: 200000, max: Infinity, label: "Over 200,000 USD" },
+    prefer_not: null,
+  };
+
+  const aidValue = (college, key) => (college.aid && college.aid[key] ? college.aid[key].value : null);
+
+  // answers: { status, parentCountries, incomeBand, colleges, area, monthly, currency }
+  // data: { colleges, countries? }
+  function fundingProfile(answers, data) {
+    const fafsaOpen = answers.status === "citizen_or_pr";
+    const visaStudent = visaProfile(answers.status).visaClass === "F";
+    const band = answers.incomeBand ? INCOME_BANDS[answers.incomeBand] : null;
+    if (band === undefined) throw new Error("Unknown income band: " + answers.incomeBand);
+
+    const currencies = [];
+    const countries = data.countries && data.countries.countries;
+    (answers.parentCountries || []).forEach((code) => {
+      const cur = countries && countries[code] ? countries[code].currency : null;
+      if (cur && cur !== "USD" && !currencies.includes(cur)) currencies.push(cur);
+    });
+
+    const colleges = data.colleges.colleges.filter((c) => c.status === "verified" && c.aid).map((c) => {
+      const intl = aidValue(c, "intl_need_based_aid");
+      const needBased = fafsaOpen
+        ? { open: true, reason: "U.S. citizens and permanent residents can apply for need-based aid." }
+        : intl === true ? { open: true, reason: "Need-based aid is open to international students." }
+          : intl === false ? { open: false, reason: "No need-based aid for international students." }
+            : { open: null, status: "not_confirmed", reason: "Not confirmed for international students." };
+      const forms = fafsaOpen ? c.aid.forms_us : c.aid.forms_intl;
+      return {
+        collegeId: c.id,
+        needBased,
+        meetsFullNeed: aidValue(c, "meets_full_need_intl") === true,
+        merit: aidValue(c, "merit_aid_intl"),
+        forms: ((forms && forms.value) || []).filter((f) => fafsaOpen || f !== "fafsa"),
+        source: collegeSource(c, c.aid.intl_need_based_aid.source, c.aid.intl_need_based_aid.checked_on),
+      };
+    });
+
+    return {
+      status: answers.status,
+      audience: fafsaOpen ? "us" : "intl",
+      visaStudent,
+      fafsa: fafsaOpen
+        ? { open: true, reason: "FAFSA is for U.S. citizens and eligible non-citizens." }
+        : { open: false, reason: visaStudent ? "FAFSA is not open to F-1 or J-1 students." : "FAFSA is for U.S. citizens and eligible non-citizens." },
+      incomeBand: band ? Object.assign({ id: answers.incomeBand }, band) : null,
+      currencies,
+      colleges,
+    };
+  }
+
+  /* ---------- 8. Estimated net price (range, never a promise) ---------- */
+
+  const COPY = {
+    noEstimate: "No estimate yet. See the official aid page.",
+    shareIncome: "Share an income range to see aid estimates.",
+    aidPage: "Official aid page",
+    meritPossible: "Merit scholarships: possible, not guaranteed.",
+    covers: "Covers every confirmed cost.",
+    stillToConfirm: "Still to confirm: ",
+  };
+
+  // Usable thresholds for this profile. MIT's (applies_to_intl: null) are never used for internationals.
+  function usableThresholds(college, profile) {
+    const t = college.aid && college.aid.thresholds;
+    return ((t && t.value) || []).filter((x) => profile.audience === "us" || x.applies_to_intl === true)
+      .slice().sort((a, b) => a.income_below_usd - b.income_below_usd);
+  }
+
+  function aidPageFor(college, profile) {
+    const f = profile.audience === "us" && college.aid.forms_us ? college.aid.forms_us : null;
+    const id = f && f.source ? f.source : college.aid.source;
+    return Object.assign(collegeSource(college, id, college.aid.checked_on), { label: COPY.aidPage });
+  }
+
+  const notConfirmedItem = (id, label, source, note) => ({ id, label, source: source || null, note: note || null });
+
+  // costResult: programTotal() or transferPath() for this college and profile.
+  // Output: { method, hasEstimate, atMost, total, averagePerYear, year1, lines, notConfirmed, message, aidPage, sources }
+  function netPrice(college, profile, costResult) {
+    if (!costResult || costResult.status !== "ok") {
+      return { status: "not_confirmed", method: null, hasEstimate: false, reason: costResult ? costResult.reason : null };
+    }
+    const years = costResult.years;
+    const pending = costResult.notAdded.filter((l) => l.reason === "not_confirmed")
+      .map((l) => notConfirmedItem(l.id, l.label, l.source, l.note));
+    const aidPage = aidPageFor(college, profile);
+    const pc = profile.colleges.find((c) => c.collegeId === college.id) || { needBased: { open: false } };
+    const band = profile.incomeBand;
+    const base = { status: "ok", collegeId: college.id, years, fullCost: costResult.total, aidPage };
+    const fullYear1 = addRanges(costResult.perYear[0].amount, costResult.oneTime.total);
+
+    const fullCost = (message) => Object.assign(base, {
+      method: "full_cost",
+      hasEstimate: true,
+      atMost: false,
+      total: costResult.total,
+      averagePerYear: scaleRange(costResult.total, 1 / years),
+      year1: fullYear1,
+      lines: costResult.annual ? costResult.annual.lines.concat(costResult.oneTime.lines) : costResult.oneTime.lines,
+      notConfirmed: pending,
+      merit: pc.merit === "limited" || pc.merit === "yes" ? COPY.meritPossible : null,
+      message: message || null,
+      sources: costResult.sources,
+    });
+    const calculatorLink = () => Object.assign(base, {
+      method: "calculator_link",
+      hasEstimate: false,
+      atMost: false,
+      total: null,
+      averagePerYear: null,
+      year1: null,
+      lines: [],
+      notConfirmed: pending,
+      message: COPY.noEstimate,
+      sources: [aidPage],
+    });
+
+    // Transfer paths and colleges without need-based aid for this profile: full cost.
+    if (costResult.kind !== "single" || pc.needBased.open !== true) return fullCost();
+    if (!band) return profile.audience === "us" ? calculatorLink() : fullCost(COPY.shareIncome);
+
+    const thr = usableThresholds(college, profile).find((x) => band.max <= x.income_below_usd);
+    if (!thr) return calculatorLink();
+    const thrSource = collegeSource(college, college.aid.thresholds.source, college.aid.thresholds.checked_on);
+
+    if (thr.rule === "parent_contribution_zero") {
+      // Parents pay 0 toward the cost of attendance. What else the family pays is not published: listed, never added.
+      const extra = [
+        notConfirmedItem("student_contribution", "Student contribution", aidPage, "Not published. Confirm with the college."),
+        notConfirmedItem("travel", "Travel", aidPage, "Not confirmed. See the official aid page."),
+        notConfirmedItem("personal", "Personal costs", aidPage, "Not confirmed. See the official aid page."),
+      ];
+      (college.required_extras_per_year || []).forEach((x) => extra.push(notConfirmedItem(x.id, x.label,
+        collegeSource(college, x.source, x.checked_on), "Not confirmed whether aid covers it. " + (x.note || ""))));
+      const once = costResult.oneTime;
+      return Object.assign(base, {
+        method: "threshold",
+        hasEstimate: true,
+        atMost: false,
+        threshold: Object.assign({}, thr, { source: thrSource }),
+        total: once.total,
+        averagePerYear: scaleRange(once.total, 1 / years),
+        year1: once.total,
+        lines: [line("parent_contribution", "Parent contribution", ZERO, thrSource, thr.label)].concat(once.lines),
+        notConfirmed: extra.concat(pending.filter((p) => !extra.some((e) => e.id === p.id))),
+        message: thr.applies_note || null,
+        sources: uniqueSources([{ source: thrSource }].concat(once.lines, once.notAdded)),
+      });
+    }
+
+    // covers_full_tuition_at_least or tuition_free: the family pays AT MOST the full cost minus tuition.
+    const tuition = costResult.annual.lines.find((l) => l.id === "tuition");
+    if (!tuition) return calculatorLink();
+    const tuitionPerYear = costResult.perYear.map((y) => scaleRange(tuition.amount, y.factor));
+    const tuitionTotal = tuitionPerYear.reduce(addRanges, ZERO);
+    const capTotal = range(costResult.total.max - tuitionTotal.max);
+    return Object.assign(base, {
+      method: "threshold",
+      hasEstimate: true,
+      atMost: true,
+      threshold: Object.assign({}, thr, { source: thrSource }),
+      total: capTotal,
+      averagePerYear: scaleRange(capTotal, 1 / years),
+      year1: range(fullYear1.max - tuitionPerYear[0].max),
+      lines: [line("tuition_covered", "Tuition, covered by aid (at least)", scaleRange(tuitionTotal, -1), thrSource, thr.label)],
+      notConfirmed: [notConfirmedItem("aid_above_tuition", "Aid above tuition", aidPage, COPY.noEstimate)].concat(pending),
+      message: thr.applies_note || null,
+      sources: uniqueSources([{ source: thrSource }].concat(costResult.annual.lines)),
+    });
+  }
+
+  /* ---------- 9. Funding gap (replaces the budget band) ---------- */
+
+  // monthlyAmount: what the family could pay per month, in the family currency. fxRate: family currency per 1 USD.
+  // The gap uses the average per year over the program; year 1 is also returned for the college detail.
+  // Only confirmed lines count. The not-confirmed list always travels with the label.
+  function fundingGap(net, monthlyAmount, fxRate, config) {
+    config = Object.assign({}, DEFAULTS, config);
+    if (!net || net.status !== "ok") return { label: null, status: "not_confirmed" };
+    if (!net.hasEstimate) return { label: null, message: COPY.noEstimate, aidPage: net.aidPage, notConfirmed: net.notConfirmed };
+    const pendingLabels = net.notConfirmed.map((n) => n.label);
+    if (!(monthlyAmount > 0) || !(fxRate > 0)) {
+      return { label: null, message: null, netPerYear: net.averagePerYear, notConfirmed: net.notConfirmed };
+    }
+    const familyPerYear = (monthlyAmount * 12) / fxRate;
+    // "At most" estimates use the cap; ranges use the midpoint.
+    const pick = (r) => (net.atMost ? r.max : r.mid);
+    const perYear = pick(net.averagePerYear);
+    const gapUsd = perYear - familyPerYear;
+    const label = gapUsd <= EPS ? "Funded" : gapUsd <= config.aboveMargin * perYear + EPS ? "Small gap" : "Gap";
+    let note = null;
+    if (label === "Funded") {
+      note = COPY.covers + (pendingLabels.length ? " " + COPY.stillToConfirm + pendingLabels.join(", ") + "." : "");
+    } else if (pendingLabels.length) {
+      note = COPY.stillToConfirm + pendingLabels.join(", ") + ".";
+    }
+    return {
+      label,
+      note,
+      notConfirmed: net.notConfirmed,
+      gapUsd,
+      gapShare: perYear > 0 ? gapUsd / perYear : 0,
+      gapFamily: gapUsd * fxRate,
+      familyPerYearUsd: familyPerYear,
+      netPerYear: perYear,
+      basis: "average per year over the program",
+      year1: { netUsd: pick(net.year1), gapUsd: pick(net.year1) - familyPerYear },
+    };
+  }
+
+  /* ---------- 10. Routes ---------- */
+
+  const ROUTE_GROUPS = [
+    { id: "dream", label: "Your dream" },
+    { id: "strong_aid", label: "Strong aid for you" },
+    { id: "lower_cost", label: "Lower-cost path" },
+  ];
+
+  // Next aid deadline for the start term. "MM-DD" dates fall in the application cycle:
+  // August to December of the year before the start, January to July of the start year.
+  function nextDeadline(college, term, today) {
+    const d = college.aid && college.aid.deadlines && college.aid.deadlines.value;
+    if (!d || !d.aid) return null;
+    const startYear = parseInt(/\d{4}/.exec(term)[0], 10);
+    const all = Object.keys(d.aid).filter((k) => !/open/.test(k)).map((k) => {
+      const v = d.aid[k];
+      const date = /^\d{4}-/.test(v) ? v : (parseInt(v.slice(0, 2), 10) >= 8 ? startYear - 1 : startYear) + "-" + v;
+      return { id: k, date, past: today ? date < today : false };
+    }).sort((a, b) => (a.date < b.date ? -1 : 1));
+    return { next: all.find((x) => !x.past) || null, past: all.filter((x) => x.past),
+      source: collegeSource(college, college.aid.deadlines.source, college.aid.deadlines.checked_on) };
+  }
+
+  const matchesArea = (p, area) => p.level === "bachelor" && (p.area === area || p.area === "any");
+
+  // ctx: { fxRate, today: "YYYY-MM-DD" }. Returns the three groups; the dream group is always first and never empty
+  // when the student named a college.
+  function routes(answers, data, ctx, config) {
+    ctx = ctx || {};
+    const profile = fundingProfile(answers, data);
+    const dreamIds = (answers.colleges || []).map((c) => c.collegeId);
+    const base = { status: answers.status, country: (answers.passports || [])[0] || null, term: answers.term,
+      englishTest: answers.englishTest || "toefl", flights: answers.flights || 0, residency: "nonresident" };
+
+    const item = (college, programId, cost) => {
+      const net = netPrice(college, profile, cost);
+      const pc = profile.colleges.find((c) => c.collegeId === college.id);
+      return {
+        collegeId: college.id,
+        collegeName: college.name,
+        programId,
+        kind: cost.kind || null,
+        targetCollegeId: cost.targetCollegeId || null,
+        status: cost.status,
+        cost,
+        netPrice: net,
+        gap: fundingGap(net, answers.monthly, ctx.fxRate, config),
+        forms: pc ? pc.forms : [],
+        deadline: nextDeadline(college, answers.term, ctx.today),
+      };
+    };
+    const single = (c, programId) => item(c, programId,
+      programTotal(Object.assign({}, base, { collegeId: c.id, programId }), data, config));
+
+    const groups = { dream: [], strong_aid: [], lower_cost: [] };
+    (answers.colleges || []).forEach((d) => {
+      const c = findCollege(data, d.collegeId);
+      if (c) groups.dream.push(single(c, d.programId));
+    });
+
+    data.colleges.colleges.forEach((c) => {
+      if (c.status !== "verified" || dreamIds.includes(c.id)) return;
+      const pc = profile.colleges.find((x) => x.collegeId === c.id);
+      (c.programs || []).forEach((p) => {
+        if (p.transfers_to && dreamIds.includes(p.transfers_to) && p.area === answers.area) {
+          groups.lower_cost.push(item(c, p.id, transferPath(Object.assign({}, base, { collegeId: c.id, programId: p.id }), data, config)));
+        }
+      });
+      const prog = (c.programs || []).find((p) => matchesArea(p, answers.area));
+      if (!prog || !pc) return;
+      if (pc.needBased.open === true && pc.meetsFullNeed) groups.strong_aid.push(single(c, prog.id));
+      else if (c.type === "public_university" && (pc.merit === "limited" || pc.merit === "yes")) groups.lower_cost.push(single(c, prog.id));
+    });
+
+    // Inside each group: unconfirmed last, then no estimate, then by gap, then by net price midpoint.
+    const rank = (r) => (r.status !== "ok" ? 2 : r.netPrice.hasEstimate ? 0 : 1);
+    const gapOf = (r) => (r.gap && typeof r.gap.gapUsd === "number" ? r.gap.gapUsd : 0);
+    const mid = (r) => (r.netPrice && r.netPrice.averagePerYear ? r.netPrice.averagePerYear.mid : Infinity);
+    const sortGroup = (list) => list.sort((a, b) => rank(a) - rank(b) || gapOf(a) - gapOf(b) || mid(a) - mid(b));
+
+    return {
+      profile,
+      groups: ROUTE_GROUPS.map((g) => ({ id: g.id, label: g.label, items: sortGroup(groups[g.id]) })),
+    };
+  }
+
   /* ---------- 6. Recommendations ---------- */
 
   const sortKey = (r) => (r.status === "ok" ? r.monthly.usd.mid : Infinity);
@@ -492,6 +813,14 @@
     residencyScenarios,
     recommend,
     outOfBudget,
+    INCOME_BANDS,
+    ROUTE_GROUPS,
+    COPY,
+    fundingProfile,
+    netPrice,
+    fundingGap,
+    nextDeadline,
+    routes,
   };
 
   if (typeof module !== "undefined" && module.exports) module.exports = api;

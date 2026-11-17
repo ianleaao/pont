@@ -19,6 +19,17 @@
 
   /* ---------- Demo answers (CLAUDE.md, "Demo paths") ---------- */
   const DEMOS = {
+    ananya: {
+      area: "any",
+      colleges: [{ collegeId: "harvard", programId: "undeclared" }],
+      passports: ["IN"],
+      parentCountries: ["IN"],
+      status: "no_visa",
+      term: "fall-2027",
+      currency: "INR",
+      incomeBand: "under_65k",
+      monthly: 10000,
+    },
     lucas: {
       area: "cs",
       colleges: [{ collegeId: "ut-austin", programId: "cs" }],

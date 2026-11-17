@@ -29,7 +29,7 @@
 <script src="js/engine.js"></script>
 <script src="js/fx.js"></script>
 <script id="engine-tests">
-// Test suite. Takes (E = engine, data = { colleges, fees, fx }) and returns [{ name, pass, detail }].
+// Test suite. Takes (E = engine, data = { colleges, fees, fx, countries }) and returns [{ name, pass, detail }].
 function runPontTests(E, data) {
   const FX = 5.5146; // fixed on purpose: tests must not change with the live rate
   const out = [];
@@ -369,6 +369,161 @@ function runPontTests(E, data) {
     return noUrl.length ? "no official link yet: " + noUrl.join(", ") : true;
   });
 
+
+  // --- Funding engine (docs/funding-and-currency.md sections 2 to 5) ---
+  const INR_TEST = 94; // TEST ONLY, same as the fx tests
+  const TODAY = "2026-11-17";
+  const ANANYA = { area: "any", colleges: [{ collegeId: "harvard", programId: "undeclared" }], passports: ["IN"],
+    parentCountries: ["IN"], status: "no_visa", term: "fall-2027", currency: "INR", monthly: 10000, incomeBand: "under_65k" };
+  const LUCAS_A = { area: "cs", colleges: [{ collegeId: "ut-austin", programId: "cs" }], passports: ["BR"],
+    parentCountries: ["BR"], status: "no_visa", term: "fall-2027", currency: "BRL", monthly: 23000 };
+  const IAN_A = { area: "cs", colleges: [{ collegeId: "ut-austin", programId: "cs" }], passports: ["US"],
+    parentCountries: ["BR"], status: "citizen_or_pr", term: "fall-2027", currency: "BRL", monthly: null };
+  const fcol = (id) => data.colleges.colleges.find((c) => c.id === id);
+  const costFor = (answers, collegeId, programId) => E.programTotal({ collegeId, programId, status: answers.status,
+    country: answers.passports[0], term: answers.term, flights: 0 }, data);
+  const netFor = (answers, collegeId, programId) => E.netPrice(fcol(collegeId),
+    E.fundingProfile(answers, data), costFor(answers, collegeId, programId));
+  const group = (r, id) => r.groups.find((g) => g.id === id);
+  const synthNet = (perYear, pending) => ({ status: "ok", hasEstimate: true, atMost: false,
+    averagePerYear: E.range(perYear), year1: E.range(perYear), notConfirmed: (pending || []).map((l) => ({ id: l, label: l })) });
+
+  t("Cost lines: Harvard 95,134 to 100,134 + insurance 4,954; MIT 92,760; Amherst 98,160; travel and unconfirmed insurance not added", () => {
+    const h = E.annualCost(fcol("harvard"), "undeclared", { status: "no_visa" });
+    check(h.total.min === 100088 && h.total.max === 105088, JSON.stringify(h.total));
+    const m = E.annualCost(fcol("mit"), "undeclared", { status: "no_visa" });
+    check(m.total.mid === 92760 && m.notAdded.some((l) => l.id === "travel") && m.notAdded.some((l) => l.id === "health_insurance"), "mit");
+    const a = E.annualCost(fcol("amherst"), "undeclared", { status: "no_visa" });
+    check(a.total.mid === 98160 && a.notAdded.every((l) => l.reason === "not_confirmed"), "amherst");
+  });
+  t("fundingProfile, three demo paths: FAFSA closed for F-1, open for Ian; family currency from the parents' country", () => {
+    const a = E.fundingProfile(ANANYA, data), l = E.fundingProfile(LUCAS_A, data), i = E.fundingProfile(IAN_A, data);
+    check(!a.fafsa.open && a.fafsa.reason === "FAFSA is not open to F-1 or J-1 students." && a.audience === "intl", "ananya fafsa");
+    check(a.currencies.join() === "INR" && a.incomeBand.id === "under_65k" && a.incomeBand.max === 65000, "ananya band");
+    check(!l.fafsa.open && l.currencies.join() === "BRL" && l.incomeBand === null, "lucas");
+    check(i.fafsa.open && i.audience === "us" && i.currencies.join() === "BRL", "ian");
+    const harvardA = a.colleges.find((c) => c.collegeId === "harvard");
+    const utL = l.colleges.find((c) => c.collegeId === "ut-austin");
+    const utI = i.colleges.find((c) => c.collegeId === "ut-austin");
+    check(harvardA.needBased.open === true && harvardA.forms.join() === "css_profile,idoc", "harvard for ananya");
+    check(utL.needBased.open === false && utI.needBased.open === true && utI.forms.join() === "fafsa,tasfa", "ut");
+    check(a.colleges.every((c) => !c.forms.includes("fafsa")), "FAFSA offered to an F-1 student");
+  });
+  t("Ananya at Harvard (under 65k): threshold, parent contribution 0, visa fees paid by the family, the rest 'Not confirmed'", () => {
+    const n = netFor(ANANYA, "harvard", "undeclared");
+    check(n.method === "threshold" && n.threshold.rule === "parent_contribution_zero" && n.hasEstimate, n.method);
+    const pc = n.lines.find((l) => l.id === "parent_contribution");
+    check(pc && pc.amount.max === 0 && pc.source.url === "https://college.harvard.edu/financial-aid/how-aid-works", "parent line");
+    check(n.lines.some((l) => l.id === "sevis_f_m") && n.lines.some((l) => l.id === "mrv") && n.total.mid === 535, "visa fees " + n.total.mid);
+    const ids = n.notConfirmed.map((x) => x.id);
+    check(["student_contribution", "travel", "personal"].every((x) => ids.includes(x)), ids.join());
+    return "total " + n.total.mid + " USD, still to confirm: " + ids.join(", ");
+  });
+  t("Ananya (10,000 INR per month): 'Funded', and the not-confirmed list travels with the label", () => {
+    const n = netFor(ANANYA, "harvard", "undeclared");
+    const g = E.fundingGap(n, ANANYA.monthly, INR_TEST);
+    check(g.label === "Funded", g.label + " " + g.gapUsd);
+    check(g.notConfirmed === n.notConfirmed && g.notConfirmed.length >= 3, "list missing");
+    check(g.note.indexOf("Covers every confirmed cost. Still to confirm: Student contribution, Travel, Personal costs") === 0, g.note);
+    check(n.notConfirmed.every((x) => g.note.indexOf(x.label) >= 0), "a not-confirmed line is missing from the note");
+  });
+  t("'Funded' never shows alone; 'Small gap' and 'Gap' carry 'Still to confirm' when lines are pending", () => {
+    check(E.fundingGap(synthNet(1000), 100, 1).note === "Covers every confirmed cost.", "funded, nothing pending");
+    check(E.fundingGap(synthNet(1000, ["Travel"]), 100, 1).note === "Covers every confirmed cost. Still to confirm: Travel.", "funded");
+    const s = E.fundingGap(synthNet(10000, ["Travel", "Books"]), 8000 / 12, 1);
+    check(s.label === "Small gap" && s.note === "Still to confirm: Travel, Books." && s.notConfirmed.length === 2, JSON.stringify(s));
+    const g = E.fundingGap(synthNet(10000, ["Travel"]), 100, 1);
+    check(g.label === "Gap" && g.note === "Still to confirm: Travel.", JSON.stringify(g));
+    check(E.fundingGap(synthNet(10000), 100, 1).note === null, "gap without pending lines");
+  });
+  t("Gap label edges: 0 -> Funded; exactly 20% -> Small gap; above 20% -> Gap; no monthly amount -> no label", () => {
+    check(E.fundingGap(synthNet(12000), 1000, 1).label === "Funded", "0");
+    check(E.fundingGap(synthNet(10000), 8000 / 12, 1).label === "Small gap", "20%");
+    check(E.fundingGap(synthNet(10000), 7999 / 12, 1).label === "Gap", "above 20%");
+    [null, undefined, 0].forEach((m) => check(E.fundingGap(synthNet(10000), m, 1).label === null, "label without amount"));
+  });
+  t("Gap uses the average per year over the program, and also returns year 1", () => {
+    const g = E.fundingGap(netFor(LUCAS_A, "ut-austin", "cs"), 23000, FX);
+    const r = E.programTotal(LUCAS, data);
+    check(near(g.netPerYear, r.total.mid / 4) && g.basis === "average per year over the program", "average");
+    check(near(g.year1.netUsd, r.perYear[0].amount.mid + r.oneTime.total.mid), "year 1");
+  });
+  t("No estimate (MIT and Amherst for Ananya): calculator_link, 'Official aid page', no gap label", () => {
+    ["mit", "amherst"].forEach((id) => {
+      const n = netFor(ANANYA, id, "undeclared");
+      check(n.method === "calculator_link" && !n.hasEstimate && n.total === null, id + " " + n.method);
+      check(n.aidPage.label === "Official aid page" && /^https:\/\//.test(n.aidPage.url), id + " link");
+      const g = E.fundingGap(n, ANANYA.monthly, INR_TEST);
+      check(g.label === null && g.message === "No estimate yet. See the official aid page.", id + " gap");
+    });
+  });
+  t("MIT thresholds are never used for international students (U.S. families: used)", () => {
+    check(netFor(ANANYA, "mit", "undeclared").method === "calculator_link", "intl");
+    const us = Object.assign({}, IAN_A, { incomeBand: "under_65k" });
+    const n = netFor(us, "mit", "undeclared");
+    check(n.method === "threshold" && n.threshold.rule === "parent_contribution_zero", "us " + n.method);
+  });
+  t("Harvard at 100k to 150k: at most the full cost minus tuition (aid covers at least tuition)", () => {
+    const ans = Object.assign({}, ANANYA, { incomeBand: "100k_150k" });
+    const n = netFor(ans, "harvard", "undeclared");
+    const r = costFor(ans, "harvard", "undeclared");
+    const expected = r.total.max - 62226 * G4;
+    check(n.method === "threshold" && n.atMost === true && near(n.total.max, expected), n.total.max + " vs " + expected);
+    check(n.notConfirmed.some((x) => x.id === "aid_above_tuition"), "aid above tuition not listed");
+    return "at most " + n.total.max.toFixed(2) + " USD, " + n.averagePerYear.max.toFixed(2) + " per year";
+  });
+  t("Harvard over 200k: above every threshold -> calculator_link", () => {
+    check(netFor(Object.assign({}, ANANYA, { incomeBand: "over_200k" }), "harvard", "undeclared").method === "calculator_link", "method");
+  });
+  t("No income band (Lucas at Harvard): full cost plus 'Share an income range to see aid estimates.'", () => {
+    const n = netFor(LUCAS_A, "harvard", "undeclared");
+    check(n.method === "full_cost" && n.message === "Share an income range to see aid estimates.", n.method + " " + n.message);
+  });
+  t("UT for Lucas (F-1): full cost, merit 'possible, not guaranteed', label 'Gap'", () => {
+    const n = netFor(LUCAS_A, "ut-austin", "cs");
+    check(n.method === "full_cost" && n.merit === "Merit scholarships: possible, not guaranteed.", n.method);
+    check(near(n.total.mid, E.programTotal(LUCAS, data).total.mid), "total");
+    check(E.fundingGap(n, 23000, FX).label === "Gap", "label");
+  });
+  t("Ian (U.S. citizen): FAFSA open, so UT uses calculator_link to the Texas One Stop aid page, not full cost", () => {
+    const n = netFor(IAN_A, "ut-austin", "cs");
+    check(n.method === "calculator_link" && n.aidPage.label === "Official aid page", n.method);
+    check(n.aidPage.url === "https://onestop.utexas.edu/managing-costs/scholarships-financial-aid/apply/", n.aidPage.url);
+    check(E.fundingGap(n, null, FX).message === "No estimate yet. See the official aid page.", "message");
+    check(E.residencyScenarios(IAN, data).sources[0].url === "https://onestop.utexas.edu", "residency card changed");
+  });
+  t("Routes: three groups in order 'Your dream', 'Strong aid for you', 'Lower-cost path'; dream college first", () => {
+    const r = E.routes(LUCAS_A, data, { fxRate: FX, today: TODAY });
+    check(r.groups.map((g) => g.label).join("|") === "Your dream|Strong aid for you|Lower-cost path", "labels");
+    check(group(r, "dream").items.length === 1 && group(r, "dream").items[0].collegeId === "ut-austin", "dream");
+    check(group(r, "dream").items[0].gap.label === "Gap", "dream kept even with a gap");
+  });
+  t("Lucas routes: Harvard, MIT, Amherst in 'Strong aid for you'; ACC then UT in 'Lower-cost path' with 'Small gap'", () => {
+    const r = E.routes(LUCAS_A, data, { fxRate: FX, today: TODAY });
+    check(group(r, "strong_aid").items.map((i) => i.collegeId).sort().join() === "amherst,harvard,mit", "strong aid");
+    const lc = group(r, "lower_cost").items[0];
+    check(lc.kind === "transfer_path" && lc.collegeId === "acc" && lc.targetCollegeId === "ut-austin", "lower cost");
+    check(lc.gap.label === "Small gap", lc.gap.label);
+    return "ACC then UT: " + (lc.gap.gapShare * 100).toFixed(1) + "% above";
+  });
+  t("Ananya routes: Harvard 'Funded'; MIT and Amherst in 'Strong aid for you' with no estimate", () => {
+    const r = E.routes(ANANYA, data, { fxRate: INR_TEST, today: TODAY });
+    check(group(r, "dream").items[0].gap.label === "Funded", "harvard");
+    check(group(r, "strong_aid").items.map((i) => i.collegeId).sort().join() === "amherst,mit", "strong aid");
+    check(group(r, "strong_aid").items.every((i) => i.gap.label === null && !i.netPrice.hasEstimate), "no estimate");
+    check(group(r, "lower_cost").items.length === 0, "lower cost");
+  });
+  t("Inside each group, colleges without an estimate sort after the ones with an estimate", () => {
+    const ans = Object.assign({}, ANANYA, { colleges: [{ collegeId: "mit", programId: "undeclared" },
+      { collegeId: "harvard", programId: "undeclared" }] });
+    const ids = group(E.routes(ans, data, { fxRate: INR_TEST, today: TODAY }), "dream").items.map((i) => i.collegeId);
+    check(ids.join() === "harvard,mit", ids.join());
+  });
+  t("Deadlines: Amherst ED aid deadline 2026-11-13 is past on 2026-11-17; next is RD 2027-01-15", () => {
+    const d = E.nextDeadline(fcol("amherst"), "fall-2027", TODAY);
+    check(d.past.length === 1 && d.past[0].date === "2026-11-13" && d.next.date === "2027-01-15", JSON.stringify(d));
+    check(E.nextDeadline(fcol("harvard"), "fall-2027", TODAY).next.date === "2027-02-01", "harvard");
+  });
   return out;
 }
 </script>
@@ -473,7 +628,7 @@ function runFxTests(F, data) {
   try {
     const [colleges, fees, fx, countries] = await Promise.all(
       ["data/colleges.json", "data/fees.json", "data/fx.json", "data/countries.json"].map(load));
-    const results = runPontTests(window.PontEngine, { colleges, fees, fx })
+    const results = runPontTests(window.PontEngine, { colleges, fees, fx, countries })
       .concat(runFxTests(window.PontFx, { countries, fx }));
     const list = document.getElementById("results");
     results.forEach((r) => {

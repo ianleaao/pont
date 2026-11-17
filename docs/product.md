@@ -45,5 +45,5 @@ The currency and the number format come from the parents' country of income (dat
 UT Austin, Austin Community College (Texas), Harvard, MIT, Amherst. Every aid policy, threshold, form and deadline needs an official source and a checked date before it is used. Anything unconfirmed shows "Not confirmed" with the official link.
 
 ## Privacy and limits
-Answers stay only in this browser tab (sessionStorage) and are cleared when the tab closes. A discreet "Start over" button clears them at any time. Only the text needed for an AI answer is sent to the proxy, and the proxy stores nothing.
+Answers stay only in this browser tab (sessionStorage) and are cleared when the tab closes. A discreet "Start over" button clears them at any time. Only the text or image needed for an AI answer is sent to Claude, through the viewer's own Claude account; Pont stores nothing.
 No exact income, savings balances, SSN, account or ID numbers. Status is used only for routing and not stored. No legal or visa advice. No aid promises: estimates are ranges with sources. Every number and rule has a source and a date.

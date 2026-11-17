@@ -1,14 +1,18 @@
-# AI layer (js/ai.js and proxy/)
+# AI layer (js/ai.js and js/prompts.js)
 
 ## Principle
 The AI never does the math. It receives numbers already computed by js/engine.js and only explains, organizes, extracts and drafts. Every AI output is labeled "Written by AI. Check the source." and shows a confidence level and the sources it used.
 
-## Architecture (live Claude)
-- proxy/: a Cloudflare Worker with one POST endpoint per function. It holds the Anthropic API key as a Worker secret, sets the model, the system prompt and max tokens per function, limits request size, and allows only the prototype's origin (CORS). The key never appears in the browser or in the repo; add proxy/.dev.vars to .gitignore.
-- js/ai.js: calls the proxy with a 15 second timeout, validates the JSON against the schema of each function, and on any failure (network, timeout, invalid JSON) returns the matching scripted answer from data/ai-scripts.json with `offline: true` so the UI shows the offline banner.
-- Every function returns strict JSON. Free text goes inside defined fields.
-- Prompts live in proxy/prompts/, one file per function, versioned in git.
-- The Anthropic API key needs a monthly spending limit set in the Anthropic console.
+## Architecture (live Claude at zero cost, decided 16 Nov 2026)
+- The prototype is published as a claude.ai Artifact (Claude in Cowork publishes each version from the repo). Inside the Artifact, the page reaches Claude through the Artifact runtime: `const sample = await claude.use("sample")`. Every call spends the VIEWER's own Claude usage; the first call asks the viewer to allow it. No API key, no proxy, no paid account.
+- Manifest declared at publish: `capabilities: {sample: {images: true}}`. Images are needed by the document reader.
+- js/ai.js picks the provider at runtime:
+  1. Artifact runtime: `window.claude` exists and `claude.use("sample")` resolves a function. Use `sample.json(input, {modelTier})` for structured answers and `sample.limits()` to check that images are allowed before sending a document.
+  2. Scripted fallback: anywhere else (Live Server, tests, a viewer who declines, `rate_limited`, any error). Returns the matching answer from data/ai-scripts.json with `offline: true`, so the UI shows the offline banner.
+- Rules from the runtime: the model has no system prompt, no memory and no web. Each call sends the instructions, the data and the JSON format together in `input` (built in js/prompts.js). Call only on an explicit viewer action (Send, Analyze document, Explain), or once at load with a stable prompt; never in a loop or timer. Handle `not_granted` (hide or fall back), `rate_limited` (fall back, no retry loop) and invalid JSON (fall back).
+- Validate every answer against the function's JSON shape; anything invalid falls back.
+- Exchange rates inside the Artifact: external fetches may be blocked, so js/fx.js must fall back to data/fx.json. Before each publish, data/fx.json is refreshed with a Frankfurter snapshot for every currency in data/countries.json, with source and date (Claude Code runs a small script for it).
+- E-11 later: the same prompts move to the Claude API through the Convex Agent Component.
 
 ## Functions
 | # | Function | Input | Output (JSON) | Failure state |

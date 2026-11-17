@@ -16,7 +16,8 @@ The previous direction ("See the real cost of studying in the U.S.") is replaced
 ## Stack
 - Vanilla HTML, CSS, JavaScript. No frameworks, no build step. Runs with VS Code Live Server.
 - Data in JSON files under `data/`.
-- Live data: exchange rates (Frankfurter v2, then ExchangeRate-API, then data/fx.json) and live Claude calls through a small proxy in `proxy/` (Cloudflare Worker). The API key lives only in the Worker secret, never in the browser or the repo.
+- Live data: exchange rates (Frankfurter v2, then ExchangeRate-API, then data/fx.json) and live Claude.
+- Live Claude, at zero cost (decided 16 Nov 2026): the prototype is published as a claude.ai Artifact. Inside the Artifact, js/ai.js calls Claude through the Artifact runtime (`await claude.use("sample")`, with images enabled for the documents studio). Each call uses the viewer's own Claude plan: no API key, no proxy, no paid account. Outside the Artifact (Live Server), js/ai.js uses the scripted answers. The E-11 rebuild moves to the Claude API through Convex.
 - Font: Public Sans (Google Fonts). Icons: Lucide (CDN, pinned version).
 
 ## Folder structure
@@ -29,14 +30,14 @@ css/tokens.css         brand variables (copy of docs/brand.md)
 css/app.css            layout and components
 js/engine.js           pure functions only: costs, funding profile, net price, gap, routes
 js/fx.js               exchange rate loader and money formatting (any currency)
-js/ai.js               AI client: calls the proxy, validates JSON, falls back to scripts
+js/ai.js               AI client: Artifact runtime (claude.use("sample")) when available, else scripted answers; validates JSON
 js/app.js              screens, navigation, state
 data/colleges.json     costs, aid policies, forms, deadlines, document rules, sources, dates
 data/fees.json         government and test fees
 data/countries.json    country -> currency, locale, language, ESTA, country notes
 data/fx.json           fallback rates
 data/ai-scripts.json   scripted fallback answers and failure states
-proxy/                 Cloudflare Worker that calls the Claude API
+js/prompts.js          one prompt builder per AI function (instructions + data + JSON format)
 docs/                  specs: read the relevant file before each task
 ```
 
@@ -66,7 +67,7 @@ Demo shortcuts: `index.html?demo=ananya`, `index.html?demo=lucas` and `index.htm
 - Funding profile, aid policies, net price, gap, routes, currency by country: docs/funding-and-currency.md
 - Cost formulas (still valid for the cost part): docs/calculation-rules.md. Sections 4 (budget band) and 7 (BRL-only currency) are replaced by docs/funding-and-currency.md.
 - Visa paths, I-20 steps, fees by phase: docs/visa-and-fees.md
-- AI functions, proxy, guardrails and failure states: docs/ai.md
+- AI functions, Artifact runtime, guardrails and failure states: docs/ai.md
 - Colors, type, tokens, components: docs/brand.md
 
 ## How to work

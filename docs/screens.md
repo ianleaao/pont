@@ -41,4 +41,4 @@ App frame (index.html, every screen):
 14. Save plan
    "Save your plan to come back later." Email login only here.
 
-Global: currency toggle (USD and family currencies) in the header after the country is known; offline AI banner when the proxy fails ("AI is offline. Showing a prepared answer.").
+Global: currency toggle (USD and family currencies) in the header after the country is known; offline AI banner when live Claude is not available ("AI is offline. Showing a prepared answer."). The first AI action asks the viewer to allow Claude (Artifact consent dialog).

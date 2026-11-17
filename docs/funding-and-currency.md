@@ -5,6 +5,15 @@ Replaces docs/calculation-rules.md section 4 (budget band) and section 7 (BRL-on
 ## 1. New data per college (data/colleges.json)
 Add an `aid` block to each college. Every field has `source` and `checked_on`. Unknown means null plus `status: "not_confirmed"`.
 
+Stored format (filled from docs/aid-data.md, checked 2026-11-13): each field is an object
+`{ "value": ..., "source": "<source id in the college's sources list>", "checked_on": "YYYY-MM-DD", "note": "..." }`.
+Unknown: `{ "value": null, "status": "not_confirmed", "source": <id or null>, "checked_on": ... }`.
+A value whose page is not listed in docs/aid-data.md keeps `source: null` and a note saying so. Form codes go in `codes` (for example `{ "css_profile": "3434" }`).
+Threshold items: `{ income_below_usd, rule: "parent_contribution_zero" | "covers_full_tuition_at_least" | "tuition_free", label, covers, applies_to_intl, applies_note }`. `applies_to_intl: null` with `status: "not_confirmed"` means the engine must not use that threshold for international students (MIT).
+Document rules for the documents studio: `document_rules` per college (translation, format, signature, channel, plus college-specific rules). UT keeps `i20.document_rules`.
+
+The original sketch of the block (placeholder values):
+
 ```json
 "aid": {
   "intl_admission_policy": "need_blind | need_aware | not_applicable",
@@ -22,7 +31,7 @@ Add an `aid` block to each college. Every field has `source` and `checked_on`. U
   "source": "official aid page id", "checked_on": "YYYY-MM-DD"
 }
 ```
-Example values above are placeholders. Fill every value from the official page of each college.
+Example values in the sketch are placeholders. Every stored value comes from docs/aid-data.md.
 
 ## 2. Funding profile (deterministic)
 `fundingProfile(answers, data)` returns which aid doors are open, each with a reason and a source:

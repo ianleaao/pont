@@ -358,7 +358,7 @@
       notes: transferNotes,
       total: addRanges(recurring, once.total),
       assumptions: assumptions(config),
-      i20: null,
+      i20: cc.i20 || null, // the community college issues the first I-20
     }, input, ccAnnual.lines.concat(tAnnual.lines, once.lines));
   }
 

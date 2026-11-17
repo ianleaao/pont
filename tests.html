@@ -87,9 +87,15 @@ function runPontTests(E, data) {
     check(d.note === "May already be included. Confirm with the college.", "wrong note");
     check(!a.lines.some((l) => l.id === "differential"), "differential was added");
   });
-  t("ACC uses its F-1 estimate with the label 'ACC estimate (9 months)'", () => {
+  t("ACC uses its F-1 estimate 30,000 with the label 'ACC estimate (first year)' (proof of support page)", () => {
     const a = E.annualCost(acc, "cs-transfer", { status: "no_visa" });
-    check(a.total.mid === 29000 && a.lines[0].label === "ACC estimate (9 months)", JSON.stringify(a.lines[0]));
+    check(a.total.mid === 30000 && a.lines[0].label === "ACC estimate (first year)", JSON.stringify(a.lines[0]));
+    check(a.lines[0].source.id === "acc-proof-support" && a.lines[0].source.url, "source");
+  });
+  t("ACC health insurance: not required, strongly recommended, with its source", () => {
+    const h = acc.health_insurance;
+    check(h.required === false && h.label === "Not required, strongly recommended" && h.source === "acc-proof-support", JSON.stringify(h));
+    check(acc.health_insurance_required === undefined, "old unsourced field still present");
   });
   t("Unverified colleges return 'not_confirmed', never a number", () => {
     const r = E.programTotal({ collegeId: "texas-am", programId: "cs", status: "no_visa", term: "fall-2027" }, data);
@@ -148,7 +154,7 @@ function runPontTests(E, data) {
     const ids = r.perYear.map((y) => y.collegeId + ":" + y.exponent).join(",");
     check(ids === "acc:1,acc:2,ut-austin:3,ut-austin:4", ids);
     // Year 3 is the first year at UT: SHIP 4,217.85. Year 4: SHIP 3,893.40. One-time: SEVIS + visa + ACC app = 635.
-    const expected = 29000 * (1.03 + Math.pow(1.03, 2)) + 73227.85 * Math.pow(1.03, 3) + 72903.40 * Math.pow(1.03, 4) + 635;
+    const expected = 30000 * (1.03 + Math.pow(1.03, 2)) + 73227.85 * Math.pow(1.03, 3) + 72903.40 * Math.pow(1.03, 4) + 635;
     check(near(r.total.mid, expected), r.total.mid + " vs " + expected);
     return "total " + r.total.mid.toFixed(2);
   });
@@ -198,10 +204,125 @@ function runPontTests(E, data) {
     check(s.label === "2026-27 amount. The amount for your start year is not published yet and may be higher.", "note");
     check(s.source.url === "https://global.utexas.edu/isss/immigration/f-1/financial-information", "source");
   });
-  t("I-20 without a published amount: MAX of the year 1 estimate (ACC: 29,000 x 1.03 = 29,870)", () => {
+  t("ACC I-20: published 30,000 shown as published, never inflated", () => {
     const s = E.showForI20(E.transferPath(LUCAS_ACC, data), data);
-    check(s.estimate === true && near(s.amount, 29870), JSON.stringify(s));
+    check(s.estimate === false && s.amount === 30000, JSON.stringify(s));
+    check(s.breakdown[0].amount + s.breakdown[1].amount === 30000, "breakdown does not add up");
+    check(s.label === "Estimates, subject to change. The year is not stated on the page.", "note");
+    check(s.source.id === "acc-proof-support" && s.source.url, "source");
+  });
+  t("I-20 without a published amount: MAX of the year 1 estimate (ACC copy without i20: 30,000 x 1.03 = 30,900)", () => {
+    const noI20 = JSON.parse(JSON.stringify(data.colleges));
+    delete noI20.colleges.find((c) => c.id === "acc").i20;
+    const s = E.showForI20(E.transferPath(LUCAS_ACC, Object.assign({}, data, { colleges: noI20 })), data);
+    check(s.estimate === true && near(s.amount, 30900), JSON.stringify(s));
     check(s.label === "Estimate. The college confirms the exact amount.", "label");
+  });
+
+  // --- Aid data (docs/aid-data.md, checked 2026-11-13) ---
+  const AID_FIELDS = ["intl_admission_policy", "intl_need_based_aid", "meets_full_need_intl", "merit_aid_intl",
+    "f1_aid", "thresholds", "forms_intl", "forms_us", "deadlines", "outside_scholarships_allowed"];
+  const VERIFIED = ["ut-austin", "acc", "harvard", "mit", "amherst"];
+  const col = (id) => data.colleges.colleges.find((c) => c.id === id);
+  t("Every aid field has a date and either a value with a source or null with 'not_confirmed'", () => {
+    const bad = [];
+    const noPage = [];
+    VERIFIED.forEach((id) => {
+      const aid = col(id).aid;
+      if (!aid) { bad.push(id + ": no aid block"); return; }
+      AID_FIELDS.forEach((k) => {
+        const v = aid[k];
+        if (!v || v.checked_on !== "2026-11-13") { bad.push(id + "." + k + " date"); return; }
+        if (v.value === null || v.value === undefined) {
+          if (v.status !== "not_confirmed") bad.push(id + "." + k + " null without not_confirmed");
+        } else if (!v.source) noPage.push(id + "." + k);
+      });
+    });
+    check(bad.length === 0, bad.join(", "));
+    check(noPage.length === 0, "value without a source page: " + noPage.join(", "));
+  });
+  t("Outside scholarships: Harvard from 'how aid works'; Amherst from 'gift aid' with the confirm note", () => {
+    const h = col("harvard").aid.outside_scholarships_allowed;
+    const a = col("amherst").aid.outside_scholarships_allowed;
+    check(h.value === true && h.source === "harvard-how-aid-works", JSON.stringify(h));
+    const url = col("amherst").sources.find((s) => s.id === a.source).url;
+    check(a.value === true && /gift_aid$/.test(url) && /Confirm with Amherst/.test(a.note), JSON.stringify(a));
+  });
+  t("Amherst U.S. forms: FAFSA only (002115); CSS Profile for U.S. citizens not confirmed", () => {
+    const f = col("amherst").aid.forms_us;
+    check(f.value.length === 1 && f.value[0] === "fafsa" && f.codes.fafsa === "002115", JSON.stringify(f));
+    check(f.css_profile_us.value === null && f.css_profile_us.status === "not_confirmed", "css_profile_us");
+  });
+  t("Every aid source id points to a listed source with an official URL", () => {
+    const bad = [];
+    VERIFIED.forEach((id) => {
+      const c = col(id);
+      const ids = c.sources.map((s) => s.id);
+      AID_FIELDS.forEach((k) => {
+        const s = c.aid[k].source;
+        if (s && !ids.includes(s)) bad.push(id + "." + k + " -> " + s);
+      });
+      c.sources.forEach((s) => { if (!/^https:\/\//.test(s.url)) bad.push(id + " " + s.id + " url"); });
+    });
+    check(bad.length === 0, bad.join(", "));
+  });
+  t("UT: old aid_for_internationals and aid_form removed; no need-based aid for incoming F-1; merit limited", () => {
+    const ut = col("ut-austin");
+    check(ut.aid_for_internationals === undefined && ut.aid_form === undefined, "old fields present");
+    check(ut.aid.intl_need_based_aid.value === false && ut.aid.merit_aid_intl.value === "limited", "aid values");
+    check(ut.aid.intl_admission_policy.status === "not_confirmed", "need-blind should be not confirmed");
+  });
+  t("Harvard, MIT, Amherst: need-blind, full need for internationals, no merit aid", () => {
+    ["harvard", "mit", "amherst"].forEach((id) => {
+      const a = col(id).aid;
+      check(col(id).status === "verified" && a.intl_admission_policy.value === "need_blind" &&
+        a.meets_full_need_intl.value === true && a.merit_aid_intl.value === "none", id);
+    });
+  });
+  t("Harvard thresholds apply to internationals (with the note); MIT thresholds are NOT confirmed for internationals", () => {
+    const h = col("harvard").aid.thresholds.value;
+    check(h[0].income_below_usd === 100000 && h[0].rule === "parent_contribution_zero" && h[0].applies_to_intl === true && h[0].covers === null, "harvard 100k");
+    const m = col("mit").aid.thresholds.value;
+    check(m.every((x) => x.applies_to_intl === null && x.status === "not_confirmed"), "mit thresholds");
+  });
+  t("New colleges: one program 'Undergraduate, undeclared', area 'any', 4 years", () => {
+    ["harvard", "mit", "amherst"].forEach((id) => {
+      const p = col(id).programs;
+      check(p.length === 1 && p[0].name === "Undergraduate, undeclared" && p[0].area === "any" && p[0].years === 4, id);
+    });
+  });
+  t("Published cost lines add up: Harvard 95,134 to 100,134; MIT 92,760; Amherst sum of lines 98,160", () => {
+    const sum = (id) => col(id).cost_of_attendance_2026_27.lines.filter((l) => l.added)
+      .reduce((s, l) => ({ min: s.min + (l.amount != null ? l.amount : l.min), max: s.max + (l.amount != null ? l.amount : l.max) }), { min: 0, max: 0 });
+    const h = sum("harvard"), m = sum("mit"), a = sum("amherst");
+    check(h.min === 95134 && h.max === 100134 && col("harvard").cost_of_attendance_2026_27.total.max === 100134, JSON.stringify(h));
+    check(m.min === 92760 && col("mit").cost_of_attendance_2026_27.total.min === 92760, JSON.stringify(m));
+    const coa = col("amherst").cost_of_attendance_2026_27;
+    check(a.min === 98160 && coa.total === null && coa.total_label === "Sum of published lines", JSON.stringify(a));
+  });
+  t("Insurance: Harvard 4,954 added (unless a family plan); MIT and Amherst shown, not added, not confirmed", () => {
+    const h = col("harvard").required_extras_per_year.find((x) => x.id === "health_insurance");
+    check(h.amount === 4954 && /family plan/.test(h.note), "harvard");
+    ["mit", "amherst"].forEach((id) => {
+      const x = col(id).shown_not_added_per_year.find((y) => y.id === "health_insurance");
+      check(x.amount === null && x.status === "not_confirmed", id);
+    });
+  });
+  t("Travel is never invented: Harvard a published range, MIT and Amherst 'varies' and not added", () => {
+    const t1 = col("harvard").cost_of_attendance_2026_27.lines.find((l) => l.id === "transportation");
+    check(t1.min === 0 && t1.max === 5000 && t1.added, "harvard");
+    ["mit", "amherst"].forEach((id) => {
+      const l = col(id).cost_of_attendance_2026_27.lines.find((x) => x.id === "travel");
+      check(l.amount === null && l.added === false && l.status === "varies", id);
+    });
+  });
+  t("Document rules stored per college; UT keeps i20.document_rules", () => {
+    check(col("ut-austin").i20.document_rules.max_pages === 10, "ut");
+    check(col("harvard").document_rules.translation.own_translation_ok === true && col("harvard").document_rules.channel.channel === "IDOC", "harvard");
+    check(col("mit").document_rules.channel.channel === "IDOC", "mit");
+    const a = col("amherst").document_rules;
+    check(a.format.pdf_only === true && a.signature.digital_ok === false, "amherst");
+    check(col("acc").document_rules.status === "not_confirmed", "acc");
   });
 
   // --- Lucas at 2,000 BRL (old value, kept as a test case) ---

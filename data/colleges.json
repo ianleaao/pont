@@ -1,7 +1,7 @@
 {
-  "checked_on": "2026-11-08",
+  "checked_on": "2026-11-13",
   "base_year": "2026-27",
-  "note": "Only UT Austin and ACC are verified. Other colleges are placeholders: show 'Not confirmed' and the official link until data is filled. All amounts are for the base year 2026-27; js/engine.js applies the yearly increase assumption from there.",
+  "note": "Verified colleges: UT Austin, ACC, Harvard, MIT, Amherst (aid data from docs/aid-data.md, checked 2026-11-13). Other colleges are placeholders: show \"Not confirmed\" and the official link. All amounts are for the base year 2026-27; js/engine.js applies the yearly increase assumption to program cost lines only, never to published I-20 amounts. Aid fields are { value, source, checked_on }; unknown values are null with status \"not_confirmed\".",
   "colleges": [
     {
       "id": "ut-austin",
@@ -9,32 +9,120 @@
       "type": "public_university",
       "city": "Austin, TX",
       "status": "verified",
-      "aid_for_internationals": "merit_limited",
-      "aid_form": "own_process",
       "programs": [
-        { "id": "cs", "level": "bachelor", "name": "Computer Science", "area": "cs", "college_unit": "Natural Sciences", "years": 4, "differential_tuition_per_semester": 500 },
-        { "id": "business", "level": "bachelor", "name": "Business", "area": "business", "college_unit": "McCombs School of Business", "years": 4, "differential_tuition_per_semester": 1100 },
-        { "id": "engineering", "level": "bachelor", "name": "Engineering", "area": "engineering", "college_unit": "Cockrell School of Engineering", "years": 4, "differential_tuition_per_semester": 1100 }
+        {
+          "id": "cs",
+          "level": "bachelor",
+          "name": "Computer Science",
+          "area": "cs",
+          "college_unit": "Natural Sciences",
+          "years": 4,
+          "differential_tuition_per_semester": 500
+        },
+        {
+          "id": "business",
+          "level": "bachelor",
+          "name": "Business",
+          "area": "business",
+          "college_unit": "McCombs School of Business",
+          "years": 4,
+          "differential_tuition_per_semester": 1100
+        },
+        {
+          "id": "engineering",
+          "level": "bachelor",
+          "name": "Engineering",
+          "area": "engineering",
+          "college_unit": "Cockrell School of Engineering",
+          "years": 4,
+          "differential_tuition_per_semester": 1100
+        }
       ],
       "differential_included_in_coa": null,
-      "cost_of_attendance_nonresident_2026_27": { "min": 64204, "max": 72916, "excludes": ["health insurance", "flights", "visa fees"], "source": "ut-coa", "checked_on": "2026-11-08" },
-      "cost_of_attendance_resident_2026_27": { "min": 32508, "max": 35386, "note": "Texas resident, living on or off campus. Shown only as a scenario: Pont never decides residency.", "source": "ut-residency", "checked_on": "2026-11-09" },
+      "cost_of_attendance_nonresident_2026_27": {
+        "min": 64204,
+        "max": 72916,
+        "excludes": [
+          "health insurance",
+          "flights",
+          "visa fees"
+        ],
+        "source": "ut-coa",
+        "checked_on": "2026-11-08"
+      },
+      "cost_of_attendance_resident_2026_27": {
+        "min": 32508,
+        "max": 35386,
+        "note": "Texas resident, living on or off campus. Shown only as a scenario: Pont never decides residency.",
+        "source": "ut-residency",
+        "checked_on": "2026-11-09"
+      },
       "residency_rule": "A dependent's domicile follows the parents; parents outside Texas means nonresident. An independent student (not claimed as a dependent) who lived and kept domicile in Texas for 12 months with employment (student jobs do not count) may qualify as a resident. Confirm with the UT residency office.",
       "required_extras_per_year": [
-        { "id": "isss_fee", "label": "ISSS Support Services Fee", "amount": 450, "applies_to": ["F", "J"], "note": "225 USD per semester, all non-immigrant international students", "source": "ut-isss-fees", "checked_on": "2026-11-10" },
-        { "id": "ship", "label": "UT student health insurance (SHIP)", "amount": 3893.40, "first_year_amount": 4217.85, "applies_to": ["F", "J"], "note": "Automatic for F and J students. 2026-27 totals with evacuation and 5% admin fee. First year at UT: New Student Fall 324.45 + Fall 1,297.80 + Spring and Summer 2,595.60 = 4,217.85. Other years: Fall 1,297.80 + Spring and Summer 2,595.60 = 3,893.40. In the ACC path, year 3 is the first year at UT.", "source": "ut-ship-costs", "checked_on": "2026-11-10" }
+        {
+          "id": "isss_fee",
+          "label": "ISSS Support Services Fee",
+          "amount": 450,
+          "applies_to": [
+            "F",
+            "J"
+          ],
+          "note": "225 USD per semester, all non-immigrant international students",
+          "source": "ut-isss-fees",
+          "checked_on": "2026-11-10"
+        },
+        {
+          "id": "ship",
+          "label": "UT student health insurance (SHIP)",
+          "amount": 3893.4,
+          "first_year_amount": 4217.85,
+          "applies_to": [
+            "F",
+            "J"
+          ],
+          "note": "Automatic for F and J students. 2026-27 totals with evacuation and 5% admin fee. First year at UT: New Student Fall 324.45 + Fall 1,297.80 + Spring and Summer 2,595.60 = 4,217.85. Other years: Fall 1,297.80 + Spring and Summer 2,595.60 = 3,893.40. In the ACC path, year 3 is the first year at UT.",
+          "source": "ut-ship-costs",
+          "checked_on": "2026-11-10"
+        }
       ],
-      "application": { "fee": 90, "fee_waiver_internationals": false, "early_action": "10-15", "regular": "12-01", "decision_early": "01-15", "decision_regular": "02-15", "sat_or_act_required": true, "source": "ut-intl-admissions", "checked_on": "2026-11-08" },
-      "transfer_application": { "fee": null, "status": "not_confirmed", "label": "UT transfer application fee", "source": "ut-intl-admissions", "checked_on": "2026-11-09" },
-      "enrollment_deposit": { "amount": 200, "refundable": false, "credited_to_tuition": true, "due": "05-01" },
+      "application": {
+        "fee": 90,
+        "fee_waiver_internationals": false,
+        "early_action": "10-15",
+        "regular": "12-01",
+        "decision_early": "01-15",
+        "decision_regular": "02-15",
+        "sat_or_act_required": true,
+        "source": "ut-intl-admissions",
+        "checked_on": "2026-11-08"
+      },
+      "transfer_application": {
+        "fee": null,
+        "status": "not_confirmed",
+        "label": "UT transfer application fee",
+        "source": "ut-intl-admissions",
+        "checked_on": "2026-11-09"
+      },
+      "enrollment_deposit": {
+        "amount": 200,
+        "refundable": false,
+        "credited_to_tuition": true,
+        "due": "05-01"
+      },
       "i20": {
         "portal_only": true,
         "translation_rule": "separate_signed_translation",
         "first_year_amount_to_show": 71912,
         "first_year_amount_year": "2026-27",
         "first_year_amount_breakdown": [
-          { "label": "Tuition and fees (2 semesters)", "amount": 49912 },
-          { "label": "Living expenses (12 months)", "amount": 22000 }
+          {
+            "label": "Tuition and fees (2 semesters)",
+            "amount": 49912
+          },
+          {
+            "label": "Living expenses (12 months)",
+            "amount": 22000
+          }
         ],
         "first_year_amount_note": "2026-27 amount. The amount for your start year is not published yet and may be higher.",
         "first_year_amount_level": "undergraduate, nonresident",
@@ -43,26 +131,216 @@
         "document_rules": {
           "source": "ut-isss-finance",
           "checked_on": "2026-11-10",
-          "upload": { "rule": "Upload only through the Admissions Checklist in myIO. Documents sent by mail, email or fax are not accepted.", "channel": "myIO" },
-          "language": { "rule": "Must be in English, or include a separate signed translation." },
-          "name": { "rule": "Must contain the student's name. If the funds belong to someone else, the supporter must also sign a Statement of Financial Support." },
+          "upload": {
+            "rule": "Upload only through the Admissions Checklist in myIO. Documents sent by mail, email or fax are not accepted.",
+            "channel": "myIO"
+          },
+          "language": {
+            "rule": "Must be in English, or include a separate signed translation."
+          },
+          "name": {
+            "rule": "Must contain the student's name. If the funds belong to someone else, the supporter must also sign a Statement of Financial Support."
+          },
           "max_age_months": 6,
           "max_age_rule": "Must be current. Proof of funding older than 6 months is not accepted.",
-          "liquid": { "rule": "Must be liquid. Funds that cannot be drawn on or converted into cash without penalty are not accepted." },
-          "not_accepted": ["Auto/Home Deeds", "Crypto currency", "Lines of Credit", "Mutual Funds", "Parent/Sponsor Paycheck/Stub", "Term Life Insurance Policies", "U.S./Foreign Stocks", "U.S./Foreign Tax Returns"],
+          "liquid": {
+            "rule": "Must be liquid. Funds that cannot be drawn on or converted into cash without penalty are not accepted."
+          },
+          "not_accepted": [
+            "Auto/Home Deeds",
+            "Crypto currency",
+            "Lines of Credit",
+            "Mutual Funds",
+            "Parent/Sponsor Paycheck/Stub",
+            "Term Life Insurance Policies",
+            "U.S./Foreign Stocks",
+            "U.S./Foreign Tax Returns"
+          ],
           "max_pages": 10
         }
       },
       "scholarships": "Admitted freshmen are automatically considered for university and college scholarships; notifications February to April.",
-      "after_graduation": { "opt_admin_fee": 150, "stem_extension_admin_fee": 300, "source": "ut-isss-fees", "checked_on": "2026-11-10" },
+      "after_graduation": {
+        "opt_admin_fee": 150,
+        "stem_extension_admin_fee": 300,
+        "source": "ut-isss-fees",
+        "checked_on": "2026-11-10"
+      },
       "sources": [
-        { "id": "ut-coa", "label": "UT Austin cost of attendance", "url": "https://finaid.utexas.edu", "checked_on": "2026-11-08" },
-        { "id": "ut-intl-admissions", "label": "UT international admissions", "url": "https://admissions.utexas.edu/apply/international-students/", "checked_on": "2026-11-08" },
-        { "id": "ut-isss-finance", "label": "UT ISSS financial information", "url": "https://global.utexas.edu/isss/immigration/f-1/financial-information", "checked_on": "2026-11-10" },
-        { "id": "ut-isss-fees", "label": "UT ISSS fees", "url": "https://global.utexas.edu/isss/about/fees", "checked_on": "2026-11-10" },
-        { "id": "ut-ship-costs", "label": "UT student health insurance costs", "url": "https://global.utexas.edu/isss/advising-services/insurance/costs", "checked_on": "2026-11-10" },
-        { "id": "ut-residency", "label": "UT residency office (One Stop)", "url": "https://onestop.utexas.edu", "checked_on": "2026-11-09" }
-      ]
+        {
+          "id": "ut-coa",
+          "label": "UT Austin cost of attendance",
+          "url": "https://finaid.utexas.edu",
+          "checked_on": "2026-11-08"
+        },
+        {
+          "id": "ut-intl-admissions",
+          "label": "UT international admissions",
+          "url": "https://admissions.utexas.edu/apply/international-students/",
+          "checked_on": "2026-11-13"
+        },
+        {
+          "id": "ut-isss-finance",
+          "label": "UT ISSS financial information",
+          "url": "https://global.utexas.edu/isss/immigration/f-1/financial-information",
+          "checked_on": "2026-11-10"
+        },
+        {
+          "id": "ut-isss-fees",
+          "label": "UT ISSS fees",
+          "url": "https://global.utexas.edu/isss/about/fees",
+          "checked_on": "2026-11-10"
+        },
+        {
+          "id": "ut-ship-costs",
+          "label": "UT student health insurance costs",
+          "url": "https://global.utexas.edu/isss/advising-services/insurance/costs",
+          "checked_on": "2026-11-10"
+        },
+        {
+          "id": "ut-residency",
+          "label": "UT residency office (One Stop)",
+          "url": "https://onestop.utexas.edu",
+          "checked_on": "2026-11-09"
+        },
+        {
+          "id": "ut-isss-scholarships",
+          "label": "UT ISSS scholarships",
+          "url": "https://global.utexas.edu/isss/advising-services/scholarships",
+          "checked_on": "2026-11-13"
+        },
+        {
+          "id": "ut-onestop-apply",
+          "label": "Texas One Stop, apply for financial aid",
+          "url": "https://onestop.utexas.edu/managing-costs/scholarships-financial-aid/apply/",
+          "checked_on": "2026-11-13"
+        },
+        {
+          "id": "ut-isss-insurance",
+          "label": "UT ISSS insurance",
+          "url": "https://global.utexas.edu/isss/advising-services/insurance",
+          "checked_on": "2026-11-13"
+        },
+        {
+          "id": "ut-outside-policy",
+          "label": "UT outside scholarships policy",
+          "url": "https://finaid.utexas.edu/ut-financial-aid-policy/outsidescholarshipspolicy/",
+          "checked_on": "2026-11-13",
+          "status": "not_read"
+        }
+      ],
+      "aid": {
+        "intl_admission_policy": {
+          "value": null,
+          "status": "not_confirmed",
+          "source": null,
+          "checked_on": "2026-11-13",
+          "note": "Need-blind policy for international students not confirmed."
+        },
+        "intl_need_based_aid": {
+          "value": false,
+          "source": "ut-onestop-apply",
+          "checked_on": "2026-11-13",
+          "note": "Most aid requires U.S. citizen, permanent resident or eligible non-citizen. Non-residents who are not FAFSA-eligible \"are only eligible for non-resident aid.\""
+        },
+        "meets_full_need_intl": {
+          "value": false,
+          "source": "ut-onestop-apply",
+          "checked_on": "2026-11-13"
+        },
+        "merit_aid_intl": {
+          "value": "limited",
+          "source": "ut-onestop-apply",
+          "checked_on": "2026-11-13",
+          "note": "\"There is no separate scholarship application.\" Students without a FAFSA are still considered for scholarships that do not require need."
+        },
+        "f1_aid": {
+          "value": null,
+          "status": "not_confirmed",
+          "source": null,
+          "checked_on": "2026-11-13",
+          "note": "Not stated directly in docs/aid-data.md."
+        },
+        "thresholds": {
+          "value": [],
+          "source": "ut-onestop-apply",
+          "checked_on": "2026-11-13",
+          "note": "No published income thresholds."
+        },
+        "forms_intl": {
+          "value": [],
+          "source": "ut-onestop-apply",
+          "checked_on": "2026-11-13",
+          "note": "Automatic merit consideration. No separate application."
+        },
+        "forms_us": {
+          "value": [
+            "fafsa",
+            "tasfa"
+          ],
+          "source": "ut-onestop-apply",
+          "checked_on": "2026-11-13",
+          "note": "FAFSA code 003658. TASFA for students without a FAFSA. CSS Profile not used.",
+          "codes": {
+            "fafsa": "003658"
+          }
+        },
+        "deadlines": {
+          "value": {
+            "admission": {
+              "early_action": "10-15",
+              "regular": "12-01",
+              "decision_early": "01-15",
+              "decision_regular": "02-15"
+            },
+            "aid": {
+              "scholarships_via_application": "12-01",
+              "isss_scholarships_open": "02-01",
+              "isss_scholarships_close": "03-01"
+            }
+          },
+          "source": "ut-intl-admissions",
+          "checked_on": "2026-11-13",
+          "note": "Scholarships are considered through the Common App by 12-01. ISSS scholarship window for fall: 02-01 to 03-01-2027 (source ut-isss-scholarships)."
+        },
+        "outside_scholarships_allowed": {
+          "value": null,
+          "status": "not_confirmed",
+          "source": "ut-outside-policy",
+          "checked_on": "2026-11-13",
+          "note": "Outside scholarship policy page not read."
+        },
+        "source": "ut-onestop-apply",
+        "checked_on": "2026-11-13"
+      },
+      "isss_scholarships": {
+        "status": "possible_not_guaranteed",
+        "note": "Some open to new international students. One-time awards. 14% tax withholding unless a tax treaty applies. Never counted in totals.",
+        "window": {
+          "opens": "02-01",
+          "closes": "03-01",
+          "year": 2027
+        },
+        "examples": [
+          {
+            "name": "STEM Scholarship",
+            "amount": 4800,
+            "note": "Specific criteria apply."
+          },
+          {
+            "name": "Iimura Peace Scholarship",
+            "amount": 5000,
+            "note": "Specific criteria apply."
+          },
+          {
+            "name": "African Leadership Bridge Scholarship",
+            "amount": 5000,
+            "note": "Specific criteria apply."
+          }
+        ],
+        "source": "ut-isss-scholarships",
+        "checked_on": "2026-11-13"
+      }
     },
     {
       "id": "acc",
@@ -70,28 +348,960 @@
       "type": "community_college",
       "city": "Austin, TX",
       "status": "verified",
-      "aid_for_internationals": "none_for_f1",
       "programs": [
-        { "id": "cs-transfer", "level": "associate", "name": "Computer Science (associate, transfer path)", "area": "cs", "years": 2, "transfers_to": "ut-austin" }
+        {
+          "id": "cs-transfer",
+          "level": "associate",
+          "name": "Computer Science (associate, transfer path)",
+          "area": "cs",
+          "years": 2,
+          "transfers_to": "ut-austin"
+        }
       ],
-      "tuition_per_credit_2026_27": { "in_district": 85, "out_of_district": 286, "international_living_in_district": 218, "international_living_out_of_district": 419, "frozen_only_for": "2026-27", "source": "acc-tuition", "checked_on": "2026-11-08" },
-      "f1_estimated_annual_cost": 29000,
-      "f1_estimate_label": "ACC estimate (9 months)",
-      "f1_estimate_note": "ACC estimate for tuition, college and living expenses for one academic year (nine months); many students may need more.",
-      "f1_estimate_source": "acc-intl-faq",
-      "f1_estimate_checked_on": "2026-11-08",
+      "tuition_per_credit_2026_27": {
+        "in_district": 85,
+        "out_of_district": 286,
+        "international_living_in_district": 218,
+        "international_living_out_of_district": 419,
+        "frozen_only_for": "2026-27",
+        "source": "acc-tuition",
+        "checked_on": "2026-11-08"
+      },
+      "f1_estimated_annual_cost": 30000,
+      "f1_estimate_label": "ACC estimate (first year)",
+      "f1_estimate_note": "ACC estimate for the first year, from the proof of financial support page. \"Estimates, subject to change without notice.\"",
+      "f1_estimate_source": "acc-proof-support",
+      "f1_estimate_checked_on": "2026-11-13",
       "full_time_credits_f1": 12,
-      "health_insurance_required": false,
-      "application": { "fee": 100, "source": "acc-catalog-2026-27", "checked_on": "2026-11-09", "sat_or_act_required": false, "sat_note": "Prototype assumption approved on 2026-11-09, not from the catalog. Confirm with ACC." },
+      "application": {
+        "fee": 100,
+        "source": "acc-catalog-2026-27",
+        "checked_on": "2026-11-09",
+        "sat_or_act_required": false,
+        "sat_note": "Prototype assumption approved on 2026-11-09, not from the catalog. Confirm with ACC.",
+        "f1_fall_deadline": "07-01",
+        "f1_fall_deadline_note": "New students who need a visa, fall term.",
+        "f1_fall_deadline_source": "acc-intl"
+      },
       "sources": [
-        { "id": "acc-tuition", "label": "ACC tuition table", "url": "https://admissions.austincc.edu/tuition-table/", "checked_on": "2026-11-08" },
-        { "id": "acc-intl-faq", "label": "ACC international students FAQ", "url": "https://admissions.austincc.edu/", "checked_on": "2026-11-08" },
-        { "id": "acc-catalog-2026-27", "label": "ACC 2026-27 catalog", "url": "https://instruction.austincc.edu/2026-27-catalog", "checked_on": "2026-11-09" }
+        {
+          "id": "acc-tuition",
+          "label": "ACC tuition table",
+          "url": "https://admissions.austincc.edu/tuition-table/",
+          "checked_on": "2026-11-08"
+        },
+        {
+          "id": "acc-catalog-2026-27",
+          "label": "ACC 2026-27 catalog",
+          "url": "https://instruction.austincc.edu/2026-27-catalog",
+          "checked_on": "2026-11-09"
+        },
+        {
+          "id": "acc-intl",
+          "label": "ACC international students",
+          "url": "https://admissions.austincc.edu/international-students/",
+          "checked_on": "2026-11-13"
+        },
+        {
+          "id": "acc-proof-support",
+          "label": "ACC proof of financial support",
+          "url": "https://admissions.austincc.edu/international-students/application-requirements/proof-of-financial-solvency/",
+          "checked_on": "2026-11-13"
+        },
+        {
+          "id": "acc-scholarships",
+          "label": "ACC scholarships",
+          "url": "https://students.austincc.edu/scholarships/",
+          "checked_on": "2026-11-13"
+        },
+        {
+          "id": "acc-intl-tuition",
+          "label": "ACC tuition for international students",
+          "url": "https://admissions.austincc.edu/international-students/application-requirements/tuition-information-for-international-students/",
+          "checked_on": "2026-11-13"
+        }
+      ],
+      "f1_estimate_breakdown": [
+        {
+          "label": "Tuition and fees",
+          "amount": 13000
+        },
+        {
+          "label": "Living expenses",
+          "amount": 17000
+        }
+      ],
+      "health_insurance": {
+        "required": false,
+        "rule": "Health insurance is not required but is strongly recommended.",
+        "label": "Not required, strongly recommended",
+        "applies_to": "general F-1 students",
+        "source": "acc-proof-support",
+        "checked_on": "2026-11-13"
+      },
+      "i20": {
+        "first_year_amount_to_show": 30000,
+        "first_year_amount_year": null,
+        "first_year_amount_breakdown": [
+          {
+            "label": "Tuition and fees",
+            "amount": 13000
+          },
+          {
+            "label": "Living expenses",
+            "amount": 17000
+          }
+        ],
+        "first_year_amount_note": "Estimates, subject to change. The year is not stated on the page.",
+        "source": "acc-proof-support",
+        "checked_on": "2026-11-13"
+      },
+      "transfer_note": {
+        "text": "Transfer admission to UT is not guaranteed.",
+        "note": "No transfer agreement or guaranteed admission found on the ACC transfer page (docs/aid-data.md).",
+        "checked_on": "2026-11-13"
+      },
+      "aid": {
+        "intl_admission_policy": {
+          "value": "not_applicable",
+          "source": "acc-intl",
+          "checked_on": "2026-11-13",
+          "note": "Open admission."
+        },
+        "intl_need_based_aid": {
+          "value": null,
+          "status": "not_confirmed",
+          "source": "acc-scholarships",
+          "checked_on": "2026-11-13",
+          "note": "Need-based scholarships use the FAFSA, so F-1 students get only the ones that do not require need."
+        },
+        "meets_full_need_intl": {
+          "value": false,
+          "source": "acc-scholarships",
+          "checked_on": "2026-11-13"
+        },
+        "merit_aid_intl": {
+          "value": "yes",
+          "source": "acc-scholarships",
+          "checked_on": "2026-11-13",
+          "note": "\"ACC scholarships are for every kind of student, including international.\" One application, matched to many scholarships."
+        },
+        "f1_aid": {
+          "value": null,
+          "status": "not_confirmed",
+          "source": null,
+          "checked_on": "2026-11-13",
+          "note": "Not stated directly in docs/aid-data.md."
+        },
+        "thresholds": {
+          "value": [],
+          "source": "acc-scholarships",
+          "checked_on": "2026-11-13",
+          "note": "No published income thresholds."
+        },
+        "forms_intl": {
+          "value": [
+            "college_form"
+          ],
+          "source": "acc-scholarships",
+          "checked_on": "2026-11-13",
+          "note": "ACC scholarship application."
+        },
+        "forms_us": {
+          "value": [
+            "fafsa"
+          ],
+          "source": "acc-scholarships",
+          "checked_on": "2026-11-13"
+        },
+        "deadlines": {
+          "value": {
+            "admission": {
+              "f1_fall": "07-01"
+            },
+            "aid": {
+              "opens": "01-15",
+              "priority": "05-01",
+              "closes": "12-15"
+            }
+          },
+          "source": "acc-scholarships",
+          "checked_on": "2026-11-13",
+          "note": "Admission deadline source: acc-intl."
+        },
+        "outside_scholarships_allowed": {
+          "value": null,
+          "status": "not_confirmed",
+          "source": null,
+          "checked_on": "2026-11-13",
+          "note": "Not confirmed."
+        },
+        "source": "acc-scholarships",
+        "checked_on": "2026-11-13"
+      },
+      "document_rules": {
+        "status": "not_confirmed",
+        "note": "Document rules not listed in docs/aid-data.md.",
+        "source": "acc-proof-support",
+        "checked_on": "2026-11-13"
+      }
+    },
+    {
+      "id": "harvard",
+      "name": "Harvard College",
+      "type": "private_college",
+      "city": "Cambridge, MA",
+      "status": "verified",
+      "programs": [
+        {
+          "id": "undeclared",
+          "level": "bachelor",
+          "name": "Undergraduate, undeclared",
+          "area": "any",
+          "years": 4,
+          "note": "This college does not admit by major."
+        }
+      ],
+      "cost_of_attendance_2026_27": {
+        "total": {
+          "min": 95134,
+          "max": 100134
+        },
+        "total_label": "Published total",
+        "lines": [
+          {
+            "id": "tuition",
+            "label": "Tuition",
+            "amount": 62226,
+            "added": true
+          },
+          {
+            "id": "fees",
+            "label": "Fees",
+            "amount": 6216,
+            "added": true
+          },
+          {
+            "id": "housing",
+            "label": "Housing",
+            "amount": 14250,
+            "added": true
+          },
+          {
+            "id": "food",
+            "label": "Food",
+            "amount": 8942,
+            "added": true
+          },
+          {
+            "id": "personal",
+            "label": "Personal",
+            "amount": 2500,
+            "added": true
+          },
+          {
+            "id": "books",
+            "label": "Books",
+            "amount": 1000,
+            "added": true
+          },
+          {
+            "id": "transportation",
+            "label": "Transportation",
+            "min": 0,
+            "max": 5000,
+            "added": true,
+            "note": "Travel allowance is included in aid for students on aid."
+          }
+        ],
+        "billed_subtotal": 91634,
+        "source": "harvard-how-aid-works",
+        "checked_on": "2026-11-13"
+      },
+      "required_extras_per_year": [
+        {
+          "id": "health_insurance",
+          "label": "Harvard student health insurance",
+          "amount": 4954,
+          "note": "Unless covered by a family plan.",
+          "source": "harvard-how-aid-works",
+          "checked_on": "2026-11-13"
+        }
+      ],
+      "aid": {
+        "intl_admission_policy": {
+          "value": "need_blind",
+          "source": "harvard-how-aid-works",
+          "checked_on": "2026-11-13",
+          "note": "\"Your financial need and your aid application will never affect your chance of being admitted to Harvard.\" Admissions and aid are the same for all applicants, regardless of nationality or citizenship."
+        },
+        "intl_need_based_aid": {
+          "value": true,
+          "source": "harvard-intl-applicants",
+          "checked_on": "2026-11-13",
+          "note": "International students are \"eligible for exactly the same aid as American students.\""
+        },
+        "meets_full_need_intl": {
+          "value": true,
+          "source": "harvard-how-aid-works",
+          "checked_on": "2026-11-13",
+          "note": "Meets 100% of demonstrated need."
+        },
+        "merit_aid_intl": {
+          "value": "none",
+          "source": "harvard-how-aid-works",
+          "checked_on": "2026-11-13",
+          "note": "\"There are no merit-based awards.\""
+        },
+        "f1_aid": {
+          "value": null,
+          "status": "not_confirmed",
+          "source": null,
+          "checked_on": "2026-11-13",
+          "note": "Not stated directly in docs/aid-data.md."
+        },
+        "thresholds": {
+          "value": [
+            {
+              "income_below_usd": 100000,
+              "rule": "parent_contribution_zero",
+              "label": "For families with annual incomes below $100,000, the expected parent contribution is zero.",
+              "covers": null,
+              "covers_note": "Not listed on the page.",
+              "applies_to_intl": true,
+              "applies_note": "Based on 'exactly the same aid as American students'. Confirm with Harvard financial aid."
+            },
+            {
+              "income_below_usd": 200000,
+              "rule": "covers_full_tuition_at_least",
+              "label": "For families with incomes up to $200,000, financial aid will cover at least the full cost of tuition.",
+              "covers": [
+                "tuition"
+              ],
+              "applies_to_intl": true,
+              "applies_note": "Based on 'exactly the same aid as American students'. Confirm with Harvard financial aid."
+            }
+          ],
+          "source": "harvard-how-aid-works",
+          "checked_on": "2026-11-13"
+        },
+        "forms_intl": {
+          "value": [
+            "css_profile",
+            "idoc"
+          ],
+          "source": "harvard-apply-aid",
+          "checked_on": "2026-11-13",
+          "note": "\"Regardless of your citizenship ... you will need to submit a CSS Profile and an IDOC Packet.\" Fee hardship: alternate instructions (source harvard-alt-aid).",
+          "codes": {
+            "css_profile": "3434"
+          }
+        },
+        "forms_us": {
+          "value": [
+            "fafsa",
+            "css_profile",
+            "idoc"
+          ],
+          "source": "harvard-apply-aid",
+          "checked_on": "2026-11-13",
+          "note": "FAFSA only for U.S. citizens and eligible non-citizens.",
+          "codes": {
+            "css_profile": "3434",
+            "fafsa": "E00468"
+          }
+        },
+        "deadlines": {
+          "value": {
+            "admission": {
+              "restrictive_early_action": "11-01",
+              "regular": "01-01"
+            },
+            "aid": {
+              "restrictive_early_action": "11-01",
+              "regular": "02-01"
+            }
+          },
+          "source": "harvard-apply-aid",
+          "checked_on": "2026-11-13",
+          "note": "Admission deadlines: source harvard-app-requirements. Late aid applications are accepted but may delay the decision."
+        },
+        "outside_scholarships_allowed": {
+          "value": true,
+          "source": "harvard-how-aid-works",
+          "checked_on": "2026-11-13",
+          "note": "Allowed, can replace the expected contribution."
+        },
+        "source": "harvard-how-aid-works",
+        "checked_on": "2026-11-13"
+      },
+      "document_rules": {
+        "translation": {
+          "rule": "Income documents translated to English. \"You don't need an official translation.\"",
+          "own_translation_ok": true
+        },
+        "format": {
+          "value": null,
+          "status": "not_confirmed",
+          "source": null,
+          "checked_on": "2026-11-13",
+          "note": "Not stated."
+        },
+        "signature": {
+          "value": null,
+          "status": "not_confirmed",
+          "source": null,
+          "checked_on": "2026-11-13",
+          "note": "Not stated."
+        },
+        "channel": {
+          "rule": "Submit through IDOC, not email.",
+          "channel": "IDOC"
+        },
+        "tax_documents": {
+          "rule": "Actual filed 2025 tax return, no estimates. Non-filers send a Tax Non-Filer Statement plus a wage statement, salary certificate or employer letter."
+        },
+        "source": "harvard-apply-aid",
+        "checked_on": "2026-11-13"
+      },
+      "sources": [
+        {
+          "id": "harvard-how-aid-works",
+          "label": "Harvard, how aid works",
+          "url": "https://college.harvard.edu/financial-aid/how-aid-works",
+          "checked_on": "2026-11-13"
+        },
+        {
+          "id": "harvard-intl-applicants",
+          "label": "Harvard, international applicants",
+          "url": "https://college.harvard.edu/admissions/apply/international-applicants",
+          "checked_on": "2026-11-13"
+        },
+        {
+          "id": "harvard-apply-aid",
+          "label": "Harvard, apply for aid (prospective students)",
+          "url": "https://college.harvard.edu/financial-aid/apply-financial-aid/prospective-students",
+          "checked_on": "2026-11-13"
+        },
+        {
+          "id": "harvard-app-requirements",
+          "label": "Harvard, application requirements",
+          "url": "https://college.harvard.edu/admissions/apply/application-requirements",
+          "checked_on": "2026-11-13"
+        },
+        {
+          "id": "harvard-alt-aid",
+          "label": "Harvard, alternate application for financial aid",
+          "url": "https://college.harvard.edu/alternate-application-financial-aid",
+          "checked_on": "2026-11-13"
+        }
       ]
     },
-    { "id": "texas-state", "name": "Texas State University", "type": "public_university", "status": "pending_verification" },
-    { "id": "texas-am", "name": "Texas A&M University", "type": "public_university", "status": "pending_verification" },
-    { "id": "uh", "name": "University of Houston", "type": "public_university", "status": "pending_verification" },
-    { "id": "hcc", "name": "Houston Community College", "type": "community_college", "status": "pending_verification" }
+    {
+      "id": "mit",
+      "name": "Massachusetts Institute of Technology",
+      "type": "private_college",
+      "city": "Cambridge, MA",
+      "status": "verified",
+      "programs": [
+        {
+          "id": "undeclared",
+          "level": "bachelor",
+          "name": "Undergraduate, undeclared",
+          "area": "any",
+          "years": 4,
+          "note": "This college does not admit by major."
+        }
+      ],
+      "cost_of_attendance_2026_27": {
+        "total": {
+          "min": 92760,
+          "max": 92760
+        },
+        "total_label": "Published total",
+        "lines": [
+          {
+            "id": "tuition",
+            "label": "Tuition",
+            "amount": 66720,
+            "added": true
+          },
+          {
+            "id": "student_life_fee",
+            "label": "Student life fee",
+            "amount": 420,
+            "added": true
+          },
+          {
+            "id": "housing",
+            "label": "Housing",
+            "amount": 14090,
+            "added": true
+          },
+          {
+            "id": "food",
+            "label": "Food",
+            "amount": 8104,
+            "added": true
+          },
+          {
+            "id": "books",
+            "label": "Books and supplies",
+            "amount": 930,
+            "added": true
+          },
+          {
+            "id": "personal",
+            "label": "Personal",
+            "amount": 2496,
+            "added": true
+          },
+          {
+            "id": "travel",
+            "label": "Travel",
+            "amount": null,
+            "added": false,
+            "status": "varies",
+            "note": "Not included in the cost of attendance. Varies."
+          }
+        ],
+        "source": "mit-coa",
+        "checked_on": "2026-11-13"
+      },
+      "shown_not_added_per_year": [
+        {
+          "id": "health_insurance",
+          "label": "MIT student health insurance (SHIP)",
+          "amount": null,
+          "status": "not_confirmed",
+          "note": "Automatic unless waived. Premium not confirmed.",
+          "source": "mit-coa",
+          "checked_on": "2026-11-13"
+        }
+      ],
+      "aid": {
+        "intl_admission_policy": {
+          "value": "need_blind",
+          "source": "mit-affordable",
+          "checked_on": "2026-11-13",
+          "note": "Need-blind \"for all of our undergraduate students, domestic and international.\""
+        },
+        "intl_need_based_aid": {
+          "value": true,
+          "source": "mit-affordable",
+          "checked_on": "2026-11-13"
+        },
+        "meets_full_need_intl": {
+          "value": true,
+          "source": "mit-affordable",
+          "checked_on": "2026-11-13",
+          "note": "\"We are committed to meeting 100% of demonstrated financial need for international students.\""
+        },
+        "merit_aid_intl": {
+          "value": "none",
+          "source": "mit-affordable",
+          "checked_on": "2026-11-13",
+          "note": "All aid is need-based."
+        },
+        "f1_aid": {
+          "value": null,
+          "status": "not_confirmed",
+          "source": null,
+          "checked_on": "2026-11-13",
+          "note": "Not stated directly in docs/aid-data.md."
+        },
+        "thresholds": {
+          "value": [
+            {
+              "income_below_usd": 200000,
+              "rule": "tuition_free",
+              "label": "Tuition-free for families earning under $200,000.",
+              "applies_to_intl": null,
+              "status": "not_confirmed",
+              "applies_note": "Stated for American families. Not confirmed for international students."
+            },
+            {
+              "income_below_usd": 100000,
+              "rule": "parent_contribution_zero",
+              "label": "Parents pay nothing for families earning under $100,000.",
+              "applies_to_intl": null,
+              "status": "not_confirmed",
+              "applies_note": "Stated for American families. Not confirmed for international students."
+            }
+          ],
+          "source": "mit-affordable",
+          "checked_on": "2026-11-13",
+          "note": "The engine must not use these thresholds for international students."
+        },
+        "forms_intl": {
+          "value": [
+            "css_profile",
+            "idoc"
+          ],
+          "source": "mit-apply-intl",
+          "checked_on": "2026-11-13",
+          "note": "CSS Profile and parental tax returns or income documentation through IDOC.",
+          "codes": {
+            "css_profile": "3514"
+          }
+        },
+        "forms_us": {
+          "value": [
+            "fafsa",
+            "css_profile",
+            "idoc"
+          ],
+          "source": "mit-apply-domestic",
+          "checked_on": "2026-11-13",
+          "codes": {
+            "css_profile": "3514",
+            "fafsa": "002178"
+          }
+        },
+        "deadlines": {
+          "value": {
+            "admission": null,
+            "aid": {
+              "early_action": "11-30",
+              "regular_action": "02-15"
+            }
+          },
+          "source": "mit-deadlines",
+          "checked_on": "2026-11-13",
+          "note": "Admission deadlines not confirmed (admissions page failed). Late aid applications have no penalty.",
+          "admission_status": "not_confirmed"
+        },
+        "outside_scholarships_allowed": {
+          "value": true,
+          "source": "mit-outside",
+          "checked_on": "2026-11-13",
+          "note": "The first 5,400 USD replaces the student contribution, then reduces the MIT Scholarship."
+        },
+        "source": "mit-affordable",
+        "checked_on": "2026-11-13"
+      },
+      "document_rules": {
+        "translation": {
+          "rule": "Tax return from the parents' country \"along with a translation to English if applicable. Professional translation is not required.\"",
+          "own_translation_ok": true
+        },
+        "format": {
+          "value": null,
+          "status": "not_confirmed",
+          "source": null,
+          "checked_on": "2026-11-13",
+          "note": "Not stated."
+        },
+        "signature": {
+          "value": null,
+          "status": "not_confirmed",
+          "source": null,
+          "checked_on": "2026-11-13",
+          "note": "Not stated."
+        },
+        "channel": {
+          "rule": "Only through IDOC.",
+          "channel": "IDOC"
+        },
+        "source": "mit-apply-intl",
+        "checked_on": "2026-11-13"
+      },
+      "sources": [
+        {
+          "id": "mit-affordable",
+          "label": "MIT, making MIT affordable",
+          "url": "https://sfs.mit.edu/undergraduate-students/the-cost-of-attendance/",
+          "checked_on": "2026-11-13"
+        },
+        {
+          "id": "mit-coa",
+          "label": "MIT cost of attendance 2026-27",
+          "url": "https://sfs.mit.edu/undergraduate-students/the-cost-of-attendance/coa/",
+          "checked_on": "2026-11-13"
+        },
+        {
+          "id": "mit-apply-intl",
+          "label": "MIT, apply for aid (international)",
+          "url": "https://sfs.mit.edu/undergraduate-students/apply-for-aid/international/",
+          "checked_on": "2026-11-13"
+        },
+        {
+          "id": "mit-apply-domestic",
+          "label": "MIT, apply for aid (domestic)",
+          "url": "https://sfs.mit.edu/undergraduate-students/apply-for-aid/domestic/",
+          "checked_on": "2026-11-13"
+        },
+        {
+          "id": "mit-deadlines",
+          "label": "MIT aid deadlines",
+          "url": "https://sfs.mit.edu/undergraduate-students/apply-for-aid/deadlines-process/",
+          "checked_on": "2026-11-13"
+        },
+        {
+          "id": "mit-outside",
+          "label": "MIT outside scholarships",
+          "url": "https://sfs.mit.edu/undergraduate-students/types-of-aid/outside-scholarships-grants/",
+          "checked_on": "2026-11-13"
+        }
+      ]
+    },
+    {
+      "id": "amherst",
+      "name": "Amherst College",
+      "type": "private_college",
+      "city": "Amherst, MA",
+      "status": "verified",
+      "programs": [
+        {
+          "id": "undeclared",
+          "level": "bachelor",
+          "name": "Undergraduate, undeclared",
+          "area": "any",
+          "years": 4,
+          "note": "This college does not admit by major."
+        }
+      ],
+      "cost_of_attendance_2026_27": {
+        "total": null,
+        "total_label": "Sum of published lines",
+        "total_note": "Amherst publishes no total. The engine sums the published lines.",
+        "lines": [
+          {
+            "id": "tuition",
+            "label": "Tuition",
+            "amount": 75330,
+            "added": true
+          },
+          {
+            "id": "housing",
+            "label": "Housing",
+            "amount": 10980,
+            "added": true
+          },
+          {
+            "id": "meals",
+            "label": "Meals",
+            "amount": 9340,
+            "added": true
+          },
+          {
+            "id": "fees",
+            "label": "Fees",
+            "amount": 710,
+            "added": true
+          },
+          {
+            "id": "personal",
+            "label": "Personal",
+            "amount": 1800,
+            "added": true
+          },
+          {
+            "id": "travel",
+            "label": "Travel",
+            "amount": null,
+            "added": false,
+            "status": "varies",
+            "note": "Varies."
+          }
+        ],
+        "source": "amherst-tuition",
+        "checked_on": "2026-11-13"
+      },
+      "shown_not_added_per_year": [
+        {
+          "id": "health_insurance",
+          "label": "Amherst student health insurance",
+          "amount": null,
+          "status": "not_confirmed",
+          "note": "Not included in the cost initially. Premium not confirmed.",
+          "source": "amherst-tuition",
+          "checked_on": "2026-11-13"
+        }
+      ],
+      "aid": {
+        "intl_admission_policy": {
+          "value": "need_blind",
+          "source": "amherst-intl-admission",
+          "checked_on": "2026-11-13",
+          "note": "Need-blind admission \"for all students, domestic and international\" (punctuation adapted)."
+        },
+        "intl_need_based_aid": {
+          "value": true,
+          "source": "amherst-intl-aid",
+          "checked_on": "2026-11-13",
+          "note": "2025-26: 82% of international students with aid; average international award above 84,000 USD."
+        },
+        "meets_full_need_intl": {
+          "value": true,
+          "source": "amherst-intl-aid",
+          "checked_on": "2026-11-13",
+          "note": "Meets 100% of calculated need for admitted international students, with no packaged loans."
+        },
+        "merit_aid_intl": {
+          "value": "none",
+          "source": "amherst-intl-aid",
+          "checked_on": "2026-11-13",
+          "note": "All aid is need-based."
+        },
+        "f1_aid": {
+          "value": null,
+          "status": "not_confirmed",
+          "source": null,
+          "checked_on": "2026-11-13",
+          "note": "Not stated directly in docs/aid-data.md."
+        },
+        "thresholds": {
+          "value": [],
+          "source": "amherst-intl-aid",
+          "checked_on": "2026-11-13",
+          "note": "No published income thresholds."
+        },
+        "forms_intl": {
+          "value": [
+            "css_profile",
+            "isfaa"
+          ],
+          "source": "amherst-apply-intl",
+          "checked_on": "2026-11-13",
+          "note": "2027-28 CSS Profile, reporting finances in the home currency; or the ISFAA if the CSS fee is a hardship (source amherst-isfaa). Business/Farm Supplement if a parent owns a business or farm. Both parents if divorced or separated. 2025 income and tax documents for parents (China: salary certificate).",
+          "codes": {
+            "css_profile": "3003"
+          }
+        },
+        "forms_us": {
+          "value": [
+            "fafsa"
+          ],
+          "source": "amherst-finaid",
+          "checked_on": "2026-11-13",
+          "note": "FAFSA code 002115. CSS Profile for U.S. citizens: not confirmed.",
+          "codes": {
+            "fafsa": "002115"
+          },
+          "css_profile_us": {
+            "value": null,
+            "status": "not_confirmed",
+            "source": "amherst-finaid",
+            "checked_on": "2026-11-13"
+          }
+        },
+        "deadlines": {
+          "value": {
+            "admission": null,
+            "aid": {
+              "early_decision": "2026-11-13",
+              "regular_decision": "2027-01-15"
+            }
+          },
+          "source": "amherst-apply-intl",
+          "checked_on": "2026-11-13",
+          "note": "Admission deadlines (ED and RD) appear only in the aid table.",
+          "admission_status": "not_confirmed"
+        },
+        "outside_scholarships_allowed": {
+          "value": true,
+          "source": "amherst-gift-aid",
+          "checked_on": "2026-11-13",
+          "note": "Must be reported. Replaces work, then up to 3,000 USD of the student contribution, then reduces the college scholarship. The page may be the first-year version, not international-specific. Confirm with Amherst."
+        },
+        "source": "amherst-intl-aid",
+        "checked_on": "2026-11-13"
+      },
+      "document_rules": {
+        "translation": {
+          "rule": "Original currency and home language plus an English translation. \"Your own translation is sufficient.\"",
+          "own_translation_ok": true
+        },
+        "format": {
+          "rule": "PDF only. No images.",
+          "pdf_only": true
+        },
+        "signature": {
+          "rule": "Original signatures. No digital signatures.",
+          "digital_ok": false
+        },
+        "channel": {
+          "value": null,
+          "status": "not_confirmed",
+          "source": null,
+          "checked_on": "2026-11-13",
+          "note": "Not stated."
+        },
+        "exchange_rate_review": {
+          "rule": "If the exchange rate moves 10% or more from the rate used in the award, a review can be requested once per year (early August or early December)."
+        },
+        "source": "amherst-apply-intl",
+        "checked_on": "2026-11-13"
+      },
+      "sources": [
+        {
+          "id": "amherst-intl-admission",
+          "label": "Amherst, international admission",
+          "url": "https://www.amherst.edu/admission/apply/international",
+          "checked_on": "2026-11-13"
+        },
+        {
+          "id": "amherst-intl-aid",
+          "label": "Amherst, international financial aid",
+          "url": "https://www.amherst.edu/offices/financialaid/international_students",
+          "checked_on": "2026-11-13"
+        },
+        {
+          "id": "amherst-apply-intl",
+          "label": "Amherst, applying for aid (international)",
+          "url": "https://www.amherst.edu/offices/financialaid/international_students/appleton",
+          "checked_on": "2026-11-13"
+        },
+        {
+          "id": "amherst-tuition",
+          "label": "Amherst cost 2026-27",
+          "url": "https://www.amherst.edu/tuition",
+          "checked_on": "2026-11-13"
+        },
+        {
+          "id": "amherst-isfaa",
+          "label": "Amherst ISFAA 2027-28 (PDF)",
+          "url": "https://www.amherst.edu/system/files/2026-11/ISFAA27-28.pdf",
+          "checked_on": "2026-11-13"
+        },
+        {
+          "id": "amherst-gift-aid",
+          "label": "Amherst, gift aid",
+          "url": "https://www.amherst.edu/offices/financialaid/international_students/gift_aid",
+          "checked_on": "2026-11-13"
+        },
+        {
+          "id": "amherst-finaid",
+          "label": "Amherst, financial aid",
+          "url": "https://www.amherst.edu/offices/financialaid",
+          "checked_on": "2026-11-13"
+        }
+      ]
+    },
+    {
+      "id": "texas-state",
+      "name": "Texas State University",
+      "type": "public_university",
+      "status": "pending_verification"
+    },
+    {
+      "id": "texas-am",
+      "name": "Texas A&M University",
+      "type": "public_university",
+      "status": "pending_verification"
+    },
+    {
+      "id": "uh",
+      "name": "University of Houston",
+      "type": "public_university",
+      "status": "pending_verification"
+    },
+    {
+      "id": "hcc",
+      "name": "Houston Community College",
+      "type": "community_college",
+      "status": "pending_verification"
+    }
   ]
 }

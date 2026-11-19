@@ -11,12 +11,12 @@ Users: international students from ANY country applying to U.S. colleges (underg
 
 This is a Harvard DGMD E-1 ("Digital Media: From Ideas to Designs and Prototypes") equivalency prototype: concept, brand, personas and stories, storyboard, component pattern library, and an interactive high-fidelity prototype with live data. A production app comes later (E-11, Next.js + Convex + Agent Component).
 
-The previous direction ("See the real cost of studying in the U.S.") is replaced. Full decision record: Notion, Project HQ, page "12 Pivot Proposal".
+The previous direction (a cost calculator) is replaced. Full decision record: Notion, Project HQ, page "12 Pivot Proposal".
 
 ## Stack
 - Vanilla HTML, CSS, JavaScript. No frameworks, no build step. Runs with VS Code Live Server.
 - Data in JSON files under `data/`.
-- Live data: exchange rates (Frankfurter v2, then ExchangeRate-API, then data/fx.json) and live Claude.
+- Live data: exchange rates (Frankfurter v2, then ExchangeRate-API, then the data/fx.json snapshot refreshed by tools/fx-snapshot.mjs before each publish) and live Claude.
 - Live Claude, at zero cost (decided 16 Nov 2026): the prototype is published as a claude.ai Artifact. Inside the Artifact, js/ai.js calls Claude through the Artifact runtime (`await claude.use("sample")`, with images enabled for the documents studio). Each call uses the viewer's own Claude plan: no API key, no proxy, no paid account. Outside the Artifact (Live Server), js/ai.js uses the scripted answers. The E-11 rebuild moves to the Claude API through Convex.
 - Visual design v4 "Campus": docs/design-campus.md, visual reference docs/mockups/dashboard.html. Font: Plus Jakarta Sans (Google Fonts). Icons: Lucide (CDN, pinned version).
 
@@ -32,7 +32,8 @@ js/engine.js           pure functions only: costs, funding profile, net price, g
 js/fx.js               exchange rate loader and money formatting (any currency)
 js/ai.js               AI client: Artifact runtime (claude.use("sample")) when available, else scripted answers; validates JSON
 js/ui.js               component renderers (HTML strings) shared by the app and components.html; no math
-js/app.js              intake, app shell (sidebar, top bar, advisor rail), pages, navigation, state
+js/intake.js           welcome, intake chat (live interviewer), form fallback, profile confirm, reload guard
+js/app.js              state, app shell (sidebar, top bar, advisor rail), pages, navigation
 data/colleges.json     costs, aid policies, forms, deadlines, document rules, sources, dates
 data/fees.json         government and test fees
 data/countries.json    country -> currency, locale, language, ESTA, country notes
@@ -41,6 +42,8 @@ data/ai-scripts.json   scripted fallback answers and failure states
 js/prompts.js          one prompt builder per AI function (instructions + data + JSON format)
 docs/                  specs: read the relevant file before each task
 docs/mockups/          visual references (dashboard.html: Overview)
+docs/publish.md        how to publish as a claude.ai Artifact, and every file it needs
+tools/fx-snapshot.mjs  Node script: refreshes the exchange-rate snapshot in data/fx.json
 ```
 
 ## Non-negotiable rules
@@ -61,7 +64,7 @@ docs/mockups/          visual references (dashboard.html: Overview)
 - Path 2, funding gap: Lucas, Brazil (BRL), no visa, Computer Science at UT Austin, can pay about 23,000 BRL per month (same value as the current tests). Result: UT gives internationals merit scholarships only; gap shown; routes: ACC then UT transfer in "Lower-cost path", outside scholarships, full-need colleges (Harvard, MIT, Amherst) in "Strong aid for you"; I-20 documents converted to USD.
 - Path 3, cross-border: Ian, U.S. citizen, parents in Brazil, UT Austin. FAFSA path with foreign income (UT net price: no estimate, link to the Texas One Stop aid page), residency check card, parents' documents converted to USD.
 
-Demo shortcuts: `index.html?demo=ananya`, `index.html?demo=lucas` and `index.html?demo=ian`. They fill the intake answers, open Overview and replace any saved session without a message. (When task 5 builds the profile confirm screen, the demos open it and "Build my funding plan" leads to Overview.) Nothing about them is visible in the UI.
+Demo shortcuts: `index.html?demo=ananya`, `index.html?demo=lucas` and `index.html?demo=ian`. They fill the intake answers, open the profile confirm screen and replace any saved session without a message. "Build my funding plan" leads to Overview. Nothing about them is visible in the UI.
 
 ## Which doc to read
 - Product, journey, intake questions: docs/product.md
@@ -70,6 +73,7 @@ Demo shortcuts: `index.html?demo=ananya`, `index.html?demo=lucas` and `index.htm
 - Cost formulas (still valid for the cost part): docs/calculation-rules.md. Sections 4 (budget band) and 7 (BRL-only currency) are replaced by docs/funding-and-currency.md.
 - Visa paths, I-20 steps, fees by phase: docs/visa-and-fees.md
 - AI functions, Artifact runtime, guardrails and failure states: docs/ai.md
+- Publishing as a claude.ai Artifact: docs/publish.md
 - Colors, type, tokens: docs/brand.md
 - Visual design, app shell, components and pages: docs/design-campus.md (reference: docs/mockups/dashboard.html)
 

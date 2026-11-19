@@ -1,77 +1,17 @@
 {
   "note": "Scripted AI outputs for the prototype. Variables in braces are filled from engine results. Never put numbers here directly.",
-  "outputs": [
-    {
-      "id": "family_mode_lucas",
-      "function": "family_mode",
-      "path": "lucas",
-      "language": "pt",
-      "confidence": "high",
-      "text": "Resumo para a família: o curso de Ciência da Computação na UT Austin custa cerca de {total_family} no total, ou {monthly_family} por mês. Para o I-20, a faculdade pede para comprovar cerca de {show_i20_family} para o primeiro ano. Próximos passos: 1) ver o caminho pela ACC, 2) preparar a carta do banco em inglês, 3) acompanhar o prazo de 15 de outubro.",
-      "sources": [
-        "ut-coa",
-        "ut-isss-finance"
-      ],
-      "failure": {
-        "id": "term_no_translation",
-        "text": "Mantivemos o termo em inglês 'cost of attendance' (custo total estimado de um ano na faculdade), porque não existe uma tradução oficial."
-      }
-    },
-    {
-      "id": "what_if_fx_up",
-      "function": "what_if",
-      "path": "lucas",
-      "language": "en",
-      "confidence": "high",
-      "text": "With the exchange rate {fx_change}, the whole program moves from {old_total_family} to {new_total_family}. The band changes from {old_band} to {new_band}.",
-      "sources": [
-        "fx"
-      ],
-      "failure": {
-        "id": "outside_data",
-        "text": "This scenario goes beyond the data we have, so we show a range, not a promise: {range_family}."
-      }
-    },
-    {
-      "id": "doc_check_lucas",
-      "function": "document_check",
-      "path": "lucas",
-      "language": "en",
-      "confidence": "medium",
-      "text": "We found {issue_count} items to fix before you upload: {issues}.",
-      "sources": [
-        "ut-isss-finance"
-      ],
-      "failure": {
-        "id": "low_confidence",
-        "text": "We could not read this field clearly. Please confirm the value."
-      }
-    },
-    {
-      "id": "bank_letter_pt",
-      "function": "bank_letter_draft",
-      "path": "lucas",
-      "language": "pt",
-      "confidence": "high",
-      "text": "Prezados, solicito uma carta em inglês, em papel timbrado e assinada por um representante do banco, informando o nome do titular, a data, a moeda e o saldo disponível da conta, para o processo de emissão do I-20 em uma universidade americana. Obrigado.",
-      "sources": [
-        "ut-isss-finance"
-      ]
-    },
-    {
-      "id": "essay_declined",
-      "function": "essay_coaching",
-      "path": "any",
-      "language": "en",
-      "confidence": "high",
-      "text": "I can help you plan and review your ideas, but I can't write your essay. Colleges require it to be your own work."
-    }
-  ],
+  "intake": {
+    "note": "Intake chat (task 5). Questions come from js/intake.js (same questions as the form). These lines are the scripted parts of the conversation.",
+    "opening": "Hi, I am your Pont advisor. A few short questions and your funding plan is ready. Type your answer or pick one below.",
+    "opening_college": "Hi, I am your Pont advisor. {college} is a great place to start. A few short questions and your funding plan is ready.",
+    "ack": "Got it.",
+    "not_understood": "I could not read that. Pick an answer below, or use the form instead.",
+    "done": "That is everything I need. Check your answers on the next screen, then build your plan."
+  },
   "advisor": {
-    "note": "Advisor rail, scripted until live AI (task 4). Variables in braces are filled from engine results and college data in js/app.js. Never put numbers here. A message whose variable is missing is not shown.",
-    "status_sample": "Sample answers",
+    "note": "Advisor rail. Live answers come from Claude through the Artifact runtime (js/ai.js); these scripted answers are the fallback when live AI is not available or a live answer fails. Variables in braces are filled from engine results and college data in js/app.js. Never put numbers here. A message whose variable is missing is not shown. Status texts and the consent note live in js/ai.js (PontAI.COPY).",
     "ai_label": "AI advisor. Uses your Claude account. Numbers come from official college pages.",
-    "offline": "AI is offline right now. Showing prepared answers only. Try one of the suggested questions.",
+    "offline": "I can answer the suggested questions without live AI. Try one of them, or open the official pages linked in your plan.",
     "generic": {
       "opening": {
         "text": "Hi {name}. Your funding plan is ready. Ask about aid, forms or documents."
@@ -150,5 +90,83 @@
         }
       ]
     }
-  }
+  },
+  "functions": {
+    "note": "Offline notes per AI function (docs/ai.md). Shown with the offline banner when live AI is not available; the page then shows the engine data and official sources without an AI explanation.",
+    "advisor": "I can answer the suggested questions without live AI. Try one of them, or open the official pages linked in your plan.",
+    "intake": "I could not read that. Pick an answer below, or use the form instead.",
+    "funding": "The aid rules below come straight from the official college pages, without an AI explanation.",
+    "routes": "Each route shows the numbers and sources without an AI explanation.",
+    "document": "We cannot read this document right now. The college document rules are below.",
+    "drafts": "Here is a prepared request you can adapt.",
+    "essay": "Essay help needs live AI. Try again later.",
+    "family": "Here is the summary in English, without an AI translation."
+  },
+  "outputs": [
+    {
+      "id": "family_mode_lucas",
+      "function": "family_mode",
+      "path": "lucas",
+      "language": "pt",
+      "confidence": "high",
+      "text": "Resumo para a família: o curso de Ciência da Computação na UT Austin custa cerca de {total_family} no total, ou {monthly_family} por mês. Para o I-20, a faculdade pede para comprovar cerca de {show_i20_family} para o primeiro ano. Próximos passos: 1) ver o caminho pela ACC, 2) preparar a carta do banco em inglês, 3) acompanhar o prazo de 15 de outubro.",
+      "sources": [
+        "ut-coa",
+        "ut-isss-finance"
+      ],
+      "failure": {
+        "id": "term_no_translation",
+        "text": "Mantivemos o termo em inglês 'cost of attendance' (custo total estimado de um ano na faculdade), porque não existe uma tradução oficial."
+      }
+    },
+    {
+      "id": "what_if_fx_up",
+      "function": "what_if",
+      "path": "lucas",
+      "language": "en",
+      "confidence": "high",
+      "text": "With the exchange rate {fx_change}, the whole program moves from {old_total_family} to {new_total_family}. The band changes from {old_band} to {new_band}.",
+      "sources": [
+        "fx"
+      ],
+      "failure": {
+        "id": "outside_data",
+        "text": "This scenario goes beyond the data we have, so we show a range, not a promise: {range_family}."
+      }
+    },
+    {
+      "id": "doc_check_lucas",
+      "function": "document_check",
+      "path": "lucas",
+      "language": "en",
+      "confidence": "medium",
+      "text": "We found {issue_count} items to fix before you upload: {issues}.",
+      "sources": [
+        "ut-isss-finance"
+      ],
+      "failure": {
+        "id": "low_confidence",
+        "text": "We could not read this field clearly. Please confirm the value."
+      }
+    },
+    {
+      "id": "bank_letter_pt",
+      "function": "bank_letter_draft",
+      "path": "lucas",
+      "language": "pt",
+      "confidence": "high",
+      "text": "Prezados, solicito uma carta em inglês, em papel timbrado e assinada por um representante do banco, informando o nome do titular, a data, a moeda e o saldo disponível da conta, para o processo de emissão do I-20 em uma universidade americana. Obrigado.",
+      "sources": [
+        "ut-isss-finance"
+      ]
+    },
+    {
+      "id": "essay_declined",
+      "function": "essay_coaching",
+      "path": "any",
+      "language": "en",
+      "confidence": "high",
+      "text": "I can help you plan and review your ideas, but I can't write your essay. Colleges require it to be your own work."
+    }
+  ]
 }

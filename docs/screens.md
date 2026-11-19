@@ -5,9 +5,9 @@ docs/design-campus.md decides the pages and the layout; this file keeps the flow
 
 | Screens in this file | Campus page | Built in |
 | --- | --- | --- |
-| 1 Welcome | 1 Welcome | task 5 |
-| 2 AI intake (chat) | 2 Intake | task 5 |
-| 3 Profile confirm | 3 Profile confirm | task 5 |
+| 1 Welcome | 1 Welcome | task 5 (done) |
+| 2 AI intake (chat) | 2 Intake | task 5 (done) |
+| 3 Profile confirm | 3 Profile confirm | task 5 (done) |
 | 4 Funding map + 5 Routes | 4 Overview (dream hero, next deadline, routes in group columns, deadlines, documents, advisor rail) | task D |
 | 6 College detail | 5 My colleges (filters, cards) and 6 College detail | task 6 |
 | 7 Scholarships | 7 Scholarships | task 6 |
@@ -32,8 +32,12 @@ App frame (index.html, every screen):
    Body: "Scholarships, financial aid and the documents you need, in your family's currency. Powered by AI. No login needed."
    Privacy line: "Your answers stay only in this browser tab and are cleared when the tab closes."
    Button: "Start"
+   Campus layout (task 5): hero in two columns (title, body, dream school search with "Dream school" and "Your family's country" selects and "Find my scholarships", popular chips, privacy line, "Start without a school"; on the right an example plan built by the engine from Harvard's published rule, captioned as an example), "How Pont works" in 4 steps, "Colleges that fund international students" (verified colleges that meet full need with need-based aid for internationals, from data/colleges.json, each with its source), and the source note.
 2. AI intake (chat)
    Pont asks the intake questions from docs/product.md one at a time, with quick-answer chips under each question (countries, statuses, terms, income bands, "Prefer not to say"). Free text is allowed; Claude turns it into structured answers. A small "Use a form instead" link opens the same questions as one-question-per-screen forms (accessibility and fallback when the AI is offline).
+   Questions in order (js/intake.js): first name (optional), dream school (one or more), program (only for a college with more than one), passports, situation in the U.S. (six situations), where you live now (optional), where parents live and earn (one or more; sets the currency), start term, family income band (optional, USD ranges also shown in the family currency), monthly amount in the family currency (optional). Required: dream school, program, passports, situation, parents' countries, start term.
+   Chips answer directly. Multi-answer questions use toggle chips and "Continue". Optional questions have "Skip". Header: "Your funding plan starts here", the AI status ("Live, powered by Claude" or "Sample answers") and "Step X of Y". On the right, the "Your profile" card fills in as answers arrive, with "Check my answers" once the required ones are in.
+   Reload guard: a screen that needs answers the tab does not have opens the first missing question in the form.
 3. Profile confirm
    "Here is what we understood. Edit anything that is wrong." Editable summary: dream colleges and program, citizenship, status, where parents earn, currencies, start term, income band, monthly amount. Button: "Build my funding plan".
 4. Funding map (dream school first)

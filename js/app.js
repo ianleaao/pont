@@ -1,5 +1,7 @@
 /*
-  Pont app: intake screens, app shell (sidebar, top bar, content, advisor rail), pages, state.
+  Pont app: state, data, app shell (sidebar, top bar, content, advisor rail), pages.
+  The intake screens (welcome, chat, form, profile confirm) live in js/intake.js.
+  AI: js/ai.js (live through the Artifact runtime, else scripted answers) and js/prompts.js.
   No math here: every amount comes from js/engine.js (CLAUDE.md rule 1). Components come from js/ui.js.
 
   Answers live only in this browser tab (sessionStorage). They are never sent
@@ -8,15 +10,15 @@
 
   Demo shortcuts (nothing visible in the UI):
     index.html?demo=ananya, index.html?demo=lucas and index.html?demo=ian
-  They replace any saved session, open Overview and then remove ?demo from the address bar.
-  (Task 5 builds the profile confirm screen; the demos will open it then.)
+  They replace any saved session, open the profile confirm screen and then remove ?demo from the
+  address bar. "Build my funding plan" then opens Overview.
 */
 (function () {
   "use strict";
 
   const E = window.PontEngine;
   const U = window.PontUI;
-  const KEY = { answers: "pont.answers", screen: "pont.screen", ticks: "pont.ticks", display: "pont.display" };
+  const KEY = { answers: "pont.answers", screen: "pont.screen", step: "pont.step", ticks: "pont.ticks", display: "pont.display", intake: "pont.intake" };
 
   /* ---------- Demo answers (CLAUDE.md, "Demo paths") ---------- */
   const DEMOS = {
@@ -28,6 +30,7 @@
       parentCountries: ["IN"],
       status: "no_visa",
       term: "fall-2027",
+      livesIn: "IN",
       currency: "INR",
       incomeBand: "under_65k",
       monthly: 10000,
@@ -39,6 +42,7 @@
       passports: ["BR"],
       parentCountries: ["BR"],
       status: "no_visa",
+      livesIn: "BR",
       term: "fall-2027",
       currency: "BRL",
       monthly: 23000,
@@ -79,7 +83,12 @@
   /* ---------- State ---------- */
   const state = {
     answers: load(KEY.answers, {}),
-    screen: load(KEY.screen, "welcome"),
+    screen: load(KEY.screen, "welcome"),  // intake screen: welcome, chat, form or confirm
+    step: load(KEY.step, null),           // form question
+    returnTo: null,                       // "confirm" while editing from the confirm screen
+    intakeChat: load(KEY.intake, []),     // intake conversation, this tab only
+    intakeTyping: false,
+    pick: {},                             // chips toggled in the chat before Continue
     ticks: load(KEY.ticks, {}),       // plan steps ticked by the student, this tab only
     display: load(KEY.display, "USD"), // currency switch
     data: null,                        // { colleges, fees, countries, scripts }
@@ -91,34 +100,6 @@
     asked: {},                         // chips already used
     typing: false,
   };
-  const hasPlan = () => Array.isArray(state.answers.colleges) && state.answers.colleges.length > 0 && !!state.answers.status;
-
-  /* ---------- Intake screens (form fallback; the AI intake comes in task 5) ---------- */
-  const SCREENS = [
-    {
-      id: "welcome", question: false,
-      title: "Tell us your dream school. We find the scholarships to get you there.",
-      body: () => `
-        <p class="screen-lead">Scholarships, financial aid and the documents you need, in your family's currency. Powered by AI. No login needed.</p>
-        <p class="small muted">Your answers stay only in this browser tab and are cleared when the tab closes.</p>`,
-      next: "Start",
-    },
-    { id: "area", question: true, title: "What do you want to study?", body: () => skeleton("Area options") },
-    { id: "college", question: true, title: "Which is your dream school?", body: () => skeleton("College search") },
-    { id: "nationality", question: true, title: "Which passport or passports do you have?", body: () => skeleton("Passport options") },
-    { id: "status", question: true, title: "What is your situation in the U.S. today?", body: () => skeleton("Six situations from docs/visa-and-fees.md") },
-    { id: "start", question: true, title: "When do you want to start?", body: () => skeleton("Fall 2027, Spring 2028, Fall 2028") },
-    { id: "currency", question: true, title: "Where do your parents earn their income?", body: () => skeleton("Countries") },
-    {
-      id: "monthly", question: true, skip: true,
-      title: "How much could your family pay per month?",
-      body: () => `<p class="screen-lead">Optional. It helps us show your funding gap. You can skip it.</p>${skeleton("Monthly amount field")}`,
-    },
-    { id: "results", question: false, final: true, title: "Your funding plan", body: () => skeleton("The plan opens after the intake (task 5)") },
-  ];
-  const QUESTIONS = SCREENS.filter((s) => s.question);
-  const indexOf = (id) => SCREENS.findIndex((s) => s.id === id);
-  const skeleton = (what) => `<div class="screen-skeleton">${U.esc(what)}. Built in task 5.</div>`;
 
   /* ---------- DOM ---------- */
   const $ = (id) => document.getElementById(id);
@@ -146,6 +127,7 @@
       if (state.ratePromises[cur]) return;
       state.ratePromises[cur] = PontFx.getRate(cur, {
         fxJsonUrl: "data/fx.json",
+        offline: !!window.claude, // inside the claude.ai Artifact external requests are blocked: use the snapshot
         onStatus: (msg) => { state.fxStatus = msg; renderTop(); },
       }).then((info) => {
         state.rates[cur] = info;
@@ -377,7 +359,7 @@
     return `<div class="page-empty"><div class="empty">${U.icon(p.icon)}<b>${U.esc(p.label)}</b> comes in a later step of this prototype.<br>Your Overview already has your routes, deadlines and documents.<br><br><a class="btn btn-outline btn-sm" href="#overview">Back to Overview</a></div></div>`;
   }
 
-  /* ---------- Advisor rail (scripted until task 4) ---------- */
+  /* ---------- Advisor rail: live AI (js/ai.js) with scripted answers as the fallback ---------- */
   function scriptVars(res) {
     if (!res) return {};
     const a = state.answers;
@@ -456,9 +438,102 @@
     return { all, path: all[state.answers.demo] || all.generic };
   }
 
+  /*
+    Plan facts for the AI prompts (js/prompts.js). Every amount comes from the engine, already
+    formatted in USD and in the family currency. Sources get short ids (s1, s2...) the AI cites.
+  */
+  function planFacts(res) {
+    const a = state.answers;
+    const audience = res.routes.profile.audience;
+    const fam = a.currency && a.currency !== "USD" && rateOf(a.currency) ? { currency: a.currency, rate: rateOf(a.currency), audience } : null;
+    const both = (usd) => (usd === null || usd === undefined ? "Not confirmed" : U.usd(usd) + (fam ? " (" + U.money(usd, fam) + ")" : ""));
+    const sources = [];
+    const sid = (src) => {
+      if (!src || !src.url) return null;
+      let s = sources.find((x) => x.url === src.url);
+      if (!s) { s = { id: "s" + (sources.length + 1), title: src.label, url: src.url, checked_on: src.checked_on || null, $src: src }; sources.push(s); }
+      return s.id;
+    };
+    const country = (code) => (state.countries.countries[code] || {}).name || code;
+    const routes = [];
+    res.routes.groups.forEach((g) => g.items.forEach((it) => {
+      const c = findCollege(it.collegeId);
+      const n = it.netPrice || {};
+      const gp = it.gap || {};
+      const prog = (c.programs || []).find((p) => p.id === it.programId);
+      const formsField = audience === "us" ? c.aid && c.aid.forms_us : c.aid && c.aid.forms_intl;
+      let estimate = "No estimate yet. See the official aid page.";
+      if (it.status !== "ok") estimate = "Not confirmed";
+      else if (n.hasEstimate && n.threshold && n.threshold.rule === "parent_contribution_zero") estimate = `Parent contribution ${U.usd(0)} under the college's published rule; the family pays ${both(n.total.mid)} once (visa fees)`;
+      else if (n.hasEstimate) estimate = (n.atMost ? "at most " + both(n.averagePerYear.max) : both(n.averagePerYear.mid) + " on average (range " + both(n.averagePerYear.min) + " to " + both(n.averagePerYear.max) + ")") + " a year";
+      routes.push({
+        route_id: g.id + ":" + it.collegeId,
+        college_id: it.collegeId,
+        group: g.label,
+        college: c.name + (it.targetCollegeId ? ", then transfer to " + findCollege(it.targetCollegeId).name : ""),
+        program: prog ? prog.name : null,
+        aid_policy: U.policyTags(c, audience),
+        estimate_method: n.method || null,
+        estimate,
+        family_can_cover_per_year: gp.label ? both(gp.familyPerYearUsd) : null,
+        gap_label: gp.label || null,
+        gap_per_year: gp.label && gp.gapUsd > 0 ? both(gp.gapUsd) : null,
+        gap_share: gp.label && gp.gapShare > 0 ? Math.round(gp.gapShare * 100) + "%" : null,
+        still_to_confirm: (n.notConfirmed || []).map((x) => x.label),
+        forms: it.forms && it.forms.length ? U.formsText(it.forms, formsField && formsField.codes) : null,
+        transfer_note: (c.transfer_note && c.transfer_note.text) || null,
+        official_aid_page: n.aidPage ? sid(n.aidPage) : null,
+        source: it.status === "ok" ? sid(U.netSource(it)) : null,
+      });
+    }));
+    const dreamItem = res.routes.groups[0].items[0];
+    const dream = findCollege(dreamItem.collegeId);
+    const i20 = dreamItem.cost && dreamItem.cost.status === "ok" && res.routes.profile.visaStudent ? E.showForI20(dreamItem.cost, state.data) : null;
+    const rate = (state.rates[a.currency] && PontFx.rateLines(state.rates[a.currency])) || null;
+    return {
+      today: U.fullDate(todayIso()),
+      student: {
+        first_name: a.name || null,
+        situation: (intake.STATUS.find((x) => x.value === a.status) || {}).label || a.status,
+        passports: (a.passports || []).map(country),
+        parents_earn_in: (a.parentCountries || []).map(country),
+        start: U.termLabel(a.term),
+        family_income: a.incomeBand && bandText(a.incomeBand) ? bandText(a.incomeBand) : "not shared",
+        family_can_pay_per_month: a.monthly > 0 ? PontFx.formatMoney(a.monthly, a.currency) : "not shared",
+        family_currency: a.currency || "USD",
+      },
+      exchange_rate: rate && rate.value ? rate.value + ". " + rate.source.text : "USD only",
+      routes,
+      deadlines: res.deadlines.filter((d) => d.status === "to_do").slice(0, 6).map((d) => ({
+        date: U.fullDate(d.date), what: U.deadlineTitle(d), college: U.collegeUi(findCollege(d.collegeId)).short,
+        detail: U.deadlineSub(d), days_left: d.daysLeft, source: sid(d.source),
+      })),
+      documents: documentsFor(res, dream).map((d) => d.title + (d.sub ? ": " + d.sub : "") + " (not started)"),
+      i20_show_first_year: i20 ? { amount: both(i20.amount), note: i20.label || null, source: sid(i20.source) } : null,
+      residency_rule: dream.residency_rule || null,
+      sources: sources.map((x) => ({ id: x.id, title: x.title, url: x.url, checked_on: x.checked_on })),
+      $sources: sources,
+    };
+  }
+  // The prompt gets the facts without the private $ keys.
+  const factsForPrompt = (f) => { const o = Object.assign({}, f); delete o.$sources; return o; };
+  const sourcesFor = (facts, ids) => (ids || []).map((id) => (facts.$sources.find((s) => s.id === id) || {}).$src).filter(Boolean);
+
+  function updateAiStatus() {
+    const live = ai.status() === "live";
+    document.querySelectorAll("[data-ai-status]").forEach((el) => {
+      el.textContent = ai.statusText();
+      el.classList.toggle("is-live", live);
+    });
+    document.querySelectorAll("[data-ai-consent]").forEach((el) => {
+      el.innerHTML = ai.consentPending() ? `<p class="consent">${U.icon("shield-check")}<span>${U.esc(PontAI.COPY.consent)}</span></p>` : "";
+    });
+    icons();
+  }
+
   function renderRail(res) {
     const s = script();
-    $("rail-status").textContent = s ? s.all.status_sample : "Sample answers";
+    updateAiStatus();
     $("ai-label").querySelector("span").textContent = s ? s.all.ai_label : "";
     if (!s || !res) { $("msgs").innerHTML = U.typing(); return; }
     const v = scriptVars(res);
@@ -468,10 +543,47 @@
     const chips = (s.path.chips || []).map((c, i) => ({ i, q: fill(c.q, v), a: fill(c.a, v), source: c.source }))
       .filter((c) => c.q && c.a && !state.asked[c.i]);
     $("msgs").innerHTML = msgs.concat(state.chat).map(U.message).join("") +
-      (state.typing ? U.typing() : "") +
+      (state.typing ? U.typing("The advisor is writing an answer") : "") +
       (chips.length && !state.typing ? `<div class="chips">${chips.map((c) => `<button type="button" class="chip" data-chip="${c.i}">${U.esc(c.q)}</button>`).join("")}</div>` : "");
+    const busy = state.typing;
+    $("ask").disabled = busy;
+    $("btn-send").disabled = busy;
+    $("btn-stop").hidden = !busy;
     icons();
   }
+
+  // One question to the advisor: live when available, else the scripted answer with the offline banner.
+  // Called only from a click or a submit (never on load, never in a timer).
+  let railCtl = null;
+  async function askAdvisor(question, scripted) {
+    const res = compute();
+    if (!res || state.typing) return;
+    const facts = planFacts(res);
+    state.chat.push({ role: "me", text: question });
+    state.typing = true;
+    renderRail(res);
+    scrollRail();
+    railCtl = typeof AbortController !== "undefined" ? new AbortController() : null;
+    const history = state.chat.slice(0, -1);
+    const out = await ai.ask(P.advisor({ question, facts: factsForPrompt(facts), history }), {
+      signal: railCtl ? railCtl.signal : undefined,
+      cache: false,
+      fallback: () => scripted,
+    });
+    railCtl = null;
+    state.typing = false;
+    if (out.cancelled) {
+      state.chat.push({ role: "ai", text: "Stopped. Ask again when you are ready." });
+    } else if (out.live) {
+      state.chat.push({ role: "ai", live: true, text: out.data.answer, confidence: out.data.confidence, sources: sourcesFor(facts, out.data.sources) });
+    } else {
+      const fb = out.data || { text: script().all.offline };
+      state.chat.push(Object.assign({ role: "ai" }, fb, { offline: true, banner: PontAI.COPY.offline }));
+    }
+    const delay = out.live || window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 500;
+    setTimeout(() => { renderRail(compute()); scrollRail(); $("ask").focus(); }, delay);
+  }
+  function scrollRail() { const m = $("msgs"); m.scrollTop = m.scrollHeight; }
 
   function askChip(i) {
     const s = script();
@@ -482,20 +594,7 @@
     const a = fill(c.a, v);
     if (!q || !a) return;
     state.asked[i] = true;
-    state.chat.push({ role: "me", text: q });
-    reply({ role: "ai", text: a, source: v.$sources[c.source] || null }, res);
-  }
-  function reply(msg, res) {
-    const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    state.typing = true;
-    renderRail(res);
-    setTimeout(() => {
-      state.typing = false;
-      state.chat.push(msg);
-      renderRail(compute());
-      const m = $("msgs");
-      m.scrollTop = m.scrollHeight;
-    }, reduce ? 0 : 700);
+    askAdvisor(q, { text: a, source: v.$sources[c.source] || null });
   }
 
   /* ---------- Drawers: advisor (below 1280 px) and menu (below 960 px) ---------- */
@@ -536,35 +635,21 @@
     if (window.lucide) window.lucide.createIcons({ attrs: { "aria-hidden": "true" } });
   }
 
-  function renderIntake(moveFocus) {
-    $("intake").hidden = false;
-    $("shell").hidden = true;
-    $("fab").hidden = true;
-    const i = Math.max(indexOf(state.screen), 0);
-    const s = SCREENS[i];
-    const q = QUESTIONS.indexOf(s);
-    $("intake-progress").hidden = q < 0;
-    if (q >= 0) {
-      $("progress-text").textContent = `Question ${q + 1} of ${QUESTIONS.length}`;
-      $("progress-fill").style.width = ((q + 1) / QUESTIONS.length) * 100 + "%";
-    }
-    $("screen").innerHTML = `
-      <h1 id="screen-title" tabindex="-1">${U.esc(s.title)}</h1>
-      <div class="screen-body">${s.body(state.answers)}</div>
-      <div class="intake-foot">
-        ${i > 0 ? `<button type="button" class="btn btn-outline" data-intake="back">Back</button>` : ""}
-        <span class="spacer"></span>
-        ${s.skip ? `<button type="button" class="btn btn-link" data-intake="skip">Skip</button>` : ""}
-        ${s.final ? "" : `<button type="button" class="btn btn-primary" data-intake="next">${U.esc(s.next || "Continue")}</button>`}
-      </div>
-      ${i > 0 ? `<p class="small" style="margin-top:24px"><button type="button" class="btn btn-link" data-intake="over">Start over</button></p>` : ""}`;
-    document.title = i === 0 ? "Pont" : `${s.title} | Pont`;
-    icons();
-    if (moveFocus) { window.scrollTo(0, 0); $("screen-title").focus(); }
+  // The plan opens only after "Build my funding plan" with every required answer (reload guard).
+  function hasPlan() {
+    if (!state.answers.confirmed) return false;
+    if (!state.data) return true; // data still loading: the shell shows its loading state
+    if (intake.requiredComplete(state.answers)) return true;
+    state.answers.confirmed = false;
+    save(KEY.answers, state.answers);
+    state.screen = "form";
+    state.step = intake.firstMissing(state.answers).id;
+    saveScreen();
+    return false;
   }
 
-  function render(moveFocus) {
-    if (!hasPlan()) { renderIntake(moveFocus); return; }
+  function render(moveFocus, opts) {
+    if (!hasPlan()) { intake.render(moveFocus, opts); return; }
     $("intake").hidden = true;
     $("shell").hidden = false;
     $("fab").hidden = false;
@@ -582,34 +667,40 @@
     if (moveFocus) { window.scrollTo(0, 0); $("page-title").focus(); }
   }
 
-  /* ---------- Events ---------- */
-  function goScreen(id) {
-    state.screen = indexOf(id) < 0 ? "welcome" : id;
-    save(KEY.screen, state.screen);
-    renderIntake(true);
+  /* ---------- Session helpers shared with js/intake.js ---------- */
+  function saveScreen() { save(KEY.screen, state.screen); save(KEY.step, state.step); }
+  function finish() {
+    state.answers.confirmed = true;
+    save(KEY.answers, state.answers);
+    state.chat = [];
+    state.asked = {};
+    if (location.hash !== "#overview") history.replaceState(null, "", location.pathname + location.search + "#overview");
+    render(true);
   }
   function startOver() {
+    if (railCtl) railCtl.abort();
     clearSession();
     state.answers = {};
     state.ticks = {};
     state.chat = [];
     state.asked = {};
+    state.intakeChat = [];
+    state.pick = {};
+    state.typing = false;
+    state.intakeTyping = false;
     state.display = "USD";
+    state.screen = "welcome";
+    state.step = null;
+    state.returnTo = null;
     closeDrawers();
     history.replaceState(null, "", location.pathname);
-    goScreen("welcome"); // rates already fetched stay cached: one request per currency per session
+    render(true); // rates already fetched stay cached: one request per currency per session
   }
 
+  /* ---------- Events (app shell; the intake has its own in js/intake.js) ---------- */
   document.addEventListener("click", (e) => {
-    const t = e.target.closest("[data-intake],[data-currency],[data-action],[data-chip]");
-    if (!t) return;
-    if (t.dataset.intake) {
-      const i = indexOf(state.screen);
-      if (t.dataset.intake === "next") goScreen(SCREENS[Math.min(i + 1, SCREENS.length - 1)].id);
-      if (t.dataset.intake === "back") goScreen(SCREENS[Math.max(i - 1, 0)].id);
-      if (t.dataset.intake === "skip") { state.answers.monthly = null; save(KEY.answers, state.answers); goScreen(SCREENS[i + 1].id); }
-      if (t.dataset.intake === "over") startOver();
-    }
+    const t = e.target.closest("[data-currency],[data-action],[data-chip]");
+    if (!t || !$("intake").hidden) return;
     if (t.dataset.currency) {
       state.display = t.dataset.currency;
       save(KEY.display, state.display);
@@ -636,12 +727,11 @@
   document.addEventListener("submit", (e) => {
     if (e.target.id === "compose") {
       e.preventDefault();
-      const text = $("ask").value.trim();
+      const text = $("ask").value.trim().slice(0, 800);
       if (!text) return;
       $("ask").value = "";
-      state.chat.push({ role: "me", text });
       const s = script();
-      reply({ role: "ai", offline: true, text: s ? s.all.offline : "AI is offline right now." }, compute());
+      askAdvisor(text, { text: s ? s.all.offline : "AI is offline right now." });
     }
     if (e.target.id === "search-form") {
       e.preventDefault();
@@ -655,6 +745,7 @@
 
   $("fab").addEventListener("click", openAdvisor);
   $("btn-rail-close").addEventListener("click", closeDrawers);
+  $("btn-stop").addEventListener("click", () => { if (railCtl) railCtl.abort(); });
   $("backdrop").addEventListener("click", closeDrawers);
   $("btn-menu").addEventListener("click", openMenu);
   $("btn-side-close").addEventListener("click", closeDrawers);
@@ -667,31 +758,56 @@
     const params = new URLSearchParams(location.search);
     const name = params.get("demo");
     if (!name || !DEMOS[name]) return false;
-    // The shortcut replaces any saved session, with no message on screen.
+    // The shortcut replaces any saved session, with no message on screen, and opens the profile confirm screen.
     clearSession();
     state.answers = Object.assign(JSON.parse(JSON.stringify(DEMOS[name])), { demo: name });
     state.ticks = {};
+    state.intakeChat = [];
     state.display = "USD";
+    state.screen = "confirm";
+    state.step = null;
     save(KEY.answers, state.answers);
+    saveScreen();
     params.delete("demo");
     const rest = params.toString();
-    history.replaceState(null, "", location.pathname + (rest ? "?" + rest : "") + "#overview");
+    history.replaceState(null, "", location.pathname + (rest ? "?" + rest : ""));
     return true;
   }
 
+  /* ---------- AI client: asks the runtime once, never blocks the first render ---------- */
+  const P = window.PontPrompts;
+  const ai = PontAI.createClient({ claude: window.claude, onStatus: updateAiStatus });
+
   /* ---------- Start ---------- */
+  const intake = PontIntake.create({
+    state,
+    ai,
+    todayIso,
+    icons,
+    render,
+    finish,
+    startOver,
+    saveScreen,
+    rateOf,
+    ensureRates,
+    familyCurrencies: (codes) => (!window.PontFx || !state.countries ? [] : PontFx.familyCurrencies(codes, state.countries)),
+    saveAnswers: () => save(KEY.answers, state.answers),
+    saveChat: () => save(KEY.intake, state.intakeChat.slice(-60)),
+  });
+
   document.getElementById("intake-logo").innerHTML = U.logoSvg();
   applyDemo();
-  if (indexOf(state.screen) < 0) state.screen = "welcome";
   render(false);
-  loadData().then(() => render(false));
+  loadData().then(() => { if (state.answers.parentCountries) ensureRates(); render(false); });
 
   // For later steps and for checks in the console. Read only.
   window.PontApp = {
     get answers() { return JSON.parse(JSON.stringify(state.answers)); },
     get page() { return hasPlan() ? currentPage() : state.screen; },
     get rates() { return Object.assign({}, state.rates); },
+    get aiStatus() { return ai.status(); },
     ratesReady: () => Promise.all(Object.values(state.ratePromises)),
     compute,
+    planFacts: () => { const r = compute(); return r ? factsForPrompt(planFacts(r)) : null; },
   };
 })();

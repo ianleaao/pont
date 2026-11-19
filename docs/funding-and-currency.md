@@ -78,6 +78,12 @@ Copy never says "can't afford". It always lists what can close it.
 - "Lower-cost path" (id `lower_cost`): community college then transfer to a dream college (uses transferPath), and public universities with merit aid.
 Sorted inside each group: colleges with an estimate first, then colleges without an estimate, then unconfirmed ones; within those, by gap, then by net price midpoint.
 Next aid deadline: "MM-DD" dates fall in the application cycle (August to December of the year before the start, January to July of the start year). Dates before `today` are returned as past (Amherst ED aid deadline 2026-11-13).
+A window with an opening date runs forward from it: ACC opens 01-15, priority 05-01, closes 12-15, so for Fall 2027 they are 2027-01-15, 2027-05-01 and 2027-12-15. An opening date anchors only the keys that share its name prefix ("isss_scholarships_open" anchors "isss_scholarships_close"; a bare "opens" anchors the whole group).
+Forms per profile: F-1 students never get the FAFSA. FAFSA filers do not get the TASFA (it is for students without a FAFSA).
+
+## 5b. Overview helpers (task D)
+- `deadlineList(routes, data, { term, today })`: every admission and aid deadline of the route colleges, sorted by date, each with kind (admission or aid), round, forms and codes, status ("to_do" or "passed"), days left and source. Opening dates and decision release dates are not deadlines. Routes without data for the student's situation add no dates; ISSS dates are for international students only.
+- `fundingBar(net, gap)`: segments per year for the funding bar: aid (full cost minus what the family pays), family (what the family pays, or what it can cover when there is a gap), gap (only with a gap) and not_confirmed (fixed 6% width, no amount). No bar when there is no estimate.
 
 ## 6. Currency by country (js/fx.js)
 - data/countries.json maps country code to { currency, locale, currency_display, family_language, family_language_alternatives, esta, home_scholarships, notes }. Countries: BR, IN, MX, CO, NG, VN, CN, KR, US.

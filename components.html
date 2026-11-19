@@ -4,460 +4,267 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Pont components</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 40'%3E%3Cpath d='M8 32 Q32 0 56 32' fill='none' stroke='%2315233A' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='8' y1='32' x2='56' y2='32' stroke='%2315233A' stroke-width='2.5' stroke-linecap='round'/%3E%3Ccircle cx='8' cy='32' r='5.5' fill='%232E7D5B'/%3E%3Ccircle cx='56' cy='32' r='5.5' fill='%23E3A947'/%3E%3C/svg%3E">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/tokens.css">
   <link rel="stylesheet" href="css/app.css">
   <style>
     /* Page-only layout for the design system proof. Not used by the app. */
-    .doc { max-width: 720px; margin: 0 auto; padding: var(--space-8) var(--space-4) var(--space-16); }
-    .doc-head { display: grid; gap: var(--space-3); padding-bottom: var(--space-8); border-bottom: 1px solid var(--line); }
-    .logo { display: inline-flex; align-items: center; gap: var(--space-2); font-weight: var(--weight-heavy); font-size: var(--text-24); letter-spacing: var(--tracking-tight); }
-    .logo svg { width: 40px; height: 25px; }
-    .doc section { padding: var(--space-12) 0 var(--space-4); border-bottom: 1px solid var(--line); }
-    .doc section > h2 { margin-bottom: var(--space-2); }
-    .doc section > .lead { color: var(--slate); margin-bottom: var(--space-8); }
-    .states { display: grid; gap: var(--space-6); }
-    .state { display: grid; gap: var(--space-2); }
-    .state-name { font-size: var(--text-12); font-weight: var(--weight-semibold); color: var(--slate); }
-    .row { display: flex; flex-wrap: wrap; gap: var(--space-4); align-items: center; }
-    .panel { padding: var(--space-4); background: var(--surface); border-radius: var(--radius-md); }
-    .swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--space-3); }
+    .ds { max-width: 1200px; margin: 0 auto; padding: 32px 32px 64px; }
+    .ds-head { display: grid; gap: 12px; padding-bottom: 32px; border-bottom: 1px solid var(--line); }
+    .ds-head .logo { padding: 0; }
+    .ds-head h1 { font-size: 44px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.08; }
+    .ds section.block { padding: 48px 0 24px; border-bottom: 1px solid var(--line); }
+    .ds section.block > h2 { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
+    .ds section.block > .lead { color: var(--muted); margin: 4px 0 24px; max-width: 720px; }
+    .states { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; align-items: start; }
+    .states.wide { grid-template-columns: minmax(0, 1fr); }
+    .states.two { grid-template-columns: repeat(auto-fill, minmax(min(100%, 520px), 1fr)); }
+    .state { display: grid; gap: 8px; min-width: 0; }
+    .state-name { font-size: var(--text-13); font-weight: 700; color: var(--muted); }
+    .panel { padding: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); min-width: 0; }
+    .panel.on-bg { background: var(--bg); }
+    .swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
     .swatch { display: grid; gap: 2px; font-size: var(--text-14); }
-    .swatch i { display: block; height: 48px; border-radius: var(--radius-sm); box-shadow: inset 0 0 0 1px var(--line); }
-    .type-sample { display: grid; gap: var(--space-3); }
+    .swatch i { display: block; height: 48px; border-radius: 10px; box-shadow: inset 0 0 0 1px var(--line); }
+    .swatch small { color: var(--muted); }
+    .type-sample { display: grid; gap: 12px; }
+    .mini-rail { border: 1px solid var(--line); border-radius: var(--r-card); overflow: hidden; background: var(--surface); display: flex; flex-direction: column; max-width: 400px; }
+    .mini-rail .msgs { max-height: none; }
+    .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+    .side-demo { width: 256px; max-width: 100%; }
+    @media (max-width: 640px) { .ds { padding: 16px 16px 48px; } .ds-head h1 { font-size: 32px; } .states { grid-template-columns: minmax(0, 1fr); } }
   </style>
 </head>
 <body>
-<main class="doc">
-
-  <header class="doc-head">
-    <span class="logo">
-      <svg viewBox="0 0 64 40" aria-hidden="true"><path d="M8 32 Q32 0 56 32" fill="none" stroke="#15233A" stroke-width="4" stroke-linecap="round"/><line x1="8" y1="32" x2="56" y2="32" stroke="#15233A" stroke-width="2.5" stroke-linecap="round"/><circle cx="8" cy="32" r="5.5" fill="#2E7D5B"/><circle cx="56" cy="32" r="5.5" fill="#E3A947"/></svg>
-      Pont
-    </span>
+<main class="ds">
+  <header class="ds-head">
+    <span class="logo"><span id="logo"></span>Pont</span>
     <h1>Components</h1>
-    <p class="muted">Brand version 2. Every component in every state. Sample values come from the engine (Lucas and Ian, rate 5,5146). This page is the proof of the design system; the app uses the same css/app.css.</p>
+    <p class="muted">Visual design v4 "Campus" (docs/design-campus.md). The 14 components of the spec in every state. Values come from the engine for the three demo paths (Ananya, Lucas, Ian) with the fixed test rates of tests.html: BRL 5.5146 (PTAX fallback) and INR 94 (test only). Today is fixed to Nov 19, 2026 so the page does not change. The app uses the same css/app.css and js/ui.js.</p>
   </header>
-
-  <!-- Color and type -->
-  <section aria-labelledby="s-color">
-    <h2 id="s-color">Color</h2>
-    <p class="lead">Contrast ratios are in docs/brand.md.</p>
-    <div class="swatches">
-      <div class="swatch"><i style="background:var(--ink)"></i><b>ink</b><span class="muted">#15233A</span></div>
-      <div class="swatch"><i style="background:var(--bg)"></i><b>bg</b><span class="muted">#F4F6F8</span></div>
-      <div class="swatch"><i style="background:var(--surface)"></i><b>surface</b><span class="muted">#FFFFFF</span></div>
-      <div class="swatch"><i style="background:var(--line)"></i><b>line</b><span class="muted">#D5DCE4, dividers only</span></div>
-      <div class="swatch"><i style="background:var(--line-strong)"></i><b>line-strong</b><span class="muted">#7B8794, control borders</span></div>
-      <div class="swatch"><i style="background:var(--slate)"></i><b>slate</b><span class="muted">#5A6475</span></div>
-      <div class="swatch"><i style="background:var(--green)"></i><b>green</b><span class="muted">#2E7D5B</span></div>
-      <div class="swatch"><i style="background:var(--green-tint)"></i><b>green-tint</b><span class="muted">#E3EFE8</span></div>
-      <div class="swatch"><i style="background:var(--amber)"></i><b>amber</b><span class="muted">#E3A947, fill only</span></div>
-      <div class="swatch"><i style="background:var(--amber-tint)"></i><b>amber-tint</b><span class="muted">#FBEFD6</span></div>
-      <div class="swatch"><i style="background:var(--plum)"></i><b>plum</b><span class="muted">#8A2E5C</span></div>
-      <div class="swatch"><i style="background:var(--plum-tint)"></i><b>plum-tint</b><span class="muted">#F3E4EC</span></div>
-    </div>
-  </section>
-
-  <section aria-labelledby="s-type">
-    <h2 id="s-type">Type</h2>
-    <p class="lead">Public Sans for everything. Money always uses tabular figures.</p>
-    <div class="type-sample">
-      <p style="font-size:40px;font-weight:800;letter-spacing:-0.015em;line-height:1.1">See the real cost of studying in the U.S.</p>
-      <p style="font-size:24px;font-weight:700;letter-spacing:-0.015em">Which colleges are you thinking about?</p>
-      <p>In your family's currency, with a clear plan. No login needed.</p>
-      <p class="muted small">UT Austin cost of attendance, checked Nov 8, 2026</p>
-      <p class="money" style="font-size:24px;font-weight:700">R$ 1.737.705<br>$315,110<br>R$ 36.202</p>
-    </div>
-  </section>
-
-  <!-- Buttons -->
-  <section aria-labelledby="s-buttons">
-    <h2 id="s-buttons">Buttons</h2>
-    <p class="lead">48 px tall. Text only, no arrows. Primary for the one main action on a screen.</p>
-    <div class="states">
-      <div class="state"><span class="state-name">Primary: default, hover, focus, pressed, disabled</span>
-        <div class="row">
-          <button class="btn btn-primary">Continue</button>
-          <button class="btn btn-primary is-hover">Continue</button>
-          <button class="btn btn-primary is-focus">Continue</button>
-          <button class="btn btn-primary is-active">Continue</button>
-          <button class="btn btn-primary" disabled>Continue</button>
-        </div>
-      </div>
-      <div class="state"><span class="state-name">Secondary: default, hover, focus, pressed, disabled</span>
-        <div class="row">
-          <button class="btn btn-secondary">Back</button>
-          <button class="btn btn-secondary is-hover">Back</button>
-          <button class="btn btn-secondary is-focus">Back</button>
-          <button class="btn btn-secondary is-active">Back</button>
-          <button class="btn btn-secondary" disabled>Back</button>
-        </div>
-      </div>
-      <div class="state"><span class="state-name">Link button: default, hover, focus</span>
-        <div class="row">
-          <button class="btn btn-link">Skip</button>
-          <button class="btn btn-link is-hover">Start over</button>
-          <button class="btn btn-link is-focus">Help me choose</button>
-        </div>
-      </div>
-      <div class="state"><span class="state-name">Question footer, as used on a 380 px screen</span>
-        <div class="row" style="justify-content:space-between">
-          <button class="btn btn-secondary">Back</button>
-          <button class="btn btn-primary">Continue</button>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Options -->
-  <section aria-labelledby="s-options">
-    <h2 id="s-options">Question options</h2>
-    <p class="lead">Big tap targets with a visible mark. A chosen option has a filled mark and a thicker border, so color is never the only signal.</p>
-    <div class="states">
-      <fieldset class="options">
-        <legend class="state-name">Single choice: default, hover, focus, selected, disabled</legend>
-        <label class="option"><input type="radio" name="area-demo"><span class="option-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span class="option-text"><span class="option-title">Business</span></span></label>
-        <label class="option is-hover"><input type="radio" name="area-demo"><span class="option-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span class="option-text"><span class="option-title">Engineering</span></span></label>
-        <label class="option is-focus"><input type="radio" name="area-demo"><span class="option-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span class="option-text"><span class="option-title">Other</span></span></label>
-        <label class="option"><input type="radio" name="area-demo" checked><span class="option-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span class="option-text"><span class="option-title">Computer Science</span></span></label>
-        <label class="option"><input type="radio" name="area-demo" disabled><span class="option-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span class="option-text"><span class="option-title">Graduate or MBA</span><span class="option-help">Coming soon</span></span></label>
-      </fieldset>
-
-      <fieldset class="options">
-        <legend class="state-name">Option with help text (visa situation)</legend>
-        <label class="option"><input type="radio" name="visa-demo" checked><span class="option-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span class="option-text"><span class="option-title">No visa, starting from zero</span><span class="option-help">You will need an F-1 student visa.</span></span></label>
-        <label class="option"><input type="radio" name="visa-demo"><span class="option-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span class="option-text"><span class="option-title">U.S. citizen or permanent resident</span><span class="option-help">No visa steps.</span></span></label>
-      </fieldset>
-
-      <fieldset class="options">
-        <legend class="state-name">Multiple choice (passports): unchecked, checked</legend>
-        <label class="option"><input type="checkbox" checked><span class="option-mark option-mark--box" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span class="option-text"><span class="option-title">Brazil</span></span></label>
-        <label class="option"><input type="checkbox"><span class="option-mark option-mark--box" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span class="option-text"><span class="option-title">United States</span></span></label>
-      </fieldset>
-
-      <fieldset class="options">
-        <legend class="state-name">College list: verified, and not confirmed with the official link</legend>
-        <label class="option"><input type="radio" name="college-demo" checked><span class="option-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span class="option-text"><span class="option-title">The University of Texas at Austin</span><span class="option-help">Austin, TX</span></span></label>
-        <div class="option-row">
-          <label class="option"><input type="radio" name="college-demo" disabled><span class="option-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span class="option-text"><span class="option-title">Texas A&amp;M University</span><span class="option-help">Not confirmed. Costs are not in Pont yet.</span></span></label>
-          <a href="https://www.tamu.edu" target="_blank" rel="noopener">See the official page</a>
-        </div>
-      </fieldset>
-    </div>
-  </section>
-
-  <!-- Inputs -->
-  <section aria-labelledby="s-inputs">
-    <h2 id="s-inputs">Inputs</h2>
-    <p class="lead">Label above, help below, error as a message with an icon. Errors use ink, never plum.</p>
-    <div class="states">
-      <div class="field">
-        <span class="state-name">Default</span>
-        <label class="field-label" for="i1">How much could your family pay per month?</label>
-        <div class="input-wrap"><span class="input-prefix">R$</span><input class="input" id="i1" inputmode="numeric" placeholder="0"></div>
-        <p class="field-help">Optional. It helps us sort colleges. You can skip it.</p>
-      </div>
-      <div class="field">
-        <span class="state-name">Hover</span>
-        <div class="input-wrap is-hover"><span class="input-prefix">R$</span><input class="input" aria-label="Monthly amount, hover example" inputmode="numeric" placeholder="0"></div>
-      </div>
-      <div class="field">
-        <span class="state-name">Focus</span>
-        <div class="input-wrap is-focus"><span class="input-prefix">R$</span><input class="input" aria-label="Monthly amount, focus example" inputmode="numeric" value="23.000"></div>
-      </div>
-      <div class="field">
-        <span class="state-name">Filled</span>
-        <div class="input-wrap"><span class="input-prefix">$</span><input class="input" aria-label="Flight estimate, filled example" inputmode="numeric" value="1,500"></div>
-        <p class="field-help">Add your flight estimate. We do not guess this number.</p>
-      </div>
-      <div class="field is-error">
-        <span class="state-name">Error</span>
-        <label class="field-label" for="i5">How much could your family pay per month?</label>
-        <div class="input-wrap"><span class="input-prefix">R$</span><input class="input" id="i5" inputmode="numeric" value="abc" aria-invalid="true" aria-describedby="i5-err"></div>
-        <p class="field-error" id="i5-err"><i data-lucide="circle-alert" class="icon icon-sm"></i>Enter an amount in numbers, for example 23.000.</p>
-      </div>
-      <div class="field is-disabled">
-        <span class="state-name">Disabled</span>
-        <div class="input-wrap"><span class="input-prefix">R$</span><input class="input" aria-label="Disabled example" disabled value="0"></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Progress -->
-  <section aria-labelledby="s-progress">
-    <h2 id="s-progress">Progress bar</h2>
-    <p class="lead">Step text plus a thin bar. The text carries the meaning; the bar repeats it.</p>
-    <div class="states">
-      <div class="progress"><span class="progress-text">Step 1 of 8</span><div class="progress-track" aria-hidden="true"><div class="progress-fill" style="width:12.5%"></div></div></div>
-      <div class="progress"><span class="progress-text">Step 5 of 8</span><div class="progress-track" aria-hidden="true"><div class="progress-fill" style="width:62.5%"></div></div></div>
-      <div class="progress"><span class="progress-text">Step 8 of 8</span><div class="progress-track" aria-hidden="true"><div class="progress-fill" style="width:100%"></div></div></div>
-    </div>
-  </section>
-
-  <!-- Badges -->
-  <section aria-labelledby="s-badges">
-    <h2 id="s-badges">Budget band badges</h2>
-    <p class="lead">Neutral words, always icon plus text. Never a verdict.</p>
-    <div class="row">
-      <span class="badge badge--within"><i data-lucide="circle-check" class="icon"></i>Fits your monthly amount</span>
-      <span class="badge badge--above"><i data-lucide="circle-alert" class="icon"></i>A bit above your amount</span>
-      <span class="badge badge--well_above"><i data-lucide="circle-arrow-up" class="icon"></i>Well above your amount</span>
-      <span class="badge badge--none"><i data-lucide="info" class="icon"></i>Total cost</span>
-    </div>
-  </section>
-
-  <!-- Cost bridge -->
-  <section aria-labelledby="s-bridge">
-    <h2 id="s-bridge">Cost bridge</h2>
-    <p class="lead">The signature element. BRL at the green dot, USD at the amber dot, each with its code as text.</p>
-    <div class="states">
-
-      <div class="state"><span class="state-name">Large, college detail: Lucas at UT Austin, well above</span>
-        <div class="panel">
-          <div class="bridge">
-            <p class="bridge-caption">Total for the whole program, 4 years</p>
-            <svg class="bridge-art" viewBox="0 0 320 92" aria-hidden="true"><path d="M12 80 Q160 -64 308 80" fill="none" stroke="#15233A" stroke-width="5" stroke-linecap="round"/><line x1="12" y1="80" x2="308" y2="80" stroke="#15233A" stroke-width="3" stroke-linecap="round"/><circle cx="12" cy="80" r="9" fill="#2E7D5B"/><circle cx="308" cy="80" r="9" fill="#E3A947"/></svg>
-            <div class="bridge-ends">
-              <div class="bridge-end"><span class="bridge-code"><span class="bridge-dot bridge-dot--family" aria-hidden="true"></span>BRL</span><span class="bridge-family">R$ 1.737.705</span></div>
-              <div class="bridge-end bridge-end--usd"><span class="bridge-code">USD<span class="bridge-dot bridge-dot--us" aria-hidden="true"></span></span><span class="bridge-usd">$315,110</span></div>
-            </div>
-            <div class="bridge-foot">
-              <span class="badge badge--well_above"><i data-lucide="circle-arrow-up" class="icon"></i>Well above your amount</span>
-              <span class="bridge-monthly">About <strong>R$ 36.202</strong> per month</span>
-            </div>
-            <div class="rate"><span class="rate-value">1 USD = R$ 5,51</span><span class="rate-source">Source: Banco Central do Brasil, PTAX, Nov 9, 2026</span></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="state"><span class="state-name">Compact, results list: ACC then UT, a bit above</span>
-        <div class="panel">
-          <div class="bridge bridge--compact">
-            <svg class="bridge-art" viewBox="0 0 320 92" aria-hidden="true"><path d="M12 80 Q160 -64 308 80" fill="none" stroke="#15233A" stroke-width="5" stroke-linecap="round"/><line x1="12" y1="80" x2="308" y2="80" stroke="#15233A" stroke-width="3" stroke-linecap="round"/><circle cx="12" cy="80" r="9" fill="#2E7D5B"/><circle cx="308" cy="80" r="9" fill="#E3A947"/></svg>
-            <div class="bridge-ends">
-              <div class="bridge-end"><span class="bridge-code"><span class="bridge-dot bridge-dot--family" aria-hidden="true"></span>BRL</span><span class="bridge-family">R$ 1.231.645</span></div>
-              <div class="bridge-end bridge-end--usd"><span class="bridge-code">USD<span class="bridge-dot bridge-dot--us" aria-hidden="true"></span></span><span class="bridge-usd">$223,343</span></div>
-            </div>
-            <div class="bridge-foot">
-              <span class="badge badge--above"><i data-lucide="circle-alert" class="icon"></i>A bit above your amount</span>
-              <span class="bridge-monthly">About <strong>R$ 25.659</strong> per month</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="state"><span class="state-name">Compact, no monthly amount: Ian at UT Austin, total cost</span>
-        <div class="panel">
-          <div class="bridge bridge--compact">
-            <svg class="bridge-art" viewBox="0 0 320 92" aria-hidden="true"><path d="M12 80 Q160 -64 308 80" fill="none" stroke="#15233A" stroke-width="5" stroke-linecap="round"/><line x1="12" y1="80" x2="308" y2="80" stroke="#15233A" stroke-width="3" stroke-linecap="round"/><circle cx="12" cy="80" r="9" fill="#2E7D5B"/><circle cx="308" cy="80" r="9" fill="#E3A947"/></svg>
-            <div class="bridge-ends">
-              <div class="bridge-end"><span class="bridge-code"><span class="bridge-dot bridge-dot--family" aria-hidden="true"></span>BRL</span><span class="bridge-family">R$ 1.629.202</span></div>
-              <div class="bridge-end bridge-end--usd"><span class="bridge-code">USD<span class="bridge-dot bridge-dot--us" aria-hidden="true"></span></span><span class="bridge-usd">$295,434</span></div>
-            </div>
-            <div class="bridge-foot">
-              <span class="badge badge--none"><i data-lucide="info" class="icon"></i>Total cost</span>
-              <span class="bridge-monthly">About <strong>R$ 33.942</strong> per month</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="state"><span class="state-name">Fits the amount (sample: 26.000 BRL shared)</span>
-        <div class="panel">
-          <div class="bridge bridge--compact">
-            <svg class="bridge-art" viewBox="0 0 320 92" aria-hidden="true"><path d="M12 80 Q160 -64 308 80" fill="none" stroke="#15233A" stroke-width="5" stroke-linecap="round"/><line x1="12" y1="80" x2="308" y2="80" stroke="#15233A" stroke-width="3" stroke-linecap="round"/><circle cx="12" cy="80" r="9" fill="#2E7D5B"/><circle cx="308" cy="80" r="9" fill="#E3A947"/></svg>
-            <div class="bridge-ends">
-              <div class="bridge-end"><span class="bridge-code"><span class="bridge-dot bridge-dot--family" aria-hidden="true"></span>BRL</span><span class="bridge-family">R$ 1.231.645</span></div>
-              <div class="bridge-end bridge-end--usd"><span class="bridge-code">USD<span class="bridge-dot bridge-dot--us" aria-hidden="true"></span></span><span class="bridge-usd">$223,343</span></div>
-            </div>
-            <div class="bridge-foot">
-              <span class="badge badge--within"><i data-lucide="circle-check" class="icon"></i>Fits your monthly amount</span>
-              <span class="bridge-monthly">About <strong>R$ 25.659</strong> per month</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="state"><span class="state-name">Not confirmed: college without verified costs</span>
-        <div class="panel">
-          <div class="bridge bridge--compact bridge--missing">
-            <svg class="bridge-art" viewBox="0 0 320 92" aria-hidden="true"><path d="M12 80 Q160 -64 308 80" fill="none" stroke="#7B8794" stroke-width="5" stroke-linecap="round" stroke-dasharray="2 10"/><line x1="12" y1="80" x2="308" y2="80" stroke="#7B8794" stroke-width="3" stroke-linecap="round"/><circle cx="12" cy="80" r="9" fill="#2E7D5B"/><circle cx="308" cy="80" r="9" fill="#E3A947"/></svg>
-            <div class="bridge-ends">
-              <div class="bridge-end"><span class="bridge-family">Not confirmed</span><a href="https://www.tamu.edu" target="_blank" rel="noopener">See the official page</a></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- Cost lines -->
-  <section aria-labelledby="s-cost">
-    <h2 id="s-cost">Cost lines</h2>
-    <p class="lead">Every amount shows its source and the date it was checked. Lines that are not added say so.</p>
-    <div class="panel">
-      <ul class="cost-lines">
-        <li class="cost-line">
-          <span class="cost-label">Cost of attendance (nonresident)</span>
-          <span class="cost-amount money">$64,204 to $72,916<span class="alt">R$ 354.059 to R$ 402.103</span></span>
-          <span class="cost-source"><a href="https://finaid.utexas.edu" target="_blank" rel="noopener">UT Austin cost of attendance</a>, checked Nov 8, 2026</span>
-        </li>
-        <li class="cost-line">
-          <span class="cost-label">UT student health insurance (SHIP), first year</span>
-          <span class="cost-amount money">$4,218<span class="alt">R$ 23.260</span></span>
-          <span class="cost-source"><a href="https://global.utexas.edu/isss/advising-services/insurance/costs" target="_blank" rel="noopener">UT student health insurance costs</a>, checked Nov 10, 2026</span>
-        </li>
-        <li class="cost-line cost-line--not-added">
-          <span class="cost-label">Differential tuition</span>
-          <span class="cost-amount money">$1,000</span>
-          <span class="cost-note"><i data-lucide="info" class="icon icon-sm"></i>May already be included. Confirm with the college. Not added to the total.</span>
-        </li>
-        <li class="cost-line cost-line--not-added">
-          <span class="cost-label">TOEFL iBT in Brazil</span>
-          <span class="cost-amount">Not confirmed</span>
-          <span class="cost-note"><i data-lucide="info" class="icon icon-sm"></i><span>Not added to the total. <a href="https://www.ets.org/toefl/test-takers/ibt/register/fees.html" target="_blank" rel="noopener">See the official page</a></span></span>
-        </li>
-        <li class="cost-line cost-line--not-added">
-          <span class="cost-label">Enrollment deposit</span>
-          <span class="cost-amount money">$200</span>
-          <span class="cost-note"><i data-lucide="info" class="icon icon-sm"></i>Credited to tuition. Not added again.</span>
-        </li>
-      </ul>
-      <div class="cost-total"><span>Year 1 total, 2027-28</span><span class="money">$75,425</span></div>
-      <p class="small muted" style="margin-top:var(--space-2)">Lines show 2026-27 amounts. The year 1 total is based on the middle of the range and assumes costs rise 3% per year from 2026-27.</p>
-    </div>
-  </section>
-
-  <!-- Exchange rate -->
-  <section aria-labelledby="s-rate">
-    <h2 id="s-rate">Exchange rate</h2>
-    <p class="lead">Two lines. No dot separators.</p>
-    <div class="states">
-      <div class="state"><span class="state-name">Live rate</span>
-        <div class="rate"><span class="rate-value">1 USD = R$ 5,55</span><span class="rate-source">Source: Frankfurter, Nov 10, 2026</span></div>
-      </div>
-      <div class="state"><span class="state-name">Second source, with the required credit</span>
-        <div class="rate"><span class="rate-value">1 USD = R$ 5,55</span><span class="rate-source">Source: <a href="https://www.exchangerate-api.com" target="_blank" rel="noopener">Rates By Exchange Rate API</a>, Nov 10, 2026</span></div>
-      </div>
-      <div class="state"><span class="state-name">Fallback</span>
-        <div class="rate"><span class="rate-value">1 USD = R$ 5,51</span><span class="rate-source">Source: Banco Central do Brasil, PTAX, Nov 9, 2026</span><span class="rate-notice">Could not update the exchange rate. Using the rate from Nov 9, 2026.</span></div>
-      </div>
-      <div class="state"><span class="state-name">Loading</span>
-        <p class="rate-source" role="status">Updating the exchange rate...</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- Currency toggle -->
-  <section aria-labelledby="s-toggle">
-    <h2 id="s-toggle">Currency toggle</h2>
-    <p class="lead">Two buttons with aria-pressed.</p>
-    <div class="row">
-      <div class="toggle" role="group" aria-label="Show amounts in">
-        <button type="button" aria-pressed="true">BRL</button>
-        <button type="button" aria-pressed="false">USD</button>
-      </div>
-      <div class="toggle" role="group" aria-label="Show amounts in">
-        <button type="button" aria-pressed="false">BRL</button>
-        <button type="button" aria-pressed="true">USD</button>
-      </div>
-    </div>
-  </section>
-
-  <!-- Alerts -->
-  <section aria-labelledby="s-alerts">
-    <h2 id="s-alerts">Alerts</h2>
-    <p class="lead">Icon, title, short body, official link.</p>
-    <div class="states">
-      <div class="alert alert--info" role="note">
-        <i data-lucide="info" class="icon"></i>
-        <p class="alert-title">You pay versus you show</p>
-        <p class="alert-body">For the I-20, you show money in an account. You do not pay it to the college.</p>
-      </div>
-      <div class="alert alert--rule" role="note">
-        <i data-lucide="scale" class="icon"></i>
-        <p class="alert-title">Rule change</p>
-        <p class="alert-body">The duration of status rule was blocked by a federal court on Sep 14, 2026. The case continues.</p>
-        <p class="alert-body"><a href="https://www.uscis.gov" target="_blank" rel="noopener">See the official page</a></p>
-      </div>
-      <div class="alert alert--missing" role="note">
-        <i data-lucide="circle-help" class="icon"></i>
-        <p class="alert-title">Not confirmed</p>
-        <p class="alert-body">We could not confirm the Visa Integrity Fee for Brazil. It is not added to the total.</p>
-        <p class="alert-body"><a href="https://travel.state.gov" target="_blank" rel="noopener">See the official page</a></p>
-      </div>
-    </div>
-  </section>
-
-  <!-- AI note -->
-  <section aria-labelledby="s-ai">
-    <h2 id="s-ai">AI note</h2>
-    <p class="lead">Always labeled, with confidence as text and bars, and the source.</p>
-    <div class="states">
-      <div class="ai-note">
-        <p class="ai-note-label"><i data-lucide="message-square-text" class="icon icon-sm"></i>Written by AI. Check the source.</p>
-        <p class="ai-note-text">Starting at ACC lowers the whole program from about R$ 1.737.705 to R$ 1.231.645. It moves from "Well above your amount" to "A bit above your amount".</p>
-        <div class="ai-note-meta">
-          <span class="confidence confidence--high"><span class="confidence-bars" aria-hidden="true"><span></span><span></span><span></span></span>Confidence: high</span>
-          <span>Source: <a href="https://admissions.austincc.edu/tuition-table/" target="_blank" rel="noopener">ACC tuition table</a></span>
-        </div>
-      </div>
-      <div class="ai-note">
-        <p class="ai-note-label"><i data-lucide="message-square-text" class="icon icon-sm"></i>Written by AI. Check the source.</p>
-        <div class="ai-confirm">
-          <p><b>We could not read this field clearly.</b> Please confirm the value.</p>
-          <div class="field">
-            <label class="field-label" for="ai-date">Statement date</label>
-            <div class="input-wrap"><input class="input" id="ai-date" value="03/2026"></div>
-          </div>
-        </div>
-        <div class="ai-note-meta">
-          <span class="confidence confidence--low"><span class="confidence-bars" aria-hidden="true"><span></span><span></span><span></span></span>Confidence: low</span>
-          <span>Source: <a href="https://global.utexas.edu/isss/immigration/f-1/financial-information" target="_blank" rel="noopener">UT ISSS financial information</a></span>
-        </div>
-      </div>
-      <div class="ai-note">
-        <p class="ai-note-label"><i data-lucide="message-square-text" class="icon icon-sm"></i>Written by AI. Check the source.</p>
-        <p class="ai-note-text">I can help you plan and review your ideas, but I can't write your essay. Colleges require it to be your own work.</p>
-        <div class="ai-note-meta"><span class="confidence confidence--medium"><span class="confidence-bars" aria-hidden="true"><span></span><span></span><span></span></span>Confidence: medium</span></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Checklist -->
-  <section aria-labelledby="s-check">
-    <h2 id="s-check">Checklist items</h2>
-    <p class="lead">State as icon plus words.</p>
-    <ul class="checklist">
-      <li class="check-item check-item--done"><i data-lucide="circle-check" class="icon"></i><span class="check-title">Valid passport</span><span class="check-status">Done</span></li>
-      <li class="check-item check-item--todo"><i data-lucide="circle" class="icon"></i><span class="check-title">Pay the SEVIS I-901 fee</span><span class="check-status">To do. $350</span></li>
-      <li class="check-item check-item--warning"><i data-lucide="triangle-alert" class="icon"></i><span class="check-title">Bank letter</span><span class="check-status">Needs attention. Older than 6 months.</span></li>
-    </ul>
-  </section>
-
-  <!-- Timeline -->
-  <section aria-labelledby="s-time">
-    <h2 id="s-time">Timeline</h2>
-    <p class="lead">Dates on the left, steps on the right.</p>
-    <ol class="timeline">
-      <li class="timeline-item timeline-item--done"><span class="timeline-date">Oct 15</span><div class="timeline-body"><p class="timeline-title">UT Early Action deadline</p><p class="small muted">Application fee $90</p></div></li>
-      <li class="timeline-item"><span class="timeline-date">Dec 1</span><div class="timeline-body"><p class="timeline-title">UT Regular deadline</p></div></li>
-      <li class="timeline-item"><span class="timeline-date">Feb to Apr</span><div class="timeline-body"><p class="timeline-title">Scholarship notifications</p><p class="small muted">Admitted freshmen are considered automatically.</p></div></li>
-      <li class="timeline-item"><span class="timeline-date">May 1</span><div class="timeline-body"><p class="timeline-title">Enrollment deposit</p><p class="small muted">$200, credited to tuition</p></div></li>
-    </ol>
-  </section>
-
+  <div id="root" aria-busy="true"><p class="muted" style="padding:32px 0">Loading the engine values...</p></div>
 </main>
 
 <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/fx.js"></script>
+<script src="js/ui.js"></script>
 <script>
-  // Icons are decoration next to text; the page works without them.
-  try { lucide.createIcons({ attrs: { "aria-hidden": "true" } }); } catch (e) { console.warn("[Pont] Lucide did not load", e); }
+(async function () {
+  "use strict";
+  const E = window.PontEngine, U = window.PontUI, F = window.PontFx;
+  const esc = U.esc, icon = U.icon;
+  const TODAY = "2026-11-19";
+  const RATES = { BRL: 5.5146, INR: 94 }; // same as tests.html; INR is TEST ONLY
+  const get = (p) => fetch(p, { cache: "no-store" }).then((r) => r.json());
+  const [colleges, fees, countries] = await Promise.all(["data/colleges.json", "data/fees.json", "data/countries.json"].map(get));
+  F.configure(countries);
+  const data = { colleges, fees, countries };
+  const col = (id) => colleges.colleges.find((c) => c.id === id);
+
+  const ANANYA = { name: "Ananya", area: "any", colleges: [{ collegeId: "harvard", programId: "undeclared" }], passports: ["IN"], parentCountries: ["IN"], status: "no_visa", term: "fall-2027", currency: "INR", incomeBand: "under_65k", monthly: 10000 };
+  const LUCAS = { name: "Lucas", area: "cs", colleges: [{ collegeId: "ut-austin", programId: "cs" }], passports: ["BR"], parentCountries: ["BR"], status: "no_visa", term: "fall-2027", currency: "BRL", monthly: 23000 };
+  const IAN = { name: "Ian", area: "cs", colleges: [{ collegeId: "ut-austin", programId: "cs" }], passports: ["US"], parentCountries: ["BR"], status: "citizen_or_pr", term: "fall-2027", currency: "BRL", monthly: null };
+  const run = (a) => {
+    const r = E.routes(a, data, { fxRate: RATES[a.currency], today: TODAY });
+    return { r, dl: E.deadlineList(r, data, { term: a.term, today: TODAY }), ctx: { currency: "USD", rate: null, audience: r.profile.audience } };
+  };
+  const A = run(ANANYA), L = run(LUCAS), I = run(IAN);
+  const group = (x, id) => x.r.groups.find((g) => g.id === id);
+  const item = (x, gid, cid) => group(x, gid).items.find((i) => i.collegeId === cid);
+  const H = item(A, "dream", "harvard");
+  const ANANYA_HIGH = run(Object.assign({}, ANANYA, { incomeBand: "100k_150k" }));
+  const HH = item(ANANYA_HIGH, "dream", "harvard");
+
+  const st = (name, html, cls) => `<div class="state"><span class="state-name">${esc(name)}</span><div class="${cls || "panel"}">${html}</div></div>`;
+  const block = (id, title, lead, body) => `<section class="block" aria-labelledby="${id}"><h2 id="${id}">${title}</h2><p class="lead">${lead}</p>${body}</section>`;
+  const out = [];
+
+  /* Foundations */
+  const sw = [["--bg", "#F6F7FB", "App background"], ["--surface", "#FFFFFF", "Cards, sidebar, inputs"], ["--ink", "#111A35", "Main text, hero"], ["--muted", "#5A6480", "Secondary text"], ["--line", "#E4E7F0", "Borders, decorative"], ["--line-strong", "#8A93AB", "Input borders"], ["--primary", "#2747C9", "Buttons, links, focus"], ["--primary-tint", "#EAEEFD", "Active nav"], ["--dream", "#5B32C8", "Your dream"], ["--dream-tint", "#F0EBFD", ""], ["--aid", "#0B7A54", "Strong aid, Funded"], ["--aid-tint", "#E3F5EC", ""], ["--lower", "#9A5A00", "Lower-cost, Small gap"], ["--lower-tint", "#FFF3DC", ""], ["--gap", "#B4235A", "Gap"], ["--gap-tint", "#FCE8EF", ""], ["--sun", "#F5B740", "Fills only, never text"]];
+  out.push(block("s-found", "Foundations", "Color tokens from css/tokens.css and the type scale (Plus Jakarta Sans). Contrast table: docs/brand.md.",
+    `<div class="swatches">${sw.map(([t, h, u]) => `<div class="swatch"><i style="background:${h}"></i><b>${t}</b><small>${h}${u ? ". " + u : ""}</small></div>`).join("")}</div>
+     <div class="type-sample panel" style="margin-top:24px">
+       <span style="font-size:44px;font-weight:800;line-height:1.08;letter-spacing:-0.02em">Tell us your dream school.</span>
+       <span style="font-size:28px;font-weight:700">Page title, 28</span>
+       <span style="font-size:20px;font-weight:700">Card title, 20</span>
+       <span class="num" style="font-size:48px;font-weight:800;letter-spacing:-0.03em">$78,777</span>
+       <span>Body, 15. Plain English, short sentences.</span>
+       <span class="small muted">Labels, chips and source lines, 13</span>
+       <div class="row"><button class="btn btn-primary">Primary</button><button class="btn btn-outline">Outline</button><button class="btn btn-primary" disabled>Disabled</button><button class="btn btn-link">Link button</button></div>
+     </div>`));
+
+  /* 1. Sidebar nav item */
+  const navItem = (label, ic, extra, attrs) => `<a class="nav-item${extra || ""}" href="#"${attrs || ""}>${icon(ic)}${label}</a>`;
+  out.push(block("s1", "1. Sidebar nav item", "Default, hover, active (aria-current), and with a count badge (Ananya: deadlines in the next 30 days).",
+    `<div class="states">
+      ${st("Default", `<nav class="nav side-demo" aria-label="Default">${navItem("My colleges", "graduation-cap")}</nav>`)}
+      ${st("Hover", `<nav class="nav side-demo" aria-label="Hover">${navItem("Scholarships", "award", " is-hover")}</nav>`)}
+      ${st("Active", `<nav class="nav side-demo" aria-label="Active">${navItem("Overview", "layout-dashboard", "", ' aria-current="page"')}</nav>`)}
+      ${st("With count badge", `<nav class="nav side-demo" aria-label="Count">${navItem(`Plan and deadlines<span class="nav-count">${A.dl.filter((d) => d.status === "to_do" && d.daysLeft <= 30).length}</span>`, "calendar-days")}</nav>`)}
+      ${st("Profile card and Start over", `<div class="side-foot side-demo" style="margin:0;padding:0"><div class="profile-card"><div class="avatar">A</div><div><b>Ananya</b><small>India, INR. Fall 2027</small></div></div><button class="btn btn-link">Start over</button></div>`)}
+    </div>`));
+
+  /* 2. Top bar */
+  const inr = { currency: "INR", rate: 94, rateDate: "2026-11-10", sourceLabel: "Frankfurter (central bank data)", status: "ok" };
+  const lines = F.rateLines(inr);
+  const top = (pressed, disabled, rateHtml) => `<div class="top" style="margin:0"><div class="top-title"><h3 style="font-size:24px;font-weight:800">Good afternoon, Ananya</h3><p class="muted">Your funding plan for Fall 2027. Family income under $65,000.</p></div>
+    <div class="top-tools"><label class="search">${icon("search")}<span class="sr-only">Search colleges and scholarships</span><input placeholder="Search colleges and scholarships"></label>
+    <div class="seg" role="group" aria-label="Currency"><button aria-pressed="${pressed === "USD"}">USD</button><button aria-pressed="${pressed === "INR"}"${disabled ? " disabled" : ""}>INR</button></div>
+    <button class="icon-btn" aria-label="Help">${icon("circle-help")}</button></div>${rateHtml}</div>`;
+  out.push(block("s2", "2. Top bar", "Title and greeting, search, currency switch (segmented control: USD and the family currencies), help. The rate shows in two parts with its source and date.",
+    `<div class="states wide">
+      ${st("USD selected", top("USD", false, `<div class="rate-line"><span><b>${esc(lines.value)}</b></span><span>${esc(lines.source.text)}</span></div>`))}
+      ${st("Family currency selected (INR 94, test rate)", top("INR", false, `<div class="rate-line"><span><b>${esc(lines.value)}</b></span><span>${esc(lines.source.text)}</span></div>`))}
+      ${st("Rate not confirmed: family currency disabled", top("USD", true, `<div class="rate-line"><span class="rate-notice">${esc(F.COPY.notConfirmed.replace("CUR", "INR"))} <a href="https://www.fbil.org.in/">Official rate</a></span></div>`))}
+    </div>`));
+
+  /* 3. Dream hero */
+  out.push(block("s3", "3. Dream hero card", "College monogram, policy line, big number, gap label with the to-confirm line, funding bar, actions, source. One per demo path.",
+    `<div class="states two">
+      ${st("Ananya, Harvard: threshold, Funded", U.dreamHero(H, col("harvard"), A.ctx), "")}
+      ${st("Lucas, UT Austin: full cost, Gap", U.dreamHero(group(L, "dream").items[0], col("ut-austin"), L.ctx), "")}
+      ${st("Ian, UT Austin: no estimate yet (FAFSA open)", U.dreamHero(group(I, "dream").items[0], col("ut-austin"), I.ctx), "")}
+      ${st("Ananya at 100k to 150k: at most full cost minus tuition", U.dreamHero(HH, col("harvard"), ANANYA_HIGH.ctx), "")}
+    </div>`));
+
+  /* 4. Funding bar */
+  const barOf = (x, it, c) => { const b = E.fundingBar(it.netPrice, it.gap); return U.fundingBar(b, U.barLegend(it, col(c), b, x.ctx)); };
+  out.push(block("s4", "4. Funding bar", "Stacked bar per year: aid, family pays, gap (only when there is one) and the hatched part still to confirm, at a fixed small width because its amount is unknown. On light cards the family part uses amber (--lower); on the dark hero it uses sun.",
+    `<div class="states two">
+      ${st("Aid, family, not confirmed (Ananya)", barOf(A, H, "harvard"))}
+      ${st("Family can cover, gap, not confirmed (Lucas at UT)", barOf(L, group(L, "dream").items[0], "ut-austin"))}
+      ${st("Aid at least tuition, family at most (Harvard at 100k to 150k)", barOf(ANANYA_HIGH, HH, "harvard"))}
+      ${st("Lower-cost path, small gap (Lucas: ACC then UT)", barOf(L, group(L, "lower_cost").items[0], "acc"))}
+    </div>`));
+
+  /* 5. College card */
+  const card = (x, gid, it, opts) => U.collegeCard(it, col(it.collegeId), gid, x.ctx, Object.assign({ target: it.targetCollegeId ? col(it.targetCollegeId) : null }, opts || {}));
+  out.push(block("s5", "5. College card", "Color band and monogram in the route group color, name, city, policy tags, the \"For you\" line, gap label or \"No estimate yet\", actions.",
+    `<div class="states">
+      ${st("Your dream, Funded (Ananya)", card(A, "dream", H), "on-bg panel")}
+      ${st("Strong aid, no estimate (MIT for Ananya)", card(A, "strong_aid", item(A, "strong_aid", "mit")), "on-bg panel")}
+      ${st("Lower-cost path, Small gap (Lucas)", card(L, "lower_cost", group(L, "lower_cost").items[0]), "on-bg panel")}
+      ${st("Strong aid, full cost without income range (Harvard for Lucas)", card(L, "strong_aid", item(L, "strong_aid", "harvard")), "on-bg panel")}
+      ${st("Hover", card(A, "strong_aid", item(A, "strong_aid", "amherst"), { cls: "is-hover" }), "on-bg panel")}
+      ${st("With actions", card(L, "dream", group(L, "dream").items[0], { actions: true }), "on-bg panel")}
+      ${st("With actions, added to plan", card(A, "dream", H, { actions: true, added: true }), "on-bg panel")}
+      ${st("No data for this situation (ACC for Ian)", card(I, "lower_cost", group(I, "lower_cost").items[0]), "on-bg panel")}
+    </div>`));
+
+  /* 6. Route group header */
+  out.push(block("s6", "6. Route group column header", "Icon tile, group name, count. The color always comes with the name and the icon.",
+    `<div class="states">${L.r.groups.map((g) => st(g.label + " (Lucas)", U.groupHeader(g))).join("")}</div>`));
+
+  /* 7. Gap label */
+  const lucasAcc = group(L, "lower_cost").items[0].gap;
+  out.push(block("s7", "7. Gap label", "Funded (check), Small gap (contrast), Gap (alert), each with its tint and its to-confirm line. \"Funded\" never shows alone.",
+    `<div class="states">
+      ${st("Funded (Ananya at Harvard)", U.gapBlock(H.gap))}
+      ${st("Small gap (Lucas: ACC then UT)", U.gapBlock(lucasAcc))}
+      ${st("Gap (Lucas at UT)", U.gapBlock(group(L, "dream").items[0].gap))}
+      ${st("Small size, in cards", `<div class="row">${U.gapLabel("Funded", true)}${U.gapLabel("Small gap", true)}${U.gapLabel("Gap", true)}</div>`)}
+      ${st("No estimate: no label", `<p class="small">No estimate yet. <a href="${esc(item(A, "strong_aid", "mit").netPrice.aidPage.url)}">See the official aid page</a></p>`)}
+    </div>`));
+
+  /* 8. Policy tags */
+  out.push(block("s8", "8. Policy tag chips", "Built from each college's aid block. Full text on the hero, short text on cards.",
+    `<div class="states">
+      ${["harvard", "mit", "amherst"].map((id) => st(col(id).name + " (international)", U.tagsHtml(U.policyTags(col(id), "intl")))).join("")}
+      ${st("UT Austin (international)", U.tagsHtml(U.policyTags(col("ut-austin"), "intl")))}
+      ${st("UT Austin (U.S. citizen)", U.tagsHtml(U.policyTags(col("ut-austin"), "us")))}
+      ${st("ACC (international)", U.tagsHtml(U.policyTags(col("acc"), "intl")))}
+      ${st("Short, on cards", U.tagsHtml(U.policyTags(col("amherst"), "intl", true), true))}
+    </div>`));
+
+  /* 9. Deadline list item */
+  const to = A.dl.find((d) => d.status === "to_do");
+  const passed = A.dl.find((d) => d.status === "passed" && d.collegeId === "amherst");
+  const accDl = L.dl.find((d) => d.collegeId === "acc" && d.kind === "aid");
+  out.push(block("s9", "9. Deadline list item", "Date tile (month and day), title, college and form, status: to do, done, passed.",
+    `<div class="states">
+      ${st("To do (MIT Early Action aid)", U.deadlineItem(to))}
+      ${st("Done (ticked by the student)", U.deadlineItem(A.dl.find((d) => d.collegeId === "harvard" && d.kind === "admission" && d.status === "to_do"), "done"))}
+      ${st("Passed (Amherst Early Decision aid)", U.deadlineItem(passed))}
+      ${st("Scholarship window (ACC, Lucas)", U.deadlineItem(accDl))}
+    </div>`));
+
+  /* 10. Documents checklist */
+  const examples = [
+    { title: "Bank statement for the I-20", sub: "Shows the money for the first year.", icon: "landmark", status: "not_started" },
+    { title: "Bank statement for the I-20", sub: "Sample file, read by the AI", icon: "landmark", status: "uploaded" },
+    { title: "Parents' 2025 tax return", sub: "Page 2 needs an English translation", icon: "file-text", status: "flagged", flags: 2 },
+    { title: "Bank statement for the I-20", sub: "Converted to USD, no issues", icon: "landmark", status: "ready" },
+  ];
+  const ananyaDocs = [
+    { title: "Bank statement for the I-20", sub: "Shows the money for the first year.", icon: "landmark", status: "not_started" },
+    { title: "Parents' 2025 tax return", sub: "Through IDOC", icon: "file-text", status: "not_started" },
+    { title: "CSS Profile", sub: "On the College Board site", icon: "clipboard-list", status: "not_started" },
+  ];
+  out.push(block("s10", "10. Documents checklist", "Progress ring and per-document status: not started, uploaded, flagged, ready. The app shows real status only (Ananya today: none started).",
+    `<div class="states">
+      ${st("Ananya today (real)", U.docsSummary(ananyaDocs) + ananyaDocs.map(U.docItem).join(""))}
+      ${st("Each status (state examples)", U.docsSummary(examples) + examples.map(U.docItem).join(""))}
+    </div>`));
+
+  /* 11. AI advisor panel */
+  const opening = `Hi Ananya. Harvard decides admission without looking at your family's money, and for families earning under ${U.usd(H.netPrice.threshold.income_below_usd)} it expects nothing from parents. Your plan is ready.`;
+  const railHead = (status, cls) => `<div class="rail-head"><div class="tile t-ink"><svg width="22" height="14" viewBox="0 0 64 40" aria-hidden="true"><path d="M8 32 Q32 0 56 32" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round"/><circle cx="56" cy="32" r="7" fill="#F5B740"/></svg></div><div><b>Your advisor</b><span class="rail-status${cls ? " " + cls : ""}">${status}</span></div></div>`;
+  const composer = (disabled) => `<div class="composer"><div class="compose"><input aria-label="Ask your advisor" placeholder="Ask about aid, forms or documents"${disabled ? " disabled" : ""}><button class="send" aria-label="Send"${disabled ? " disabled" : ""}>${icon("arrow-up")}</button></div><p class="ai-label">${icon("info")}<span>AI advisor. Uses your Claude account. Numbers come from official college pages.</span></p></div>`;
+  const harvardMini = { tone: "dream", mono: "H", title: "Harvard College", sub: "$0 a year from parents", label: "Funded" };
+  out.push(block("s11", "11. AI advisor panel", "Header with status, advisor and user messages, a result mini-card inside the chat, suggested prompt chips, composer, AI label. Status: sample answers (until task 4), live, offline.",
+    `<div class="states">
+      ${st("Sample answers (now)", `<div class="mini-rail">${railHead("Sample answers")}<div class="msgs">${U.message({ role: "ai", text: opening, mini: harvardMini, source: H.netPrice.threshold.source })}${U.message({ role: "me", text: "What do my parents need to send?" })}${U.message({ role: "ai", text: "Their 2025 tax return, through IDOC, by Feb 1, 2027. Harvard accepts your own English translation, so you don't need to pay for one." })}<div class="chips"><button class="chip">Why is Harvard funded?</button><button class="chip">Explain the CSS Profile</button></div></div>${composer()}</div>`, "")}
+      ${st("Live (task 4), typing", `<div class="mini-rail">${railHead("Live, powered by Claude", "is-live")}<div class="msgs">${U.message({ role: "me", text: "Explain the CSS Profile" })}${U.typing()}</div>${composer(true)}</div>`, "")}
+      ${st("Offline", `<div class="mini-rail">${railHead("Offline", "is-offline")}<div class="msgs">${U.message({ role: "me", text: "Can I get more aid?" })}${U.message({ role: "ai", offline: true, text: "AI is offline right now. Showing prepared answers only. Try one of the suggested questions." })}<div class="chips"><button class="chip">Why is Harvard funded?</button><button class="chip" disabled>Check my documents</button></div></div>${composer()}</div>`, "")}
+    </div>`));
+
+  /* 12. Filter panel */
+  const filters = (active) => `<div class="filters">
+      ${active ? `<div class="active-chips"><button class="fchip">Strong aid for you ${icon("x")}</button><button class="fchip">Need-blind ${icon("x")}</button><button class="btn btn-link">Clear all</button></div>` : ""}
+      <fieldset><legend>Route group</legend>
+        <label class="check"><input type="checkbox"${active ? "" : ""}> Your dream</label>
+        <label class="check"><input type="checkbox"${active ? " checked" : ""}> Strong aid for you</label>
+        <label class="check"><input type="checkbox"> Lower-cost path</label></fieldset>
+      <fieldset><legend>Aid policy</legend>
+        <label class="check"><input type="checkbox"${active ? " checked" : ""}> Need-blind</label>
+        <label class="check"><input type="checkbox"> Meets full need</label>
+        <label class="check"><input type="checkbox"> Merit aid</label></fieldset>
+      <fieldset><legend>Net price per year, up to</legend>
+        <input type="range" min="0" max="100000" step="5000" value="${active ? 60000 : 100000}" aria-label="Net price per year, up to">
+        <div class="range-row"><span>$0</span><span>${active ? "$60,000" : "$100,000"}</span></div></fieldset>
+    </div>`;
+  out.push(block("s12", "12. Filter panel", "For the My colleges page: checkbox groups, range, active filter chips and Clear all.",
+    `<div class="states">${st("Default", filters(false))}${st("With active filters", filters(true))}</div>`));
+
+  /* 13. Source line */
+  out.push(block("s13", "13. Source line", "\"Source: page, checked date\" with the official link. Shown under every amount and every aid rule.",
+    `<div class="states">
+      ${st("Aid rule (Harvard)", U.sourceLine(H.netPrice.threshold.source))}
+      ${st("Cost (UT Austin)", U.sourceLine(group(L, "dream").items[0].netPrice.sources[0]))}
+      ${st("Deadline (Amherst)", U.sourceLine(passed.source))}
+      ${st("Not confirmed", `<p class="source">Not confirmed. <a href="https://www.fbil.org.in/">Official page</a></p>`)}
+    </div>`));
+
+  /* 14. Empty, loading, offline */
+  out.push(block("s14", "14. Empty, loading and offline AI states", "Empty group, skeleton while the plan loads, and the offline AI banner.",
+    `<div class="states">
+      ${st("Empty (Lower-cost path for Ananya)", `<div class="empty">${icon("route")}Your dream school already looks funded. Ask the advisor to compare lower-cost options anyway.</div>`)}
+      ${st("Loading (skeleton)", `<div aria-busy="true"><div class="skel skel-line" style="width:30%"></div><div class="skel skel-big"></div><div class="skel skel-line"></div><div class="skel skel-line" style="width:70%"></div></div>`)}
+      ${st("Offline AI", `<div class="offline-banner">${icon("wifi-off")}<span>AI is offline. Showing a prepared answer.</span></div>`)}
+    </div>`));
+
+  document.getElementById("logo").innerHTML = U.logoSvg();
+  const root = document.getElementById("root");
+  root.innerHTML = out.join("");
+  root.removeAttribute("aria-busy");
+  if (window.lucide) lucide.createIcons({ attrs: { "aria-hidden": "true" } });
+})().catch((e) => {
+  document.getElementById("root").innerHTML = `<p class="offline-banner">Could not load the components: ${String(e.message)}. Open this page with Live Server.</p>`;
+});
 </script>
 </body>
 </html>

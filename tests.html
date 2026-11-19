@@ -6,16 +6,16 @@
   <title>Pont tests</title>
   <link rel="stylesheet" href="css/tokens.css">
   <style>
-    body { margin: 0; padding: var(--space-4); background: var(--bg); color: var(--ink);
+    body { margin: 0; padding: 16px; background: var(--bg); color: var(--ink);
       font: 16px/1.5 var(--font); }
     main { max-width: 720px; margin: 0 auto; }
-    h1 { font-size: 24px; margin: 0 0 var(--space-2); }
-    #summary { padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); margin-bottom: var(--space-4); }
-    .ok { background: var(--green-tint); color: var(--green-text); }
-    .bad { background: var(--plum-tint); color: var(--plum); }
-    ol { padding-left: var(--space-6); }
-    li { margin: var(--space-1) 0; }
-    code { font-variant-numeric: tabular-nums; color: var(--slate); }
+    h1 { font-size: 24px; margin: 0 0 8px; }
+    #summary { padding: 12px 16px; border-radius: 12px; margin-bottom: 16px; }
+    .ok { background: var(--aid-tint); color: var(--aid); }
+    .bad { background: var(--gap-tint); color: var(--gap); }
+    ol { padding-left: 24px; }
+    li { margin: 4px 0; }
+    code { font-variant-numeric: tabular-nums; color: var(--muted); }
   </style>
 </head>
 <body>
@@ -406,7 +406,7 @@ function runPontTests(E, data) {
     const utL = l.colleges.find((c) => c.collegeId === "ut-austin");
     const utI = i.colleges.find((c) => c.collegeId === "ut-austin");
     check(harvardA.needBased.open === true && harvardA.forms.join() === "css_profile,idoc", "harvard for ananya");
-    check(utL.needBased.open === false && utI.needBased.open === true && utI.forms.join() === "fafsa,tasfa", "ut");
+    check(utL.needBased.open === false && utI.needBased.open === true && utI.forms.join() === "fafsa", "ut: FAFSA filers do not need the TASFA");
     check(a.colleges.every((c) => !c.forms.includes("fafsa")), "FAFSA offered to an F-1 student");
   });
   t("Ananya at Harvard (under 65k): threshold, parent contribution 0, visa fees paid by the family, the rest 'Not confirmed'", () => {
@@ -523,6 +523,49 @@ function runPontTests(E, data) {
     const d = E.nextDeadline(fcol("amherst"), "fall-2027", TODAY);
     check(d.past.length === 1 && d.past[0].date === "2026-11-13" && d.next.date === "2027-01-15", JSON.stringify(d));
     check(E.nextDeadline(fcol("harvard"), "fall-2027", TODAY).next.date === "2027-02-01", "harvard");
+  });
+
+  // --- Overview helpers (task D): deadline list and funding bar ---
+  const OV_TODAY = "2026-11-19";
+  const dlFor = (ans, fx) => E.deadlineList(E.routes(ans, data, { fxRate: fx, today: OV_TODAY }), data, { term: ans.term, today: OV_TODAY });
+  t("Deadline list (Ananya, 2026-11-19): sorted; passed ones marked; next is MIT Early Action aid, Nov 30, 11 days", () => {
+    const d = dlFor(ANANYA, INR_TEST);
+    check(d.every((x, i) => i === 0 || d[i - 1].date <= x.date), "not sorted");
+    check(d.filter((x) => x.status === "passed").map((x) => x.date).join() === "2026-11-01,2026-11-01,2026-11-13", "passed");
+    const next = d.find((x) => x.status === "to_do");
+    check(next.collegeId === "mit" && next.date === "2026-11-30" && next.daysLeft === 11 && next.kind === "aid", JSON.stringify(next));
+    check(next.forms.join() === "css_profile,idoc" && next.codes.css_profile === "3514", "forms");
+    const h = d.find((x) => x.collegeId === "harvard" && x.kind === "admission" && x.round === "regular");
+    check(h.date === "2027-01-01" && h.daysLeft === 43, "harvard RD");
+    check(!d.some((x) => /open|decision_/.test(x.round)), "opening or decision dates listed");
+  });
+  t("Deadline windows: ACC opens 01-15, priority 2027-05-01, closes 2027-12-15; UT scholarships 2026-12-01", () => {
+    const d = dlFor(LUCAS_A, FX);
+    const get = (c, r) => d.find((x) => x.collegeId === c && x.round === r).date;
+    check(get("acc", "priority") === "2027-05-01" && get("acc", "closes") === "2027-12-15", "acc");
+    check(get("ut-austin", "scholarships_via_application") === "2026-12-01" && get("ut-austin", "isss_scholarships_close") === "2027-03-01", "ut");
+  });
+  t("Deadline list (Ian): no ISSS dates and no dates from routes without data for his situation", () => {
+    const d = dlFor(IAN_A, FX);
+    check(!d.some((x) => /^isss/.test(x.round)) && !d.some((x) => x.collegeId === "acc"), d.map((x) => x.id).join());
+  });
+  t("Funding bar (Ananya at Harvard): aid, family, hatched not-confirmed part at a fixed width; shares add up to 1", () => {
+    const it = E.routes(ANANYA, data, { fxRate: INR_TEST, today: OV_TODAY }).groups[0].items[0];
+    const b = E.fundingBar(it.netPrice, it.gap);
+    check(b.segments.map((x) => x.id).join() === "aid,family,not_confirmed", b.segments.map((x) => x.id).join());
+    check(near(b.segments[1].amount, 535 / 4) && b.segments[2].amount === null && b.segments[2].share === 0.06, "amounts");
+    check(b.segments[1].share >= 0.02 * 0.94 - 1e-9, "family part too small to see");
+    check(near(b.segments.reduce((sum, x) => sum + x.share, 0), 1, 1e-9), "shares");
+  });
+  t("Funding bar (Lucas at UT): family can cover, then the gap segment; no aid segment", () => {
+    const it = E.routes(LUCAS_A, data, { fxRate: FX, today: OV_TODAY }).groups[0].items[0];
+    const b = E.fundingBar(it.netPrice, it.gap);
+    check(b.segments.map((x) => x.id).join() === "family,gap,not_confirmed", b.segments.map((x) => x.id).join());
+    check(near(b.segments[0].amount + b.segments[1].amount, it.gap.netPerYear, 1e-6), "family + gap = net per year");
+  });
+  t("Funding bar: no estimate (Ian at UT) -> no bar", () => {
+    const it = E.routes(IAN_A, data, { fxRate: FX, today: OV_TODAY }).groups[0].items[0];
+    check(E.fundingBar(it.netPrice, it.gap) === null, "bar drawn");
   });
   return out;
 }

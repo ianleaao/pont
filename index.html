@@ -4,52 +4,92 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Pont</title>
-  <meta name="description" content="See the real cost of studying in the U.S., in your family's currency, with a clear plan.">
+  <meta name="description" content="Tell us your dream school. We find the scholarships to get you there.">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/tokens.css">
   <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
   <!--
-    Language: the page is English. Every Portuguese block (Family mode, bank letter)
-    sets lang="pt-BR" on its own element so screen readers pronounce it correctly.
+    Language: the page is English. Every block in the family language (family mode, bank letter, drafts)
+    sets its own lang on its element (for example lang="pt-BR", lang="hi").
+    Two layouts: the intake (welcome and questions, no sidebar) and the app shell (every screen after the intake).
   -->
-  <div class="app">
-    <header class="app-header">
-      <a class="app-logo" href="./" aria-label="Pont, home">
-        <svg viewBox="0 0 64 40" aria-hidden="true"><path d="M8 32 Q32 0 56 32" fill="none" stroke="#15233A" stroke-width="4" stroke-linecap="round"/><line x1="8" y1="32" x2="56" y2="32" stroke="#15233A" stroke-width="2.5" stroke-linecap="round"/><circle cx="8" cy="32" r="5.5" fill="#2E7D5B"/><circle cx="56" cy="32" r="5.5" fill="#E3A947"/></svg>
-        <span>Pont</span>
-      </a>
-      <div class="app-rate" id="app-rate" aria-live="polite"></div>
+
+  <!-- Intake: welcome and question screens -->
+  <div class="intake" id="intake" hidden>
+    <header class="intake-head">
+      <a class="logo" href="./" aria-label="Pont, home"><span id="intake-logo"></span>Pont</a>
+      <div class="intake-progress" id="intake-progress" hidden>
+        <span id="progress-text"></span>
+        <div class="progress" aria-hidden="true"><span id="progress-fill"></span></div>
+      </div>
+    </header>
+    <main class="intake-main">
+      <section class="intake-card" id="screen" aria-labelledby="screen-title"></section>
+    </main>
+  </div>
+
+  <!-- App shell -->
+  <div class="shell" id="shell" hidden>
+    <header class="mobile-bar">
+      <a class="logo" href="#overview" aria-label="Pont, overview"><span class="logo-slot"></span>Pont</a>
+      <button type="button" class="icon-btn" id="btn-menu" aria-label="Open the menu" aria-expanded="false" aria-controls="side">
+        <i data-lucide="menu" class="icon" aria-hidden="true"></i>
+      </button>
     </header>
 
-    <div class="app-progress" id="app-progress" hidden>
-      <div class="progress">
-        <span class="progress-text" id="progress-text"></span>
-        <div class="progress-track" aria-hidden="true"><div class="progress-fill" id="progress-fill"></div></div>
+    <aside class="side" id="side" aria-label="Main">
+      <div style="display:flex;align-items:center">
+        <a class="logo" href="#overview" aria-label="Pont, overview"><span class="logo-slot"></span>Pont</a>
+        <button type="button" class="icon-btn side-close" id="btn-side-close" aria-label="Close the menu">
+          <i data-lucide="x" class="icon" aria-hidden="true"></i>
+        </button>
       </div>
-    </div>
+      <nav class="nav" id="nav" aria-label="Pages"></nav>
+      <div class="side-foot">
+        <div class="profile-card" id="profile-card"></div>
+        <button type="button" class="btn btn-link" id="btn-start-over">Start over</button>
+      </div>
+    </aside>
 
-    <main class="app-main" id="app-main">
-      <section class="screen" id="screen" aria-labelledby="screen-title"></section>
+    <main class="main" id="main">
+      <div class="top" id="top"></div>
+      <div id="page"></div>
     </main>
 
-    <footer class="app-footer" id="app-footer">
-      <div class="app-nav" id="app-nav">
-        <button type="button" class="btn btn-secondary" id="btn-back">Back</button>
-        <button type="button" class="btn btn-link" id="btn-skip" hidden>Skip</button>
-        <button type="button" class="btn btn-primary" id="btn-next">Continue</button>
+    <aside class="rail" id="rail" aria-label="AI advisor">
+      <div class="rail-head">
+        <div class="tile t-ink"><svg width="22" height="14" viewBox="0 0 64 40" aria-hidden="true"><path d="M8 32 Q32 0 56 32" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round"/><circle cx="56" cy="32" r="7" fill="#F5B740"/></svg></div>
+        <div><b>Your advisor</b><span class="rail-status" id="rail-status">Sample answers</span></div>
+        <button type="button" class="icon-btn rail-close" id="btn-rail-close" aria-label="Close the advisor">
+          <i data-lucide="x" class="icon" aria-hidden="true"></i>
+        </button>
       </div>
-      <button type="button" class="btn btn-link app-start-over" id="btn-start-over" hidden>Start over</button>
-    </footer>
+      <div class="msgs" id="msgs" role="log" aria-live="polite"></div>
+      <div class="composer">
+        <form class="compose" id="compose">
+          <label for="ask" class="sr-only">Ask your advisor</label>
+          <input id="ask" autocomplete="off" placeholder="Ask about aid, forms or documents">
+          <button type="submit" class="send" aria-label="Send"><i data-lucide="arrow-up" class="icon" aria-hidden="true"></i></button>
+        </form>
+        <p class="ai-label" id="ai-label"><i data-lucide="info" class="icon" aria-hidden="true"></i><span></span></p>
+      </div>
+    </aside>
   </div>
+
+  <button type="button" class="fab" id="fab" hidden aria-controls="rail" aria-expanded="false">
+    <i data-lucide="message-circle" class="icon" aria-hidden="true"></i>Ask the advisor
+  </button>
+  <div class="backdrop" id="backdrop" hidden></div>
 
   <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
   <script src="js/engine.js"></script>
   <script src="js/fx.js"></script>
+  <script src="js/ui.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

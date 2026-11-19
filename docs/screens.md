@@ -1,6 +1,25 @@
 # Screens (prototype, about 14)
 
-Mobile first. Copy below is the default English text. Never use em dashes in copy. Every AI block is labeled "Written by AI. Check the source." with a confidence level and its sources. Every number is tappable for "Source and date".
+## Pages (visual design v4 "Campus", decided 19 Nov 2026)
+docs/design-campus.md decides the pages and the layout; this file keeps the flow and the exact copy. Map from the screens below to the Campus pages:
+
+| Screens in this file | Campus page | Built in |
+| --- | --- | --- |
+| 1 Welcome | 1 Welcome | task 5 |
+| 2 AI intake (chat) | 2 Intake | task 5 |
+| 3 Profile confirm | 3 Profile confirm | task 5 |
+| 4 Funding map + 5 Routes | 4 Overview (dream hero, next deadline, routes in group columns, deadlines, documents, advisor rail) | task D |
+| 6 College detail | 5 My colleges (filters, cards) and 6 College detail | task 6 |
+| 7 Scholarships | 7 Scholarships | task 6 |
+| 8 Plan timeline | 8 Plan and deadlines | task 6 |
+| 9 Upload + 10 Document result + 11 Drafts | 9 Documents studio | task 7 |
+| 12 Essay coach | Advisor rail (essay help inside the chat) | task 7 |
+| 13 Family mode | 10 Family mode | task 8 |
+| 14 Save plan | Sidebar profile card | task 8 |
+
+App frame: the Campus app shell (left sidebar, top bar with search and currency switch, content grid, AI advisor rail) replaces the header, progress and footer described below for every page after the intake. The intake keeps the progress and the Back and Continue buttons.
+
+Desktop first, adapting to 380 px. Copy below is the default English text. Never use em dashes in copy. Every AI block is labeled "Written by AI. Check the source." with a confidence level and its sources. Every number is tappable for "Source and date".
 
 App frame (index.html, every screen):
 - Header: Pont logo on the left; after the family country is known, the exchange rate in two lines on the right ("1 USD = <rate in family currency>" and "Source: <provider>, <date>"). Hidden for USD families and before the country is known.

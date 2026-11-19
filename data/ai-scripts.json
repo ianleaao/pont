@@ -8,8 +8,14 @@
       "language": "pt",
       "confidence": "high",
       "text": "Resumo para a família: o curso de Ciência da Computação na UT Austin custa cerca de {total_family} no total, ou {monthly_family} por mês. Para o I-20, a faculdade pede para comprovar cerca de {show_i20_family} para o primeiro ano. Próximos passos: 1) ver o caminho pela ACC, 2) preparar a carta do banco em inglês, 3) acompanhar o prazo de 15 de outubro.",
-      "sources": ["ut-coa", "ut-isss-finance"],
-      "failure": { "id": "term_no_translation", "text": "Mantivemos o termo em inglês 'cost of attendance' (custo total estimado de um ano na faculdade), porque não existe uma tradução oficial." }
+      "sources": [
+        "ut-coa",
+        "ut-isss-finance"
+      ],
+      "failure": {
+        "id": "term_no_translation",
+        "text": "Mantivemos o termo em inglês 'cost of attendance' (custo total estimado de um ano na faculdade), porque não existe uma tradução oficial."
+      }
     },
     {
       "id": "what_if_fx_up",
@@ -18,8 +24,13 @@
       "language": "en",
       "confidence": "high",
       "text": "With the exchange rate {fx_change}, the whole program moves from {old_total_family} to {new_total_family}. The band changes from {old_band} to {new_band}.",
-      "sources": ["fx"],
-      "failure": { "id": "outside_data", "text": "This scenario goes beyond the data we have, so we show a range, not a promise: {range_family}." }
+      "sources": [
+        "fx"
+      ],
+      "failure": {
+        "id": "outside_data",
+        "text": "This scenario goes beyond the data we have, so we show a range, not a promise: {range_family}."
+      }
     },
     {
       "id": "doc_check_lucas",
@@ -28,8 +39,13 @@
       "language": "en",
       "confidence": "medium",
       "text": "We found {issue_count} items to fix before you upload: {issues}.",
-      "sources": ["ut-isss-finance"],
-      "failure": { "id": "low_confidence", "text": "We could not read this field clearly. Please confirm the value." }
+      "sources": [
+        "ut-isss-finance"
+      ],
+      "failure": {
+        "id": "low_confidence",
+        "text": "We could not read this field clearly. Please confirm the value."
+      }
     },
     {
       "id": "bank_letter_pt",
@@ -38,7 +54,9 @@
       "language": "pt",
       "confidence": "high",
       "text": "Prezados, solicito uma carta em inglês, em papel timbrado e assinada por um representante do banco, informando o nome do titular, a data, a moeda e o saldo disponível da conta, para o processo de emissão do I-20 em uma universidade americana. Obrigado.",
-      "sources": ["ut-isss-finance"]
+      "sources": [
+        "ut-isss-finance"
+      ]
     },
     {
       "id": "essay_declined",
@@ -48,5 +66,89 @@
       "confidence": "high",
       "text": "I can help you plan and review your ideas, but I can't write your essay. Colleges require it to be your own work."
     }
-  ]
+  ],
+  "advisor": {
+    "note": "Advisor rail, scripted until live AI (task 4). Variables in braces are filled from engine results and college data in js/app.js. Never put numbers here. A message whose variable is missing is not shown.",
+    "status_sample": "Sample answers",
+    "ai_label": "AI advisor. Uses your Claude account. Numbers come from official college pages.",
+    "offline": "AI is offline right now. Showing prepared answers only. Try one of the suggested questions.",
+    "generic": {
+      "opening": {
+        "text": "Hi {name}. Your funding plan is ready. Ask about aid, forms or documents."
+      },
+      "chips": []
+    },
+    "ananya": {
+      "opening": {
+        "text": "Hi {name}. {dream} decides admission without looking at your family's money, and for families earning under {threshold_income} it expects nothing from parents. Your plan is ready.",
+        "mini": true,
+        "source": "dream"
+      },
+      "chips": [
+        {
+          "q": "What do my parents need to send?",
+          "a": "Their 2025 tax return, through IDOC, by {dream_aid_deadline}. {dream} accepts your own English translation, so you don't need to pay for one.",
+          "source": "dream_apply"
+        },
+        {
+          "q": "Why is {dream} funded?",
+          "a": "{dream}'s rule: for families earning under {threshold_income}, the expected parent contribution is zero. Your family's income is {band}. Your family pays the visa fees, {visa_fees} once. Still to confirm: {pending}.",
+          "source": "dream"
+        },
+        {
+          "q": "Explain the CSS Profile",
+          "a": "The CSS Profile is the College Board's financial aid application. {dream} asks for it with code {css_code}, plus your parents' tax documents through IDOC. Regular Decision aid deadline: {dream_aid_deadline}.",
+          "source": "dream_apply"
+        }
+      ]
+    },
+    "lucas": {
+      "opening": {
+        "text": "Hi {name}. {dream} gives international students merit scholarships only, so we count the full cost: about {net_per_year} a year on average. Your family could cover about {family_per_year}. The gap is about {gap_per_year} a year.",
+        "mini": true,
+        "source": "dream"
+      },
+      "chips": [
+        {
+          "q": "How can I close the gap?",
+          "a": "Two routes can help. Start at {cc_name} and transfer to {dream}: {cc_gap_label}, {cc_gap_share} above what your family can pay. {transfer_note} Colleges that meet full need for international students: {strong_list}. Share an income range to see their estimates.",
+          "source": "cc"
+        },
+        {
+          "q": "How much do I show for the I-20?",
+          "a": "{dream} asks you to show {i20_amount} for the first year. {i20_note} This is what you show, not what you pay.",
+          "source": "i20"
+        },
+        {
+          "q": "What is \"Strong aid for you\"?",
+          "a": "Colleges that give need-based aid to international students and meet full need: {strong_list}. Their price depends on your family's income, so share an income range to see an estimate.",
+          "source": "dream"
+        }
+      ]
+    },
+    "ian": {
+      "opening": {
+        "text": "{name}, as a U.S. citizen you can file the FAFSA. {dream} has no published income rule, so there is no estimate yet. The official aid page has the next steps.",
+        "mini": true,
+        "source": "dream"
+      },
+      "chips": [
+        {
+          "q": "Am I a Texas resident?",
+          "a": "Pont doesn't decide residency. The UT rule: {residency_rule}",
+          "source": "residency"
+        },
+        {
+          "q": "Which forms do I need?",
+          "a": "{dream_forms}. Next {dream} deadline: {dream_next_deadline}.",
+          "source": "dream"
+        },
+        {
+          "q": "What does {dream} cost before aid?",
+          "a": "Before aid, {dream} costs about {full_per_year} a year on average as a nonresident, over {years} years with costs rising {increase} a year. Your aid offer comes after the FAFSA.",
+          "source": "cost"
+        }
+      ]
+    }
+  }
 }

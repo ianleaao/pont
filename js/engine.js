@@ -488,7 +488,8 @@
         needBased,
         meetsFullNeed: aidValue(c, "meets_full_need_intl") === true,
         merit: aidValue(c, "merit_aid_intl"),
-        forms: ((forms && forms.value) || []).filter((f) => fafsaOpen || f !== "fafsa"),
+        // F-1 students never get the FAFSA; FAFSA filers do not need the TASFA (it is for students without a FAFSA).
+        forms: ((forms && forms.value) || []).filter((f) => (fafsaOpen ? f !== "tasfa" : f !== "fafsa")),
         source: collegeSource(c, c.aid.intl_need_based_aid.source, c.aid.intl_need_based_aid.checked_on),
       };
     });
@@ -676,17 +677,119 @@
 
   // Next aid deadline for the start term. "MM-DD" dates fall in the application cycle:
   // August to December of the year before the start, January to July of the start year.
+  // A window with an "opens" date (ACC: opens 01-15, priority 05-01, closes 12-15) runs forward from it:
+  // dates earlier in the year than the opening fall in the next year.
+  function resolveDates(group, term) {
+    const startYear = parseInt(/\d{4}/.exec(term)[0], 10);
+    const cycle = (v) => (/^\d{4}-/.test(v) ? v : (parseInt(v.slice(0, 2), 10) >= 8 ? startYear - 1 : startYear) + "-" + v);
+    // The opening date anchors only the keys that share its prefix ("isss_scholarships_open" ->
+    // "isss_scholarships_close"); a bare "opens" anchors the whole group.
+    const openKey = Object.keys(group).find((k) => /open/.test(k));
+    const opens = openKey ? cycle(group[openKey]) : null;
+    const prefix = openKey ? openKey.replace(/opens?$/, "") : "";
+    const out = {};
+    Object.keys(group).forEach((k) => {
+      const v = group[k];
+      if (!v) return;
+      if (!opens || /^\d{4}-/.test(v) || k.indexOf(prefix) !== 0) { out[k] = cycle(v); return; }
+      const y = parseInt(opens.slice(0, 4), 10);
+      out[k] = (v >= opens.slice(5) ? y : y + 1) + "-" + v;
+    });
+    return out;
+  }
+
+  // Whole days from a to b ("YYYY-MM-DD"), calendar dates, no time zone shift.
+  function daysBetween(a, b) {
+    const t = (s) => Date.UTC(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8, 10));
+    return Math.round((t(b) - t(a)) / 86400000);
+  }
+
   function nextDeadline(college, term, today) {
     const d = college.aid && college.aid.deadlines && college.aid.deadlines.value;
     if (!d || !d.aid) return null;
-    const startYear = parseInt(/\d{4}/.exec(term)[0], 10);
-    const all = Object.keys(d.aid).filter((k) => !/open/.test(k)).map((k) => {
-      const v = d.aid[k];
-      const date = /^\d{4}-/.test(v) ? v : (parseInt(v.slice(0, 2), 10) >= 8 ? startYear - 1 : startYear) + "-" + v;
+    const dates = resolveDates(d.aid, term);
+    const all = Object.keys(dates).filter((k) => !/open/.test(k)).map((k) => {
+      const date = dates[k];
       return { id: k, date, past: today ? date < today : false };
     }).sort((a, b) => (a.date < b.date ? -1 : 1));
     return { next: all.find((x) => !x.past) || null, past: all.filter((x) => x.past),
       source: collegeSource(college, college.aid.deadlines.source, college.aid.deadlines.checked_on) };
+  }
+
+  // Every admission and aid deadline of the colleges in the routes, sorted by date.
+  // Opening dates and decision release dates are not deadlines and are left out.
+  // routesResult: routes(). opts: { term, today }.
+  function deadlineList(routesResult, data, opts) {
+    const audience = routesResult.profile.audience;
+    const seen = {};
+    const items = [];
+    routesResult.groups.forEach((g) => g.items.forEach((it) => {
+      if (seen[it.collegeId] || it.status !== "ok") return; // no data for this situation: no dates either
+      seen[it.collegeId] = true;
+      const c = findCollege(data, it.collegeId);
+      const dl = c && c.aid && c.aid.deadlines;
+      if (!dl || !dl.value) return;
+      const formsField = audience === "us" ? c.aid.forms_us : c.aid.forms_intl;
+      const codes = (formsField && formsField.codes) || {};
+      const source = collegeSource(c, dl.source, dl.checked_on);
+      ["admission", "aid"].forEach((kind) => {
+        const group = dl.value[kind];
+        if (!group) return;
+        const dates = resolveDates(group, opts.term);
+        // ISSS scholarships are for international students only.
+        Object.keys(dates).filter((k) => !/open|^decision_/.test(k) && !(audience === "us" && /^isss/.test(k))).forEach((k) => {
+          const date = dates[k];
+          const passed = opts.today ? date < opts.today : false;
+          items.push({
+            id: c.id + ":" + kind + ":" + k,
+            collegeId: c.id,
+            collegeName: c.name,
+            group: g.id,
+            kind,
+            round: k,
+            date,
+            status: passed ? "passed" : "to_do",
+            daysLeft: opts.today ? daysBetween(opts.today, date) : null,
+            forms: kind === "aid" ? it.forms.slice() : [],
+            codes,
+            source,
+          });
+        });
+      });
+    }));
+    return items.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : a.id < b.id ? -1 : 1));
+  }
+
+  /* ---------- 11. Funding bar (per year, USD) ---------- */
+
+  // Segments: aid (full cost minus what the family pays), family (what the family pays or can cover),
+  // gap (only when there is a gap), not_confirmed (hatched, fixed small width: its amount is unknown).
+  // share: width as a fraction of the bar. Non-zero segments get at least MIN_SHARE so they stay visible.
+  const BAR = { notConfirmedShare: 0.06, minShare: 0.02 };
+
+  function fundingBar(net, gap) {
+    if (!net || net.status !== "ok" || !net.hasEstimate) return null;
+    const pick = (r) => (net.atMost ? r.max : r.mid);
+    const fullPerYear = net.fullCost.mid / net.years;
+    const perYear = pick(net.averagePerYear);
+    const hasGap = !!(gap && gap.label && gap.gapUsd > EPS);
+    const known = [];
+    const aid = fullPerYear - perYear;
+    if (aid > EPS) known.push({ id: "aid", amount: aid });
+    known.push({ id: "family", amount: hasGap ? gap.familyPerYearUsd : perYear });
+    if (hasGap) known.push({ id: "gap", amount: gap.gapUsd });
+    const pending = net.notConfirmed && net.notConfirmed.length > 0;
+    const room = 1 - (pending ? BAR.notConfirmedShare : 0);
+    const total = known.reduce((s, x) => s + x.amount, 0);
+    // Small parts get the minimum width first; the rest is shared in proportion.
+    const raw = known.map((x) => (total > 0 ? x.amount / total : 0));
+    const small = raw.map((r, i) => known[i].amount > EPS && r < BAR.minShare);
+    const fixed = small.filter(Boolean).length * BAR.minShare;
+    const bigTotal = raw.reduce((s, r, i) => s + (small[i] ? 0 : r), 0) || 1;
+    const shares = raw.map((r, i) => (small[i] ? BAR.minShare : (r / bigTotal) * (1 - fixed)) * room);
+    const segments = known.map((x, i) => ({ id: x.id, amount: x.amount, share: shares[i] }));
+    if (pending) segments.push({ id: "not_confirmed", amount: null, share: BAR.notConfirmedShare });
+    return { segments, fullPerYear, perYear, atMost: !!net.atMost };
   }
 
   const matchesArea = (p, area) => p.level === "bachelor" && (p.area === area || p.area === "any");
@@ -821,6 +924,9 @@
     fundingGap,
     nextDeadline,
     routes,
+    daysBetween,
+    deadlineList,
+    fundingBar,
   };
 
   if (typeof module !== "undefined" && module.exports) module.exports = api;

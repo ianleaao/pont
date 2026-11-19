@@ -6,9 +6,11 @@
   is known. Never at startup. USD needs no rate.
     1. Frankfurter v2 (central bank data): /v2/rate/usd/{cur}
     2. ExchangeRate-API open endpoint (credit link required by its terms)
-    3. data/fx.json fallback (BRL and INR only), with a visible notice
+    3. data/fx.json: the Frankfurter snapshot (every currency, refreshed before each publish by
+       tools/fx-snapshot.mjs), then the official fallback (BRL PTAX), with a visible notice
     4. Nothing left: status "not_confirmed"
   Time budget: 5 seconds per currency, then the fallback.
+  options.offline skips 1 and 2 (inside the claude.ai Artifact external requests are blocked).
 
   Format: each currency in its own country's locale (data/countries.json),
   USD always en-US. Totals without cents. Rates with 2 decimals below 1,000
@@ -164,15 +166,22 @@
       credit: { text: COPY.erCredit, url: "https://www.exchangerate-api.com" } };
   }
 
-  // Fallback file. A currency without a confirmed rate returns status "not_confirmed".
-  async function fromFile(currency, fxJsonUrl) {
+  // Fallback file: the snapshot first (newer, same source as the live rate), then the official rate.
+  // A currency in neither returns status "not_confirmed".
+  async function fromFile(currency, fxJsonUrl, json) {
     let r = null;
+    let snap = null;
     try {
-      const res = await fetch(fxJsonUrl, { cache: "no-store" });
-      const j = await res.json();
+      const j = json || await (await fetch(fxJsonUrl, { cache: "no-store" })).json();
       r = j.rates && j.rates[currency];
+      snap = j.snapshot && j.snapshot.rates && j.snapshot.rates[currency] ? j.snapshot : null;
     } catch (e) {
       console.warn("[Pont fx] fallback file unavailable", e.message);
+    }
+    if (snap && validRate(snap.rates[currency].rate)) {
+      const s = snap.rates[currency];
+      return { rate: s.rate, rateDate: s.date, source: "snapshot", sourceLabel: snap.source, sourceUrl: snap.credit_url,
+        credit: null, fallback: true, notice: COPY.fallback.replace("DATE", formatDate(s.date)) };
     }
     if (r && validRate(r.rate)) {
       return { rate: r.rate, rateDate: r.set_on, source: "fallback", sourceLabel: r.source, sourceUrl: r.url,
@@ -205,7 +214,7 @@
     const left = () => deadline - Date.now();
 
     let info = null;
-    for (const attempt of [fromFrankfurter, fromExchangeRateApi]) {
+    for (const attempt of options.offline ? [] : [fromFrankfurter, fromExchangeRateApi]) {
       try {
         info = await attempt(currency, left());
         break;
@@ -235,5 +244,5 @@
   }
 
   return { configure, familyCurrencies, getRate, getRates, rateLines, label, formatMoney, formatRate,
-    rateDigits, formatDate, COPY, TIMEOUT_MS };
+    rateDigits, formatDate, fromFile, COPY, TIMEOUT_MS };
 });

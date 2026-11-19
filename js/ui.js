@@ -298,10 +298,17 @@
   function message(m) {
     if (m.role === "me") return `<div class="msg me">${esc(m.text)}</div>`;
     const mini = m.mini ? `<div class="mini"><div class="mono mono-sm m-${m.mini.tone}-solid" aria-hidden="true">${esc(m.mini.mono)}</div><div><b>${esc(m.mini.title)}</b><div class="mini-sub">${esc(m.mini.sub)}</div></div>${m.mini.label ? gapLabel(m.mini.label, true) : ""}</div>` : "";
-    const src = m.source ? `<span class="msg-source">Source: ${ext(m.source.url, m.source.label)}${m.source.checked_on ? ", checked " + esc(fullDate(m.source.checked_on)) : ""}.</span>` : "";
-    return `<div class="msg ai${m.offline ? " offline" : ""}">${esc(m.text)}${mini}${src}</div>`;
+    const list = (m.sources || []).concat(m.source ? [m.source] : []).filter((x) => x && x.url);
+    const one = (x) => `${ext(x.url, x.label)}${x.checked_on ? ", checked " + esc(fullDate(x.checked_on)) : ""}`;
+    const src = list.length ? `<span class="msg-source">Source: ${list.map(one).join("; ")}.</span>` : "";
+    // Offline: the scripted answer carries the offline banner (docs/screens.md, global).
+    const banner = m.offline ? `<span class="msg-banner">${icon("wifi-off")}${esc(m.banner || "AI is offline. Showing a prepared answer.")}</span>` : "";
+    // Live: every AI answer is labeled, with its confidence (docs/ai.md, principle).
+    const conf = { high: "High confidence", medium: "Medium confidence", low: "Low confidence" }[m.confidence];
+    const label = m.live ? `<span class="msg-label">${icon("sparkles")}Written by AI. Check the source.${conf ? " " + conf + "." : ""}</span>` : "";
+    return `<div class="msg ai${m.offline ? " offline" : ""}"${m.lang ? ` lang="${esc(m.lang)}"` : ""}>${banner}${esc(m.text)}${mini}${src}${label}</div>`;
   }
-  const typing = () => `<div class="typing" aria-label="The advisor is typing"><span></span><span></span><span></span></div>`;
+  const typing = (label) => `<div class="typing" role="status" aria-label="${esc(label || "The advisor is typing")}"><span></span><span></span><span></span></div>`;
 
   root.PontUI = {
     esc, icon, ext, monthDay, fullDate, termLabel, logoSvg, money, usd, listText,

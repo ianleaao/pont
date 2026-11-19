@@ -87,7 +87,7 @@ The mockup shows sample states. The app shows only what the data and the student
 - Plan steps: built from the real deadlines of the route colleges (`deadlineList` in js/engine.js), "0 of N" until the student ticks them. Ticks are saved in the tab only.
 - Documents: the documents the dream college's data asks for, each "Not started", ring at 0, until the documents studio (task 8).
 - Next deadline: the real next one for today's date (for example MIT Early Action aid, Nov 30, 2026), even when the mockup shows another.
-- Advisor rail status: "Sample answers" until live AI (task 4). Scripted answers are templates filled from engine values (data/ai-scripts.json, "advisor").
+- Advisor rail status: "Live, powered by Claude" when the Artifact runtime resolved the sample function, otherwise "Sample answers" (docs/ai.md). Scripted answers are templates filled from engine values (data/ai-scripts.json, "advisor") and carry the offline banner.
 
 ## Motion
 Subtle and purposeful only: card hover lifts 1 px with a slightly stronger shadow; advisor messages fade in with a short typing indicator; the funding bar fills once on first view. Respect prefers-reduced-motion (no motion at all).

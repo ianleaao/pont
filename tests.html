@@ -21,13 +21,15 @@
 <body>
 <main>
   <h1>Pont tests</h1>
-  <p>Engine and money format. Fixed rates: 1 USD = R$ 5.5146 and 1 USD = ₹94 (INR test only). Run with Live Server. Results also go to the console.</p>
+  <p>Engine, money format, exchange-rate snapshot and the AI layer (a fake Artifact runtime, no real calls). Fixed rates: 1 USD = R$ 5.5146 and 1 USD = ₹94 (INR test only). Run with Live Server. Results also go to the console.</p>
   <div id="summary">Running...</div>
   <ol id="results"></ol>
 </main>
 
 <script src="js/engine.js"></script>
 <script src="js/fx.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/prompts.js"></script>
 <script id="engine-tests">
 // Test suite. Takes (E = engine, data = { colleges, fees, fx, countries }) and returns [{ name, pass, detail }].
 function runPontTests(E, data) {
@@ -664,6 +666,270 @@ function runFxTests(F, data) {
   return out;
 }
 </script>
+<script id="ai-tests">
+// AI layer tests (docs/ai.md). A fake Artifact runtime stands in for claude.use("sample"): no real calls.
+// Takes (AI = PontAI, P = PontPrompts) and resolves [{ name, pass, detail }].
+async function runAiTests(AI, P) {
+  const out = [];
+  const t = async (name, fn) => {
+    try {
+      const info = await fn();
+      out.push({ name, pass: true, detail: typeof info === "string" ? info : "" });
+    } catch (e) {
+      out.push({ name, pass: false, detail: e.message });
+    }
+  };
+  const check = (cond, msg) => { if (!cond) throw new Error(msg); };
+  const LONG_DASH = String.fromCharCode(0x2014);
+
+  // Fake runtime. behave(input, opts) returns the parsed JSON or throws { code }.
+  function fakeRuntime(behave, o) {
+    o = o || {};
+    const calls = { use: 0, json: 0, opts: [], inputs: [] };
+    const sample = async () => { throw { code: "invalid_request", message: "text calls are not used" }; };
+    sample.json = async (input, opts) => {
+      calls.json += 1;
+      calls.opts.push(opts);
+      calls.inputs.push(input);
+      return behave(input, opts);
+    };
+    sample.limits = async () => (o.images ? { maxPromptBytes: 262144, images: { maxCount: 5, maxInputBytes: 20e6, mediaTypes: ["image/png"] } } : { maxPromptBytes: 262144 });
+    const claude = {
+      use: (name) => {
+        calls.use += 1;
+        if (o.never) return new Promise(() => {});
+        if (o.nullUse) return Promise.resolve(null);
+        return Promise.resolve(name === "sample" ? sample : null);
+      },
+    };
+    return { claude, calls };
+  }
+  const FACTS = {
+    student: { first_name: "Lucas", family_currency: "BRL" },
+    routes: [{ route_id: "dream:ut-austin", college_id: "ut-austin", gap_label: "Gap", gap_per_year: "$31,514 (R$ 184.040)" }],
+    sources: [{ id: "s1", title: "UT Austin cost of attendance", url: "https://example.org/coa", checked_on: "2026-11-13" }],
+  };
+  const advisorCall = (q) => P.advisor({ question: q || "How big is my gap?", facts: FACTS, history: [] });
+  const SCRIPTED = { text: "Prepared answer." };
+  const GOOD = { answer: "Your gap at UT Austin is $31,514 a year.", sources: ["s1"], confidence: "high" };
+  const settle = () => new Promise((r) => setTimeout(r, 0));
+
+  await t("No runtime (Live Server): status Sample answers, scripted answer with offline: true", async () => {
+    const c = AI.createClient({});
+    check(c.status() === "offline" && c.statusText() === "Sample answers", c.status());
+    const r = await c.ask(advisorCall(), { fallback: SCRIPTED });
+    check(r.offline === true && r.live === false && r.data === SCRIPTED && r.reason === "no_runtime", JSON.stringify(r));
+  });
+
+  await t("Creating the client asks the runtime once and calls Claude zero times (no call on load)", async () => {
+    const f = fakeRuntime(() => GOOD);
+    const c = AI.createClient({ claude: f.claude });
+    await c.ready();
+    check(f.calls.use === 1 && f.calls.json === 0, JSON.stringify(f.calls));
+    check(c.status() === "live" && c.statusText() === "Live, powered by Claude", c.status());
+  });
+
+  await t("Live, valid answer: validated, live: true, modelTier default, consent note only before the first call", async () => {
+    const f = fakeRuntime(() => GOOD);
+    const c = AI.createClient({ claude: f.claude });
+    await c.ready();
+    check(c.consentPending() === true, "consent note missing before the first call");
+    const r = await c.ask(advisorCall(), { fallback: SCRIPTED });
+    check(r.live === true && r.offline === false && r.data.answer === GOOD.answer && r.data.sources[0] === "s1", JSON.stringify(r));
+    check(f.calls.opts[0].modelTier === "default", JSON.stringify(f.calls.opts[0]));
+    check(c.consentPending() === false, "consent note still shown after the first call");
+  });
+
+  await t("Invalid JSON: scripted answer, offline banner, one call only (no retry)", async () => {
+    const f = fakeRuntime(() => { throw { code: "invalid_json", message: "no JSON", text: "Sure! Here..." }; });
+    const c = AI.createClient({ claude: f.claude });
+    await c.ready();
+    const r = await c.ask(advisorCall(), { fallback: SCRIPTED });
+    check(r.offline === true && r.data === SCRIPTED && r.reason === "invalid_json", JSON.stringify(r));
+    check(f.calls.json === 1, "called " + f.calls.json + " times");
+    check(c.status() === "live", "invalid JSON should not switch the client off");
+  });
+
+  await t("Answer that breaks its JSON shape (no confidence) falls back", async () => {
+    const f = fakeRuntime(() => ({ answer: "Hi", sources: [] }));
+    const c = AI.createClient({ claude: f.claude });
+    await c.ready();
+    const r = await c.ask(advisorCall(), { fallback: SCRIPTED });
+    check(r.offline && r.reason === "invalid_shape", JSON.stringify(r));
+  });
+
+  await t("not_granted: scripted answer, client switches to Sample answers, later asks never call Claude", async () => {
+    const f = fakeRuntime(() => { throw { code: "not_granted", message: "declined" }; });
+    const c = AI.createClient({ claude: f.claude });
+    await c.ready();
+    const r1 = await c.ask(advisorCall(), { fallback: SCRIPTED });
+    const r2 = await c.ask(advisorCall(), { fallback: SCRIPTED });
+    check(r1.offline && r1.reason === "not_granted" && r2.offline, JSON.stringify([r1, r2]));
+    check(f.calls.json === 1, "called " + f.calls.json + " times after not_granted");
+    check(c.status() === "offline" && c.statusText() === "Sample answers", c.status());
+  });
+
+  await t("rate_limited: scripted answer, no retry, live stays available for the viewer's next action", async () => {
+    const f = fakeRuntime(() => { throw { code: "rate_limited", message: "slow down" }; });
+    const c = AI.createClient({ claude: f.claude });
+    await c.ready();
+    const r = await c.ask(advisorCall(), { fallback: SCRIPTED });
+    check(r.offline && r.reason === "rate_limited" && f.calls.json === 1, JSON.stringify(r));
+    check(c.status() === "live", c.status());
+  });
+
+  await t("Timeout: claude.use(\"sample\") never resolves, the action gets the scripted answer and Claude is not called", async () => {
+    const f = fakeRuntime(() => GOOD, { never: true });
+    const c = AI.createClient({ claude: f.claude, useTimeoutMs: 20 });
+    check(c.status() === "pending" && c.statusText() === "Sample answers", c.status());
+    const r = await c.ask(advisorCall(), { fallback: SCRIPTED });
+    check(r.offline && r.reason === "timeout" && f.calls.json === 0, JSON.stringify(r));
+  });
+
+  await t("claude.use(\"sample\") resolves null (about 10 s, no viewer): Sample answers", async () => {
+    const f = fakeRuntime(() => GOOD, { nullUse: true });
+    const c = AI.createClient({ claude: f.claude });
+    await c.ready();
+    const r = await c.ask(advisorCall(), { fallback: SCRIPTED });
+    check(c.status() === "offline" && r.offline && f.calls.json === 0, c.status());
+  });
+
+  await t("Upstream error (the platform ended an over-long call): scripted answer", async () => {
+    const f = fakeRuntime(() => { throw { code: "upstream_error", message: "timed out" }; });
+    const c = AI.createClient({ claude: f.claude });
+    await c.ready();
+    const r = await c.ask(advisorCall(), { fallback: SCRIPTED });
+    check(r.offline && r.reason === "upstream_error", JSON.stringify(r));
+  });
+
+  await t("A number the data does not have (the AI did math) is rejected", async () => {
+    const f = fakeRuntime(() => ({ answer: "Your gap is about $2,626 a month.", sources: ["s1"], confidence: "high" }));
+    const c = AI.createClient({ claude: f.claude });
+    await c.ready();
+    const r = await c.ask(advisorCall(), { fallback: SCRIPTED });
+    check(r.offline && r.reason === "invalid_shape", JSON.stringify(r));
+  });
+
+  await t("A source id the prompt did not send is rejected", async () => {
+    const f = fakeRuntime(() => ({ answer: "See the page.", sources: ["s9"], confidence: "low" }));
+    const c = AI.createClient({ claude: f.claude });
+    await c.ready();
+    const r = await c.ask(advisorCall(), { fallback: SCRIPTED });
+    check(r.offline, JSON.stringify(r));
+  });
+
+  await t("Long dashes are removed from live text", async () => {
+    const f = fakeRuntime(() => ({ answer: "Harvard " + LONG_DASH + " need-blind.", sources: [], confidence: "high" }));
+    const c = AI.createClient({ claude: f.claude });
+    await c.ready();
+    const r = await c.ask(advisorCall(), { fallback: SCRIPTED });
+    check(r.live && !r.data.answer.includes(LONG_DASH) && r.data.answer === "Harvard, need-blind.", r.data && r.data.answer);
+  });
+
+  await t("Documents: images are sent only when limits() reports images", async () => {
+    const built = P.document({ kind: "bank_statement", college: "UT Austin", rules: { max_pages: 10, max_age_months: 6 }, language: "pt-BR" });
+    const blob = typeof Blob !== "undefined" ? new Blob(["x"], { type: "image/png" }) : { size: 1 };
+    const noImg = fakeRuntime(() => ({ fields: [], translation: "", flags: [], confidence: "low" }));
+    const c1 = AI.createClient({ claude: noImg.claude });
+    await c1.ready();
+    const r1 = await c1.ask(built, { images: [blob], fallback: { note: "offline" } });
+    check(r1.offline && r1.reason === "images_unavailable" && noImg.calls.json === 0, JSON.stringify(r1));
+    const withImg = fakeRuntime(() => ({ fields: [{ name: "holder", value: "SAMPLE NAME", confidence: "high" }], translation: "Balance on 2026-10-01", flags: [], confidence: "high" }), { images: true });
+    const c2 = AI.createClient({ claude: withImg.claude });
+    await c2.ready();
+    const r2 = await c2.ask(built, { images: [blob], fallback: null });
+    check(r2.live && withImg.calls.opts[0].images.length === 1, JSON.stringify(r2));
+    check(r2.data.translation === "Balance on 2026-10-01", "a date was removed: " + r2.data.translation);
+  });
+
+  await t("Document reader drops account and ID numbers", async () => {
+    const v = AI.validate("document", {
+      fields: [{ name: "holder", value: "SAMPLE NAME, account 0012345678", confidence: "high" }],
+      translation: "Account 1234 5678 9012, balance R$ 125.430,00, ID 123.456.789-00", flags: [{ rule: "max_pages", text: "Check the page count." }], confidence: "medium",
+    }, { ruleIds: ["max_pages"] });
+    check(v && !/12345678|1234 5678 9012|123\.456\.789-00/.test(v.fields[0].value + v.translation), JSON.stringify(v));
+    check(/125\.430,00/.test(v.translation), "the amount was removed");
+  });
+
+  await t("Intake: values outside the allowed list or with low confidence are dropped, never guessed", async () => {
+    const allowed = { passports: (v) => Array.isArray(v) && v.every((x) => ["BR", "IN"].includes(x)), status: (v) => ["no_visa", "citizen_or_pr"].includes(v), term: (v) => v === "fall-2027" };
+    const v = AI.validate("intake", {
+      answers: { passports: { value: ["BR"], confidence: "high" }, status: { value: "tourist_maybe", confidence: "high" }, term: { value: "fall-2027", confidence: "low" } },
+      reply: "Got it. What is your situation in the U.S. today?", next_field: "status", unclear: false,
+    }, { allowed });
+    check(v.answers.passports[0] === "BR" && !("status" in v.answers) && !("term" in v.answers), JSON.stringify(v.answers));
+    check(v.unclear === true && v.dropped.sort().join() === "status,term" && v.nextField === "status", JSON.stringify(v));
+  });
+
+  await t("Essay coach: a request to write the essay shows the fixed decline message", async () => {
+    const v = AI.validate("essay", { declined: true, suggestions: [] }, {});
+    check(v.declined && v.message === "I can help you plan and review your ideas, but I can't write your essay. Colleges require it to be your own work.", JSON.stringify(v));
+  });
+
+  await t("Family mode: wrong language or not exactly three steps is rejected", async () => {
+    const ctx = { language: "hi", dataText: "₹0" };
+    check(AI.validate("family", { language: "en", summary: "x", steps: ["a", "b", "c"] }, ctx) === null, "wrong language accepted");
+    check(AI.validate("family", { language: "hi", summary: "x", steps: ["a", "b"] }, ctx) === null, "two steps accepted");
+    check(AI.validate("family", { language: "hi", summary: "x", steps: ["a", "b", "c"] }, ctx) !== null, "valid rejected");
+  });
+
+  await t("Every prompt builder sends the guardrails, DATA and the exact JSON FORMAT in one input", async () => {
+    const built = [
+      P.advisor({ question: "q", facts: FACTS }),
+      P.intake({ fields: [], allowed: {}, answers: {}, history: [], message: "hi" }),
+      P.funding({ facts: FACTS }),
+      P.routes({ facts: FACTS }),
+      P.document({ kind: "bank_statement", rules: {} }),
+      P.drafts({ college: "UT Austin", language: "pt-BR", languageName: "Portuguese", requirements: [] }),
+      P.essay({ draft: "My essay", request: "Review it" }),
+      P.family({ facts: FACTS, language: "hi", languageName: "Hindi", currency: "INR" }),
+    ];
+    check(built.map((b) => b.fn).join() === AI.FUNCTIONS.join(), built.map((b) => b.fn).join());
+    built.forEach((b) => {
+      check(typeof b.input === "string", b.fn + ": input is not one string");
+      P.GUARDRAILS.forEach((g) => check(b.input.includes(g), b.fn + " misses a guardrail: " + g.slice(0, 40)));
+      check(/\nDATA:\n/.test(b.input) && /\nFORMAT:\n/.test(b.input), b.fn + ": DATA or FORMAT missing");
+      check(!b.input.includes(LONG_DASH), b.fn + ": long dash in the prompt");
+    });
+    return built.length + " builders";
+  });
+
+  await settle();
+  return out;
+}
+</script>
+<script id="snapshot-tests">
+// Exchange-rate snapshot in data/fx.json (tools/fx-snapshot.mjs), used inside the Artifact.
+async function runSnapshotTests(F, data) {
+  const out = [];
+  const t = async (name, fn) => {
+    try { const info = await fn(); out.push({ name, pass: true, detail: typeof info === "string" ? info : "" }); }
+    catch (e) { out.push({ name, pass: false, detail: e.message }); }
+  };
+  const check = (cond, msg) => { if (!cond) throw new Error(msg); };
+  const snap = data.fx.snapshot;
+
+  await t("Snapshot covers every family currency in countries.json, from Frankfurter v2, with dates", async () => {
+    check(snap && /api\.frankfurter\.dev\/v2\/rate\/usd\/\{cur\}/.test(snap.url) && /^\d{4}-\d{2}-\d{2}$/.test(snap.fetched_on), JSON.stringify(snap && snap.url));
+    const curs = Object.values(data.countries.countries).map((c) => c.currency).filter((c) => c !== "USD");
+    const missing = curs.filter((c) => !(snap.rates[c] && snap.rates[c].rate > 0 && /^\d{4}-\d{2}-\d{2}$/.test(snap.rates[c].date)) && !snap.missing.includes(c));
+    check(!missing.length, "no snapshot and not listed as missing: " + missing.join());
+    return Object.keys(snap.rates).length + " rates, " + snap.fetched_on;
+  });
+  await t("Offline (inside the Artifact): the snapshot rate is used, with source and the fallback notice", async () => {
+    const info = await F.fromFile("INR", null, data.fx);
+    check(info.rate === snap.rates.INR.rate && info.sourceLabel === "Frankfurter (central bank data), snapshot" && info.fallback === true, JSON.stringify(info));
+    check(info.notice === "Could not update the exchange rate. Using the rate from " + F.formatDate(snap.rates.INR.date) + ".", info.notice);
+  });
+  await t("Official fallbacks kept: BRL PTAX 5.5146 is used when a currency has no snapshot", async () => {
+    const fx = JSON.parse(JSON.stringify(data.fx));
+    delete fx.snapshot.rates.BRL;
+    const info = await F.fromFile("BRL", null, fx);
+    check(info.rate === 5.5146 && /PTAX/.test(info.sourceLabel), JSON.stringify(info));
+  });
+  return out;
+}
+</script>
 <script>
 (async function () {
   const load = (p) => fetch(p, { cache: "no-store" }).then((r) => r.json());
@@ -672,7 +938,9 @@ function runFxTests(F, data) {
     const [colleges, fees, fx, countries] = await Promise.all(
       ["data/colleges.json", "data/fees.json", "data/fx.json", "data/countries.json"].map(load));
     const results = runPontTests(window.PontEngine, { colleges, fees, fx, countries })
-      .concat(runFxTests(window.PontFx, { countries, fx }));
+      .concat(runFxTests(window.PontFx, { countries, fx }))
+      .concat(await runSnapshotTests(window.PontFx, { countries, fx }))
+      .concat(await runAiTests(window.PontAI, window.PontPrompts));
     const list = document.getElementById("results");
     results.forEach((r) => {
       const li = document.createElement("li");

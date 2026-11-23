@@ -11,7 +11,7 @@ Amounts and sources live in data/fees.json and data/colleges.json. This doc must
 | Already F-1 at another school | Yes, full-time, 12 credits | SEVIS transfer checklist; no federal aid |
 | Tourist visa (B-1, B-2) or ESTA | No course of study | ESTA: leave and apply from home. B-1/B-2: change of status (I-539) or apply from home |
 | H-4, L-2, E or G dependent | Yes, full or part-time | No visa change needed; optional F-1 switch |
-| F-2 dependent | Only part-time recreational | Switch to F-1 for a degree |
+| F-2 dependent | Only part-time recreational | Switch to F-1 for a degree. Its own situation in the engine (`f2_dependent`, routing only, never folded into the dependent visas); the plan shows the switch to F-1 steps with official links |
 | DACA or no status | Can enroll; no FAFSA | College aid, official guidance only |
 
 Program type: degree = F-1 (college issues I-20); vocational = M-1 (I-20); exchange = J-1 (sponsor issues DS-2019).

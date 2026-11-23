@@ -28,10 +28,10 @@ G. Family mode: summary for parents in their language and currency.
 H. Save plan (login only here).
 
 ## Intake questions (AI asks them in conversation; the confirm screen shows them as a form)
-1. Dream colleges (one or more) and program, or "help me choose".
+1. Dream colleges (one or more) and program, or "help me choose" (then: what do you want to study; the routes come from the profile alone, docs/funding-and-currency.md section 5).
 2. Level: bachelor's (prototype). Graduate, MBA and continuing education appear only as alternatives.
 3. Citizenship (one or more passports).
-4. Visa or status today (six situations, docs/visa-and-fees.md).
+4. Visa or status today (seven situations, docs/visa-and-fees.md; F-2 dependent is its own situation, routing only).
 5. Where the student lives now.
 6. Where each parent lives and earns (country). Parents in different countries are allowed.
 7. When do you want to start? Fall 2027, Spring 2028, Fall 2028.

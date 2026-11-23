@@ -51,7 +51,7 @@
       "chips": [
         {
           "q": "How can I close the gap?",
-          "a": "Two routes can help. Start at {cc_name} and transfer to {dream}: {cc_gap_label}, {cc_gap_share} above what your family can pay. {transfer_note} Colleges that meet full need for international students: {strong_list}. Share an income range to see their estimates.",
+          "a": "Two routes can help. Start at {cc_name} and transfer to {dream}: {cc_gap_label}, {cc_gap_share} above what your family can pay. {transfer_note} Colleges that meet full need for international students: {strong_list}. See their estimates under Strong aid for you.",
           "source": "cc"
         },
         {
@@ -61,7 +61,7 @@
         },
         {
           "q": "What is \"Strong aid for you\"?",
-          "a": "Colleges that give need-based aid to international students and meet full need: {strong_list}. Their price depends on your family's income, so share an income range to see an estimate.",
+          "a": "Colleges that give need-based aid to international students and meet full need: {strong_list}. Their price depends on your family's income. See each estimate under Strong aid for you.",
           "source": "dream"
         }
       ]

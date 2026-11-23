@@ -96,6 +96,8 @@
     f1_transfer: { visaClass: "F", oneTime: false, modeled: true },
     tourist: { visaClass: "F", oneTime: true, modeled: false },
     dependent: { visaClass: null, oneTime: false, modeled: false },
+    // F-2 dependents may study only part time: routing only, the plan shows the switch to F-1 steps.
+    f2_dependent: { visaClass: null, oneTime: false, modeled: false },
     daca_or_none: { visaClass: null, oneTime: false, modeled: false },
   };
 
@@ -525,8 +527,9 @@
       .slice().sort((a, b) => a.income_below_usd - b.income_below_usd);
   }
 
+  // The aid page for an audience is the source of that audience's forms (forms_us or forms_intl).
   function aidPageFor(college, profile) {
-    const f = profile.audience === "us" && college.aid.forms_us ? college.aid.forms_us : null;
+    const f = profile.audience === "us" ? college.aid.forms_us : college.aid.forms_intl;
     const id = f && f.source ? f.source : college.aid.source;
     return Object.assign(collegeSource(college, id, college.aid.checked_on), { label: COPY.aidPage });
   }
@@ -829,11 +832,13 @@
       if (c) groups.dream.push(single(c, d.programId));
     });
 
+    // Without a dream school ("Help me choose"), community-college paths into any college in the data are offered.
+    const noDream = dreamIds.length === 0;
     data.colleges.colleges.forEach((c) => {
       if (c.status !== "verified" || dreamIds.includes(c.id)) return;
       const pc = profile.colleges.find((x) => x.collegeId === c.id);
       (c.programs || []).forEach((p) => {
-        if (p.transfers_to && dreamIds.includes(p.transfers_to) && p.area === answers.area) {
+        if (p.transfers_to && (noDream || dreamIds.includes(p.transfers_to)) && p.area === answers.area) {
           groups.lower_cost.push(item(c, p.id, transferPath(Object.assign({}, base, { collegeId: c.id, programId: p.id }), data, config)));
         }
       });
@@ -842,6 +847,11 @@
       if (pc.needBased.open === true && pc.meetsFullNeed) groups.strong_aid.push(single(c, prog.id));
       else if (c.type === "public_university" && (pc.merit === "limited" || pc.merit === "yes")) groups.lower_cost.push(single(c, prog.id));
     });
+
+    // Routes this profile cannot use (status not_confirmed, for example ACC then UT for U.S. citizens) are hidden.
+    // Dream colleges are never hidden.
+    groups.strong_aid = groups.strong_aid.filter((r) => r.status === "ok");
+    groups.lower_cost = groups.lower_cost.filter((r) => r.status === "ok");
 
     // Inside each group: unconfirmed last, then no estimate, then by gap, then by net price midpoint.
     const rank = (r) => (r.status !== "ok" ? 2 : r.netPrice.hasEstimate ? 0 : 1);

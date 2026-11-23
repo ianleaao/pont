@@ -64,40 +64,40 @@
     "source": "Frankfurter (central bank data), snapshot",
     "url": "https://api.frankfurter.dev/v2/rate/usd/{cur}",
     "credit_url": "https://frankfurter.dev",
-    "fetched_on": "2026-11-19",
+    "fetched_on": "2026-11-23",
     "tool": "tools/fx-snapshot.mjs",
     "rates": {
       "BRL": {
-        "rate": 5.8396,
-        "date": "2026-11-19"
+        "rate": 5.9479,
+        "date": "2026-11-23"
       },
       "CNY": {
-        "rate": 6.6625,
-        "date": "2026-11-19"
+        "rate": 6.6685,
+        "date": "2026-11-23"
       },
       "COP": {
-        "rate": 3335.89,
-        "date": "2026-11-19"
+        "rate": 3475.13,
+        "date": "2026-11-23"
       },
       "INR": {
-        "rate": 93.27,
-        "date": "2026-11-19"
+        "rate": 92.71,
+        "date": "2026-11-23"
       },
       "KRW": {
-        "rate": 1331.23,
-        "date": "2026-11-19"
+        "rate": 1342.54,
+        "date": "2026-11-23"
       },
       "MXN": {
-        "rate": 18.7542,
-        "date": "2026-11-19"
+        "rate": 19.1341,
+        "date": "2026-11-23"
       },
       "NGN": {
-        "rate": 1359.75,
-        "date": "2026-11-19"
+        "rate": 1386.35,
+        "date": "2026-11-23"
       },
       "VND": {
-        "rate": 25770,
-        "date": "2026-11-19"
+        "rate": 25834,
+        "date": "2026-11-23"
       }
     },
     "missing": []

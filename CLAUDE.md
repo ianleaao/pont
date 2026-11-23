@@ -33,6 +33,7 @@ js/fx.js               exchange rate loader and money formatting (any currency)
 js/ai.js               AI client: Artifact runtime (claude.use("sample")) when available, else scripted answers; validates JSON
 js/ui.js               component renderers (HTML strings) shared by the app and components.html; no math
 js/intake.js           welcome, intake chat (live interviewer), form fallback, profile confirm, reload guard
+js/pages.js            My colleges, College detail, Scholarships, Plan and deadlines (funding and routes explainers)
 js/app.js              state, app shell (sidebar, top bar, advisor rail), pages, navigation
 data/colleges.json     costs, aid policies, forms, deadlines, document rules, sources, dates
 data/fees.json         government and test fees
@@ -61,10 +62,10 @@ tools/fx-snapshot.mjs  Node script: refreshes the exchange-rate snapshot in data
 
 ## Demo paths (must work end to end)
 - Path 1, dream school: Ananya, India (INR), no visa, wants Harvard, income band under 65,000 USD, can pay about 10,000 INR per month. Result: Harvard is need-blind for internationals and meets full need; estimated family cost near 0 under Harvard's published threshold, label "Funded" with the lines still to confirm; plan with CSS Profile, documents and deadlines; MIT and Amherst in "Strong aid for you" (no estimate yet, official aid page); documents studio with an Indian bank statement sample; family mode in Hindi.
-- Path 2, funding gap: Lucas, Brazil (BRL), no visa, Computer Science at UT Austin, can pay about 23,000 BRL per month (same value as the current tests). Result: UT gives internationals merit scholarships only; gap shown; routes: ACC then UT transfer in "Lower-cost path", outside scholarships, full-need colleges (Harvard, MIT, Amherst) in "Strong aid for you"; I-20 documents converted to USD.
+- Path 2, funding gap: Lucas, Brazil (BRL), no visa, Computer Science at UT Austin, income band 100,000 to 150,000 USD, can pay about 23,000 BRL per month (same value as the current tests). Result: UT gives internationals merit scholarships only; gap shown; Harvard shows "at most" the full cost minus tuition next to UT's gap; routes: ACC then UT transfer in "Lower-cost path", outside scholarships, full-need colleges (Harvard, MIT, Amherst) in "Strong aid for you"; I-20 documents converted to USD.
 - Path 3, cross-border: Ian, U.S. citizen, parents in Brazil, UT Austin. FAFSA path with foreign income (UT net price: no estimate, link to the Texas One Stop aid page), residency check card, parents' documents converted to USD.
 
-Demo shortcuts: `index.html?demo=ananya`, `index.html?demo=lucas` and `index.html?demo=ian`. They fill the intake answers, open the profile confirm screen and replace any saved session without a message. "Build my funding plan" leads to Overview. Nothing about them is visible in the UI.
+Demo shortcuts: `index.html?demo=ananya`, `index.html?demo=lucas` and `index.html?demo=ian`, and the "Try an example" buttons at the bottom of the welcome screen (inside the claude.ai Artifact query strings and hashes may not reach the page). They fill the intake answers, open the profile confirm screen and replace any saved session without a message. "Build my funding plan" leads to Overview.
 
 ## Which doc to read
 - Product, journey, intake questions: docs/product.md

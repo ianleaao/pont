@@ -38,7 +38,7 @@ The AI never does the math. It receives numbers already computed by js/engine.js
 | 6 | Essay coach | Student draft and request | `{declined, suggestions: [{type, text}]}` | Request to write the essay: the fixed decline message |
 | 7 | Family mode | Plan facts, language, currency | `{language, summary, steps[3], kept_terms[]}` | Term without a safe translation: keep the English term with a plain explanation |
 
-The advisor chat and the intake interviewer are wired in tasks 4 and 5. Functions 2 to 7 have their prompt builders, validators and offline notes (data/ai-scripts.json, "functions"); their screens come in tasks 6 to 8.
+The advisor chat and the intake interviewer are wired in tasks 4 and 5. The funding explainer ("Explain with AI" on College detail) and the routes explainer ("Explain my routes" on My colleges) are wired in task 6; their scripted fallback is built from the engine (policy tags, the published rule, the gap label) and carries the offline banner. Functions 4 to 7 have their prompt builders, validators and offline notes (data/ai-scripts.json, "functions"); their screens come in tasks 7 and 8.
 The intake works like this: the app owns the questions, their order and the allowed values. Chips set answers directly, with no AI call. Free text goes to the interviewer, which only reads it into those values and phrases the next question. Offline, free text is read only when it names an option exactly (a country, a term) or is a first name or an amount; anything else gets "I could not read that. Pick an answer below, or use the form instead."
 
 The USD conversion of document amounts is done by js/engine.js with the rate from js/fx.js, never by the AI.

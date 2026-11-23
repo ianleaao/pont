@@ -28,6 +28,7 @@
     { value: "tourist", label: "Tourist visa (B-1, B-2) or ESTA" },
     { value: "dependent", label: "Dependent visa (H-4, L-2, E or G)" },
     { value: "daca_or_none", label: "DACA or no status" },
+    { value: "f2_dependent", label: "F-2 dependent" },
   ];
   const TERMS = [
     { value: "fall-2027", label: "Fall 2027" },
@@ -80,6 +81,14 @@
       const prog = d ? bachelor(collegeById(d.collegeId)).find((p) => p.id === d.programId) : null;
       a.area = prog ? prog.area : "any";
     };
+    // Study areas from the bachelor programs in the data; "any" is shown as Undecided.
+    const areaOpts = () => {
+      const seen = {};
+      data().colleges.colleges.filter((c) => c.status === "verified").forEach((c) => bachelor(c).forEach((p) => {
+        if (!seen[p.area]) seen[p.area] = p.area === "any" ? "Undecided" : p.name;
+      }));
+      return Object.keys(seen).sort((x, y) => (x === "any") - (y === "any")).map((k) => ({ value: k, label: seen[k] }));
+    };
     const namesList = (codes) => U.listText((codes || []).map(countryName));
     const nameOk = (v) => typeof v === "string" && /^[\p{L}][\p{L}\p{M} '.-]{0,39}$/u.test(v.trim());
     const listOf = (opts) => (v) => Array.isArray(v) && v.length > 0 && new Set(v).size === v.length && v.every((x) => opts().some((o) => o.value === x));
@@ -101,10 +110,13 @@
         q: () => "Which is your dream school?",
         help: "Pick one or more. Pont has checked aid data for these colleges today.",
         options: dreamOpts,
-        valid: listOf(dreamOpts),
+        // "help" = Help me choose: no dream school; the routes come from the profile alone.
+        valid: (v) => v === "help" || listOf(dreamOpts)(v),
         value: (a) => (a.colleges || []).map((d) => d.collegeId),
-        answered: (a) => Array.isArray(a.colleges) && a.colleges.length > 0,
+        answered: (a) => Array.isArray(a.colleges) && (a.colleges.length > 0 || a.helpChoose === true),
         apply: (a, ids) => {
+          if (ids === "help") { a.colleges = []; a.helpChoose = true; delete a.area; return; }
+          delete a.helpChoose;
           a.colleges = ids.map((id) => {
             const old = (a.colleges || []).find((d) => d.collegeId === id);
             const progs = bachelor(collegeById(id));
@@ -112,7 +124,17 @@
           });
           setArea(a);
         },
-        show: (a) => U.listText((a.colleges || []).map((d) => collegeById(d.collegeId).name)),
+        show: (a) => (a.helpChoose && !(a.colleges || []).length ? "Help me choose" : U.listText((a.colleges || []).map((d) => collegeById(d.collegeId).name))),
+      },
+      {
+        id: "area", kind: "single", required: true, label: "Study",
+        visible: (a) => a.helpChoose === true && !(a.colleges || []).length,
+        q: () => "What do you want to study?",
+        help: "We look for colleges with aid for this area.",
+        options: areaOpts,
+        valid: oneOf(areaOpts),
+        apply: (a, v) => { a.area = v; },
+        show: (a) => (areaOpts().find((o) => o.value === a.area) || {}).label || null,
       },
       {
         id: "program", kind: "single", required: true, label: "Program",
@@ -301,6 +323,19 @@
           <div class="fund-grid">${fundCards || `<div class="empty">No college in our data yet.</div>`}</div>
         </section>
 
+        <section class="examples" aria-labelledby="ex-title" id="examples">
+          <h2 id="ex-title">Try an example</h2>
+          <p class="muted">Sample students with real college data. Each opens the profile confirm screen, where you can change anything.</p>
+          <div class="ex-grid">
+            ${[["ananya", "Ananya", "India to Harvard", "IN"], ["lucas", "Lucas", "Brazil to UT Austin", "BR"], ["ian", "Ian", "U.S. citizen with parents in Brazil", "US"]].map((x) => `
+              <button type="button" class="card ex-card" data-example="${x[0]}">
+                <span class="avatar" aria-hidden="true">${x[1][0]}</span>
+                <span><b>${x[1]}</b><span class="small muted">${U.esc(x[2])}</span></span>
+                ${U.icon("arrow-right")}
+              </button>`).join("")}
+          </div>
+        </section>
+
         <p class="source-note">${U.icon("badge-check")}Every amount and aid rule in Pont comes from the colleges' official pages, with the date we checked it. College data checked ${U.esc(U.fullDate(data().colleges.checked_on))}. Missing data shows "Not confirmed" with the official link. Pont is a prototype and never promises aid or admission.</p>
       </div>`;
     }
@@ -365,7 +400,7 @@
         const sel = st.pick[f.id] || (f.value ? f.value(a) : a[f.id]) || [];
         st.pick[f.id] = sel.slice();
         return `${help}<div class="chips" role="group" aria-label="Pick one or more">${f.options(a).map((o) => `<button type="button" class="chip chip-toggle" data-toggle="${U.esc(o.value)}" aria-pressed="${sel.includes(o.value)}">${sel.includes(o.value) ? U.icon("check") : ""}${U.esc(o.label)}</button>`).join("")}</div>
-          <div class="chat-done"><button type="button" class="btn btn-primary btn-sm" data-pick-done="${f.id}"${sel.length ? "" : " disabled"}>Continue</button></div>`;
+          <div class="chat-done"><button type="button" class="btn btn-primary btn-sm" data-pick-done="${f.id}"${sel.length ? "" : " disabled"}>Continue</button>${f.id === "colleges" ? `<button type="button" class="btn btn-link" data-help="chat">Help me choose</button>` : ""}</div>`;
       }
       return `${help}${skip ? `<div class="chips">${skip}</div>` : ""}`;
     }
@@ -549,6 +584,7 @@
           <button type="button" class="btn btn-outline" data-intake="back">Back</button>
           <span class="spacer"></span>
           ${f.required ? "" : `<button type="button" class="btn btn-link" data-skip-form="${f.id}">Skip</button>`}
+          ${f.id === "colleges" ? `<button type="button" class="btn btn-link" data-help="form">Help me choose</button>` : ""}
           <button type="submit" class="btn btn-primary">${st.returnTo === "confirm" ? "Save" : i === vis.length - 1 ? "Check my answers" : "Continue"}</button>
         </div>
         <p class="small form-links"><button type="button" class="btn btn-link" data-intake="chat">Back to the chat</button></p>
@@ -678,7 +714,7 @@
 
     /* ---------- Events (inside the intake only) ---------- */
     $("intake").addEventListener("click", (e) => {
-      const t = e.target.closest("[data-intake],[data-dream],[data-pick],[data-toggle],[data-pick-done],[data-skip],[data-skip-form],[data-edit]");
+      const t = e.target.closest("[data-intake],[data-dream],[data-pick],[data-toggle],[data-pick-done],[data-skip],[data-skip-form],[data-edit],[data-help],[data-example]");
       if (!t) return;
       const act = t.dataset.intake;
       if (act === "start") { go("chat"); }
@@ -711,6 +747,15 @@
       if (t.dataset.pickDone) pickDone(t.dataset.pickDone);
       if (t.dataset.skip) skip(t.dataset.skip);
       if (t.dataset.skipForm) { setAnswer(field(t.dataset.skipForm), null); nextFormStep(t.dataset.skipForm); }
+      if (t.dataset.example) { app.loadDemo(t.dataset.example); return; }
+      if (t.dataset.help === "chat") {
+        pushMsg({ role: "me", text: "Help me choose" });
+        setAnswer(field("colleges"), "help");
+        st.pick = {};
+        ensureQuestion();
+        app.render(false, { focusId: "chat-input" });
+      }
+      if (t.dataset.help === "form") { setAnswer(field("colleges"), "help"); nextFormStep("colleges"); }
       if (t.dataset.edit) { st.returnTo = "confirm"; go("form", t.dataset.edit); }
     });
 

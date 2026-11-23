@@ -527,6 +527,57 @@ function runPontTests(E, data) {
     check(E.nextDeadline(fcol("harvard"), "fall-2027", TODAY).next.date === "2027-02-01", "harvard");
   });
 
+  // --- Fixes before task 6 (2026-11-23) ---
+  const LUCAS_DEMO = Object.assign({}, LUCAS_A, { incomeBand: "100k_150k" }); // the Lucas demo answers
+  t("Lucas demo (income 100k to 150k): Harvard shows at most the full cost minus tuition, next to UT's gap", () => {
+    const r = E.routes(LUCAS_DEMO, data, { fxRate: FX, today: TODAY });
+    const ut = group(r, "dream").items[0];
+    check(ut.collegeId === "ut-austin" && ut.gap.label === "Gap", "UT gap: " + ut.gap.label);
+    const h = group(r, "strong_aid").items.find((i) => i.collegeId === "harvard");
+    check(h && h.netPrice.method === "threshold" && h.netPrice.atMost === true, JSON.stringify(h && h.netPrice.method));
+    const cost = costFor(LUCAS_DEMO, "harvard", "undeclared");
+    const tuition = cost.annual.lines.find((l) => l.id === "tuition");
+    const tuitionTotal = cost.perYear.reduce((s, y) => s + tuition.amount.max * y.factor, 0);
+    check(near(h.netPrice.total.max, cost.total.max - tuitionTotal, 1), h.netPrice.total.max + " vs " + (cost.total.max - tuitionTotal));
+    check(h.gap.label !== null && h.netPrice.notConfirmed.some((n) => n.id === "aid_above_tuition"), "label or aid above tuition");
+    return "Harvard at most " + Math.round(h.netPrice.averagePerYear.max) + " a year";
+  });
+  t("Aid page per audience is the source of that audience's forms (MIT intl: mit-apply-intl; MIT U.S.: mit-apply-domestic)", () => {
+    const intl = netFor(ANANYA, "mit", "undeclared").aidPage;
+    const src = (id) => fcol("mit").sources.find((s) => s.id === id);
+    check(intl.url === src("mit-apply-intl").url && intl.label === "Official aid page", JSON.stringify(intl));
+    const us = netFor(Object.assign({}, IAN_A, { colleges: [{ collegeId: "mit", programId: "undeclared" }], area: "any" }), "mit", "undeclared").aidPage;
+    check(us.url === src("mit-apply-domestic").url, JSON.stringify(us));
+    ["harvard", "amherst", "ut-austin", "acc"].forEach((id) => {
+      const c = fcol(id);
+      const page = netFor(ANANYA, id, id === "ut-austin" ? "cs" : id === "acc" ? "cs-transfer" : "undeclared");
+      if (page.status !== "ok") return;
+      const want = c.sources.find((s) => s.id === c.aid.forms_intl.source);
+      check(page.aidPage.url === want.url, id + ": " + page.aidPage.url);
+    });
+  });
+  t("Routes this profile cannot use are hidden: no ACC then UT for Ian (U.S. citizen); dream colleges are never hidden", () => {
+    const r = E.routes(IAN_A, data, { fxRate: FX, today: TODAY });
+    check(!group(r, "lower_cost").items.some((i) => i.collegeId === "acc"), "ACC shown to a U.S. citizen");
+    check(r.groups.slice(1).every((g) => g.items.every((i) => i.status === "ok")), "an unconfirmed route is shown");
+    check(group(r, "dream").items.length === 1, "dream hidden");
+  });
+  t("F-2 dependent is its own situation: routing only (modeled: false), never folded into Dependent visa", () => {
+    const p = E.visaProfile("f2_dependent");
+    check(p.modeled === false && p.visaClass === null, JSON.stringify(p));
+    const r = E.routes(Object.assign({}, LUCAS_A, { status: "f2_dependent" }), data, { fxRate: FX, today: TODAY });
+    check(group(r, "dream").items.length === 1 && r.profile.status === "f2_dependent", "routes");
+  });
+  t("Help me choose (no dream school): dream empty, strong aid from the profile, lower-cost path with community colleges", () => {
+    const ans = Object.assign({}, LUCAS_DEMO, { colleges: [] });
+    const r = E.routes(ans, data, { fxRate: FX, today: TODAY });
+    check(group(r, "dream").items.length === 0, "dream not empty");
+    check(group(r, "strong_aid").items.map((i) => i.collegeId).sort().join() === "amherst,harvard,mit", group(r, "strong_aid").items.map((i) => i.collegeId).join());
+    const lc = group(r, "lower_cost").items;
+    check(lc.some((i) => i.collegeId === "acc" && i.targetCollegeId === "ut-austin"), "no community-college path");
+    check(lc.some((i) => i.collegeId === "ut-austin"), "no public university with merit aid");
+  });
+
   // --- Overview helpers (task D): deadline list and funding bar ---
   const OV_TODAY = "2026-11-19";
   const dlFor = (ans, fx) => E.deadlineList(E.routes(ans, data, { fxRate: fx, today: OV_TODAY }), data, { term: ans.term, today: OV_TODAY });

@@ -9,9 +9,9 @@ docs/design-campus.md decides the pages and the layout; this file keeps the flow
 | 2 AI intake (chat) | 2 Intake | task 5 (done) |
 | 3 Profile confirm | 3 Profile confirm | task 5 (done) |
 | 4 Funding map + 5 Routes | 4 Overview (dream hero, next deadline, routes in group columns, deadlines, documents, advisor rail) | task D |
-| 6 College detail | 5 My colleges (filters, cards) and 6 College detail | task 6 |
-| 7 Scholarships | 7 Scholarships | task 6 |
-| 8 Plan timeline | 8 Plan and deadlines | task 6 |
+| 6 College detail | 5 My colleges (filters, cards) and 6 College detail | task 6 (done) |
+| 7 Scholarships | 7 Scholarships | task 6 (done) |
+| 8 Plan timeline | 8 Plan and deadlines | task 6 (done) |
 | 9 Upload + 10 Document result + 11 Drafts | 9 Documents studio | task 7 |
 | 12 Essay coach | Advisor rail (essay help inside the chat) | task 7 |
 | 13 Family mode | 10 Family mode | task 8 |
@@ -32,6 +32,7 @@ App frame (index.html, every screen):
    Body: "Scholarships, financial aid and the documents you need, in your family's currency. Powered by AI. No login needed."
    Privacy line: "Your answers stay only in this browser tab and are cleared when the tab closes."
    Button: "Start"
+   "Try an example" (bottom of the welcome screen): three buttons, Ananya (India to Harvard), Lucas (Brazil to UT Austin), Ian (U.S. citizen with parents in Brazil). Each loads the demo answers and opens the profile confirm screen.
    Campus layout (task 5): hero in two columns (title, body, dream school search with "Dream school" and "Your family's country" selects and "Find my scholarships", popular chips, privacy line, "Start without a school"; on the right an example plan built by the engine from Harvard's published rule, captioned as an example), "How Pont works" in 4 steps, "Colleges that fund international students" (verified colleges that meet full need with need-based aid for internationals, from data/colleges.json, each with its source), and the source note.
 2. AI intake (chat)
    Pont asks the intake questions from docs/product.md one at a time, with quick-answer chips under each question (countries, statuses, terms, income bands, "Prefer not to say"). Free text is allowed; Claude turns it into structured answers. A small "Use a form instead" link opens the same questions as one-question-per-screen forms (accessibility and fallback when the AI is offline).
@@ -48,10 +49,14 @@ App frame (index.html, every screen):
    No estimate (net price method calculator_link): no gap label, the card says "No estimate yet. See the official aid page." with the link labeled "Official aid page".
 6. College detail
    Aid policy with source, thresholds, forms, deadlines, full cost by phase (pay versus show for the I-20), scholarships, residency check card for U.S. citizens and residents (UT), I-20 amount for visa students.
+   Built in task 6 (js/pages.js): header with route group, "Add to plan" (dream colleges always stay in the plan) and "Official aid page"; cards "Net price for you" (method, estimate, gap label with its to-confirm line, funding bar, "Still to confirm" list, "Explain with AI"), "Aid policy" (one row per rule with source), "Cost by phase" (before you arrive, each year, year by year, whole program, shown not added), "Deadlines and forms", "Show for the I-20" ("This is what you show, not what you pay."), "Document rules", "Residency check".
+   My colleges (task 6): filter panel (route group, aid policy, type, only with an estimate; active chips and Clear all; folds below 1100 px), sort (best funding fit, lowest estimate, name), cards with View and "Add to plan", and "Why these routes" with "Explain my routes". The top bar search filters this page by name.
 7. Scholarships
    College scholarships (automatic or separate application) and outside scholarship categories that match the profile. Never counted in totals. Link to each official page.
+   Built in task 6: "Never counted in your totals." banner; one card per route college (merit policy, automatic consideration, international student scholarships with window and examples, college scholarship application deadlines, outside scholarship rule), each with its source; "Outside scholarships" (colleges that allow them, and the family's country: "Not confirmed" until a checked list exists).
 8. Plan timeline
    Month by month until the start term: tests, applications, CSS Profile or ISFAA or college form, scholarship deadlines, I-20 request, SEVIS, visa interview. Items depend on the profile.
+   Built in task 6: the deadlines of the colleges in the plan (every route college unless the student took it out in My colleges), grouped by month, with status (to do, done, passed) and ticks kept in the tab; a card with the steps for the student's situation (after admission: I-20 and F-1 visa; F-1 transfer; switch to F-1 for F-2 dependents; change of status for visitors; FAFSA for U.S. citizens), each with its official link, and "Confirm every decision with the college international office or an immigration attorney."
 9. Documents studio: upload
    "Upload a bank statement or income document. We read it, translate it and convert it to USD." Sample files available for each demo path (marked SAMPLE). Notice: "Do not upload real account numbers in this prototype."
 10. Document result

@@ -220,14 +220,19 @@
       name = `${ui.short}, then ${collegeUi(o.target).short}`;
       city = `2 years at ${ui.short}, then transfer. ${(college.transfer_note && college.transfer_note.text) || ""}`.trim();
     }
+    // locked: a dream college is always in the plan. added: in the plan (toggle). reason: one line from the routes explainer.
+    const plan = o.locked
+      ? `<span class="tag tag-sm">${icon("sparkles")}Your dream</span>`
+      : `<button type="button" class="btn ${o.added ? "btn-outline" : "btn-primary"} btn-sm" data-action="add" data-college="${esc(college.id)}" aria-pressed="${!!o.added}" aria-label="${o.added ? "In your plan: " : "Add to plan: "}${esc(name)}">${o.added ? icon("check") + "In your plan" : icon("plus") + "Add to plan"}</button>`;
     const actions = o.actions ? `<div class="card-actions">
-        <button type="button" class="btn btn-outline btn-sm" data-action="view" data-college="${esc(college.id)}">View</button>
-        <button type="button" class="btn btn-primary btn-sm" data-action="add" data-college="${esc(college.id)}"${o.added ? " aria-pressed=\"true\"" : ""}>${o.added ? icon("check") + "In your plan" : icon("plus") + "Add to plan"}</button>
+        <button type="button" class="btn btn-outline btn-sm" data-action="view" data-college="${esc(college.id)}" aria-label="View ${esc(name)}">View</button>
+        ${plan}
       </div>` : "";
     return `<article class="college${o.cls ? " " + o.cls : ""}"><div class="band band-${tone}"></div><div class="body">
       <div class="name"><div class="mono m-${tone}" aria-hidden="true">${esc(ui.mono)}</div><div><h3>${esc(name)}</h3><div class="city">${esc(city)}</div></div></div>
       ${tagsHtml(policyTags(college, ctx.audience, true), true)}
       ${forYou(item, college, ctx)}
+      ${o.reason || ""}
       ${actions}
     </div></article>`;
   }

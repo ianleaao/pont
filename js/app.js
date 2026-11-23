@@ -8,17 +8,21 @@
   to or saved on a server, and they are cleared when the tab closes.
   No income, savings, SSN, account numbers or immigration documents are stored.
 
-  Demo shortcuts (nothing visible in the UI):
-    index.html?demo=ananya, index.html?demo=lucas and index.html?demo=ian
-  They replace any saved session, open the profile confirm screen and then remove ?demo from the
-  address bar. "Build my funding plan" then opens Overview.
+  Demo shortcuts: index.html?demo=ananya, index.html?demo=lucas and index.html?demo=ian, and the
+  "Try an example" buttons on the welcome screen (inside the claude.ai Artifact query strings and hashes
+  may not reach the page). They replace any saved session and open the profile confirm screen.
+  "Build my funding plan" then opens Overview.
+
+  Navigation: pages are routes in memory (state.route). Links with href="#page" are handled in the page,
+  and the hash is updated when the browser allows it, so navigation works inside the Artifact too.
 */
 (function () {
   "use strict";
 
   const E = window.PontEngine;
   const U = window.PontUI;
-  const KEY = { answers: "pont.answers", screen: "pont.screen", step: "pont.step", ticks: "pont.ticks", display: "pont.display", intake: "pont.intake" };
+  const KEY = { answers: "pont.answers", screen: "pont.screen", step: "pont.step", ticks: "pont.ticks", display: "pont.display",
+    intake: "pont.intake", planOut: "pont.planOut", filters: "pont.filters" };
 
   /* ---------- Demo answers (CLAUDE.md, "Demo paths") ---------- */
   const DEMOS = {
@@ -45,6 +49,7 @@
       livesIn: "BR",
       term: "fall-2027",
       currency: "BRL",
+      incomeBand: "100k_150k",
       monthly: 23000,
     },
     ian: {
@@ -99,6 +104,11 @@
     chat: [],                          // advisor messages after the opening
     asked: {},                         // chips already used
     typing: false,
+    route: null,                       // current page: "overview", "colleges", "college/<id>", ...
+    planOut: load(KEY.planOut, {}),    // route colleges taken out of the plan by the student (dream colleges never)
+    filters: Object.assign({ groups: [], policy: [], types: [], estimate: false, q: "", sort: "fit" }, load(KEY.filters, {})),
+    routesAi: null,                    // routes explainer result (My colleges)
+    fundingAi: {},                     // funding explainer result per college (College detail)
   };
 
   /* ---------- DOM ---------- */
@@ -169,8 +179,11 @@
     const data = state.data;
     const today = todayIso();
     const r = E.routes(a, data, { fxRate, today });
-    const deadlines = E.deadlineList(r, data, { term: a.term, today });
-    return { routes: r, deadlines, today, fxRate };
+    const allDeadlines = E.deadlineList(r, data, { term: a.term, today });
+    // The plan: every route college unless the student took it out (My colleges). Dream colleges always stay.
+    const dreamIds = r.groups[0].items.map((i) => i.collegeId);
+    const deadlines = allDeadlines.filter((d) => dreamIds.includes(d.collegeId) || !state.planOut[d.collegeId]);
+    return { routes: r, deadlines, allDeadlines, today, fxRate };
   }
 
   // Money context for the currency switch.
@@ -188,17 +201,31 @@
     { id: "documents", label: "Documents", icon: "file-check-2" },
     { id: "family", label: "Family mode", icon: "users" },
   ];
-  const currentPage = () => {
-    const id = location.hash.replace("#", "");
-    return PAGES.some((p) => p.id === id) ? id : "overview";
+  // "college/<id>" is the College detail page, under My colleges in the navigation.
+  const parseRoute = (raw) => {
+    const r = String(raw || "").replace(/^#/, "");
+    if (/^college\/[a-z0-9-]+$/.test(r)) return r;
+    return PAGES.some((p) => p.id === r) ? r : null;
   };
+  const currentRoute = () => state.route || "overview";
+  const currentPage = () => currentRoute().split("/")[0];
+  const routeArg = () => currentRoute().split("/")[1] || null;
+  function navigate(route, opts) {
+    const r = parseRoute(route) || "overview";
+    state.route = r;
+    try {
+      if (location.hash !== "#" + r) history.pushState(null, "", location.pathname + location.search + "#" + r);
+    } catch (e) { /* the hash cannot change here (Artifact): the route still lives in memory */ }
+    render(!(opts && opts.keepFocus));
+  }
 
   function renderNav(res) {
     const page = currentPage();
     const soon = res ? res.deadlines.filter((d) => d.status === "to_do" && !state.ticks[d.id] && d.daysLeft <= 30).length : 0;
     $("nav").innerHTML = PAGES.map((p) => {
       const count = p.id === "plan" && soon ? `<span class="nav-count" aria-label="${soon} deadlines in the next 30 days">${soon}</span>` : "";
-      return `<a class="nav-item" href="#${p.id}"${p.id === page ? ' aria-current="page"' : ""}>${U.icon(p.icon)}${U.esc(p.label)}${count}</a>`;
+      const active = p.id === page || (page === "college" && p.id === "colleges");
+      return `<a class="nav-item" href="#${p.id}"${active ? ' aria-current="page"' : ""}>${U.icon(p.icon)}${U.esc(p.label)}${count}</a>`;
     }).join("");
 
     const a = state.answers;
@@ -227,9 +254,20 @@
   function renderTop() {
     const page = currentPage();
     const a = state.answers;
-    const p = PAGES.find((x) => x.id === page);
+    const p = PAGES.find((x) => x.id === page) || PAGES[1];
     let title = p.label;
     let sub = "";
+    const SUBS = {
+      colleges: "Every route for your profile, with its source.",
+      scholarships: "College and outside scholarships. Never counted in your totals.",
+      plan: "Every deadline for the colleges in your plan, month by month.",
+    };
+    if (SUBS[page]) sub = SUBS[page];
+    if (page === "college" && state.data) {
+      const c = findCollege(routeArg());
+      title = c ? c.name : "College";
+      sub = "College detail: aid, net price, costs, deadlines and documents.";
+    }
     if (page === "overview") {
       title = greeting();
       sub = `Your funding plan for ${U.termLabel(a.term)}.`;
@@ -246,7 +284,7 @@
       <div class="top-tools">
         <form class="search" role="search" id="search-form">
           ${U.icon("search")}<label for="search" class="sr-only">Search colleges and scholarships</label>
-          <input id="search" type="search" placeholder="Search colleges and scholarships">
+          <input id="search" type="search" placeholder="Search colleges and scholarships" value="${U.esc(state.filters.q || "")}">
         </form>
         ${seg}
         <button type="button" class="icon-btn" data-action="advisor" aria-label="Help: ask the advisor">${U.icon("circle-help")}</button>
@@ -257,6 +295,7 @@
 
   /* ---------- Overview ---------- */
   function documentsFor(res, dream) {
+    if (!dream) return [];
     const profile = res.routes.profile;
     const docs = [];
     const pc = profile.colleges.find((c) => c.collegeId === dream.id) || { forms: [] };
@@ -306,6 +345,7 @@
     const col = (g) => {
       const cards = g.items.map((it) => U.collegeCard(it, findCollege(it.collegeId), g.id, ctx,
         { target: it.targetCollegeId ? findCollege(it.targetCollegeId) : null })).join("");
+      if (g.id === "dream" && !cards) return `<div>${U.groupHeader(g)}${pickDreamHtml()}</div>`;
       const empty = g.id === "lower_cost" && dreamFunded
         ? "Your dream school already looks funded. Ask the advisor to compare lower-cost options anyway."
         : "No route in our data for this group yet.";
@@ -325,8 +365,16 @@
     </section>`;
   }
 
+  // "Help me choose": no dream school yet.
+  const pickDreamHtml = () => `<div class="empty">${U.icon("sparkles")}Pick a dream school anytime.<br><button type="button" class="btn btn-outline btn-sm" data-action="pick-dream" style="margin-top:10px">Choose a dream school</button></div>`;
+
   function docsCard(res, dream) {
     const docs = documentsFor(res, dream);
+    if (!dream) {
+      return `<section class="card span-5" aria-labelledby="docs-title">
+      <div class="card-head"><div class="tile t-gap">${U.icon("file-search")}</div><h2 id="docs-title">Documents</h2></div>
+      <div class="empty">The documents list comes from your dream school. Pick one anytime.</div></section>`;
+    }
     return `<section class="card span-5" aria-labelledby="docs-title">
       <div class="card-head"><div class="tile t-gap">${U.icon("file-search")}</div><h2 id="docs-title">Documents</h2><a class="more" href="#documents">Open studio</a></div>
       ${docs.length ? U.docsSummary(docs) + docs.map(U.docItem).join("") : `<div class="empty">No documents needed yet.</div>`}
@@ -337,9 +385,12 @@
     if (!res) return loadingHtml();
     const ctx = moneyCtx(res);
     const dreamItem = res.routes.groups[0].items[0];
-    const dream = findCollege(dreamItem.collegeId);
+    const dream = dreamItem ? findCollege(dreamItem.collegeId) : null;
+    const hero = dream ? U.dreamHero(dreamItem, dream, ctx, { cls: "span-7" })
+      : `<section class="card span-7" aria-labelledby="pick-title"><div class="card-head"><div class="tile t-dream">${U.icon("sparkles")}</div><h2 id="pick-title">Your dream</h2></div>
+        <p>You asked us to help you choose. Your routes below come from your profile: colleges with strong aid for you and lower-cost paths.</p>${pickDreamHtml()}</section>`;
     return `<div class="grid">
-      ${U.dreamHero(dreamItem, dream, ctx, { cls: "span-7" })}
+      ${hero}
       ${nextCard(res)}
       ${routesSection(res, ctx)}
       ${deadlinesCard(res)}
@@ -354,6 +405,17 @@
     </div>`;
   }
 
+  function pageHtml(res) {
+    const page = currentPage();
+    if (page === "overview") return overviewHtml(res);
+    if (!res) return loadingHtml();
+    if (page === "colleges") return pages.collegesHtml(res);
+    if (page === "college") return pages.collegeHtml(res, routeArg());
+    if (page === "scholarships") return pages.scholarshipsHtml(res);
+    if (page === "plan") return pages.planHtml(res);
+    return placeholderHtml(page);
+  }
+
   function placeholderHtml(page) {
     const p = PAGES.find((x) => x.id === page);
     return `<div class="page-empty"><div class="empty">${U.icon(p.icon)}<b>${U.esc(p.label)}</b> comes in a later step of this prototype.<br>Your Overview already has your routes, deadlines and documents.<br><br><a class="btn btn-outline btn-sm" href="#overview">Back to Overview</a></div></div>`;
@@ -366,6 +428,7 @@
     const ctx = moneyCtx(res);
     const groups = res.routes.groups;
     const dreamItem = groups[0].items[0];
+    if (!dreamItem) return { name: a.name || "there", $sources: {}, $mini: null };
     const dream = findCollege(dreamItem.collegeId);
     const ui = U.collegeUi(dream);
     const n = dreamItem.netPrice || {};
@@ -486,9 +549,9 @@
         source: it.status === "ok" ? sid(U.netSource(it)) : null,
       });
     }));
-    const dreamItem = res.routes.groups[0].items[0];
-    const dream = findCollege(dreamItem.collegeId);
-    const i20 = dreamItem.cost && dreamItem.cost.status === "ok" && res.routes.profile.visaStudent ? E.showForI20(dreamItem.cost, state.data) : null;
+    const dreamItem = res.routes.groups[0].items[0] || null;
+    const dream = dreamItem ? findCollege(dreamItem.collegeId) : null;
+    const i20 = dreamItem && dreamItem.cost && dreamItem.cost.status === "ok" && res.routes.profile.visaStudent ? E.showForI20(dreamItem.cost, state.data) : null;
     const rate = (state.rates[a.currency] && PontFx.rateLines(state.rates[a.currency])) || null;
     return {
       today: U.fullDate(todayIso()),
@@ -510,7 +573,8 @@
       })),
       documents: documentsFor(res, dream).map((d) => d.title + (d.sub ? ": " + d.sub : "") + " (not started)"),
       i20_show_first_year: i20 ? { amount: both(i20.amount), note: i20.label || null, source: sid(i20.source) } : null,
-      residency_rule: dream.residency_rule || null,
+      dream_school: dream ? dream.name : "not chosen yet (help me choose)",
+      residency_rule: (dream && dream.residency_rule) || null,
       sources: sources.map((x) => ({ id: x.id, title: x.title, url: x.url, checked_on: x.checked_on })),
       $sources: sources,
     };
@@ -650,6 +714,7 @@
 
   function render(moveFocus, opts) {
     if (!hasPlan()) { intake.render(moveFocus, opts); return; }
+    if (!state.route) state.route = parseRoute(location.hash) || "overview";
     $("intake").hidden = true;
     $("shell").hidden = false;
     $("fab").hidden = false;
@@ -658,13 +723,15 @@
     const page = currentPage();
     renderNav(res);
     renderTop();
-    $("page").innerHTML = page === "overview" ? overviewHtml(res) : placeholderHtml(page);
+    $("page").innerHTML = pageHtml(res);
     renderRail(res);
     document.querySelectorAll(".logo-slot").forEach((el) => { el.innerHTML = U.logoSvg(); });
     const p = PAGES.find((x) => x.id === page);
-    document.title = `${p.label} | Pont`;
+    document.title = `${page === "college" ? $("page-title").textContent : p.label} | Pont`;
     icons();
-    if (moveFocus) { window.scrollTo(0, 0); $("page-title").focus(); }
+    if (moveFocus) { window.scrollTo(0, 0); $("page-title").focus(); return; }
+    const fid = opts && opts.focusId;
+    if (fid && $(fid)) $(fid).focus();
   }
 
   /* ---------- Session helpers shared with js/intake.js ---------- */
@@ -674,9 +741,12 @@
     save(KEY.answers, state.answers);
     state.chat = [];
     state.asked = {};
-    if (location.hash !== "#overview") history.replaceState(null, "", location.pathname + location.search + "#overview");
-    render(true);
+    state.routesAi = null;
+    state.fundingAi = {};
+    navigate("overview");
   }
+  function savePlan() { save(KEY.planOut, state.planOut); }
+  function saveFilters() { save(KEY.filters, state.filters); }
   function startOver() {
     if (railCtl) railCtl.abort();
     clearSession();
@@ -692,6 +762,11 @@
     state.screen = "welcome";
     state.step = null;
     state.returnTo = null;
+    state.route = null;
+    state.planOut = {};
+    state.filters = { groups: [], policy: [], types: [], estimate: false, q: "", sort: "fit" };
+    state.routesAi = null;
+    state.fundingAi = {};
     closeDrawers();
     history.replaceState(null, "", location.pathname);
     render(true); // rates already fetched stay cached: one request per currency per session
@@ -699,8 +774,16 @@
 
   /* ---------- Events (app shell; the intake has its own in js/intake.js) ---------- */
   document.addEventListener("click", (e) => {
+    if (!$("intake").hidden) return;
+    // In-page links (#overview, #college/harvard): handled here so they work where the hash cannot change.
+    const link = e.target.closest('a[href^="#"]');
+    if (link && $("shell").contains(link)) {
+      const r = parseRoute(link.getAttribute("href"));
+      if (r) { e.preventDefault(); closeDrawers(); navigate(r); return; }
+    }
+    if ($("page").contains(e.target) && pages.onClick(e)) return;
     const t = e.target.closest("[data-currency],[data-action],[data-chip]");
-    if (!t || !$("intake").hidden) return;
+    if (!t) return;
     if (t.dataset.currency) {
       state.display = t.dataset.currency;
       save(KEY.display, state.display);
@@ -709,11 +792,26 @@
       if (b) b.focus();
     }
     if (t.dataset.action === "advisor") openAdvisor();
-    if (t.dataset.action === "plan") location.hash = "#plan";
+    if (t.dataset.action === "plan") {
+      const res = compute();
+      const d = res && res.routes.groups[0].items[0];
+      navigate(d ? "college/" + d.collegeId : "plan");
+    }
+    if (t.dataset.action === "pick-dream") {
+      // Back to the form at the dream school question, then the confirm screen, then the plan.
+      state.answers.confirmed = false;
+      save(KEY.answers, state.answers);
+      state.screen = "form";
+      state.step = "colleges";
+      state.returnTo = "confirm";
+      saveScreen();
+      render(true);
+    }
     if (t.dataset.chip !== undefined) askChip(+t.dataset.chip);
   });
 
   document.addEventListener("change", (e) => {
+    if ($("intake").hidden && $("page").contains(e.target) && pages.onChange(e)) return;
     const id = e.target.dataset && e.target.dataset.tick;
     if (!id) return;
     if (e.target.checked) state.ticks[id] = true; else delete state.ticks[id];
@@ -735,7 +833,9 @@
     }
     if (e.target.id === "search-form") {
       e.preventDefault();
-      location.hash = "#colleges";
+      state.filters.q = $("search").value.trim().slice(0, 60);
+      saveFilters();
+      navigate("colleges");
     }
   });
 
@@ -751,26 +851,51 @@
   $("btn-side-close").addEventListener("click", closeDrawers);
   $("btn-start-over").addEventListener("click", startOver);
   $("nav").addEventListener("click", (e) => { if (e.target.closest("a")) closeDrawers(); });
-  window.addEventListener("hashchange", () => { if (hasPlan()) render(true); });
+  window.addEventListener("hashchange", () => {
+    const r = parseRoute(location.hash);
+    if (hasPlan() && r && r !== state.route) { state.route = r; render(true); }
+  });
+  window.addEventListener("popstate", () => {
+    const r = parseRoute(location.hash);
+    if (hasPlan() && r && r !== state.route) { state.route = r; render(true); }
+  });
 
   /* ---------- Demo shortcuts ---------- */
-  function applyDemo() {
-    const params = new URLSearchParams(location.search);
-    const name = params.get("demo");
-    if (!name || !DEMOS[name]) return false;
-    // The shortcut replaces any saved session, with no message on screen, and opens the profile confirm screen.
+  // Loads a demo's answers, replacing any saved session, and opens the profile confirm screen.
+  function setDemo(name) {
+    if (!DEMOS[name]) return false;
     clearSession();
     state.answers = Object.assign(JSON.parse(JSON.stringify(DEMOS[name])), { demo: name });
     state.ticks = {};
     state.intakeChat = [];
+    state.chat = [];
+    state.asked = {};
+    state.planOut = {};
+    state.routesAi = null;
+    state.fundingAi = {};
+    state.route = null;
     state.display = "USD";
     state.screen = "confirm";
     state.step = null;
+    state.returnTo = null;
     save(KEY.answers, state.answers);
     saveScreen();
+    return true;
+  }
+  function loadDemo(name) {
+    if (!setDemo(name)) return;
+    try { history.replaceState(null, "", location.pathname); } catch (e) { /* Artifact */ }
+    if (state.answers.parentCountries) ensureRates();
+    render(true);
+  }
+  function applyDemo() {
+    let params;
+    try { params = new URLSearchParams(location.search); } catch (e) { return false; }
+    const name = params.get("demo");
+    if (!name || !setDemo(name)) return false;
     params.delete("demo");
     const rest = params.toString();
-    history.replaceState(null, "", location.pathname + (rest ? "?" + rest : ""));
+    try { history.replaceState(null, "", location.pathname + (rest ? "?" + rest : "")); } catch (e) { /* Artifact */ }
     return true;
   }
 
@@ -782,6 +907,7 @@
   const intake = PontIntake.create({
     state,
     ai,
+    loadDemo,
     todayIso,
     icons,
     render,
@@ -793,6 +919,11 @@
     familyCurrencies: (codes) => (!window.PontFx || !state.countries ? [] : PontFx.familyCurrencies(codes, state.countries)),
     saveAnswers: () => save(KEY.answers, state.answers),
     saveChat: () => save(KEY.intake, state.intakeChat.slice(-60)),
+  });
+
+  const pages = PontPages.create({
+    state, ai, render, navigate, compute, findCollege, moneyCtx, planFacts, factsForPrompt, sourcesFor,
+    savePlan, saveFilters,
   });
 
   document.getElementById("intake-logo").innerHTML = U.logoSvg();

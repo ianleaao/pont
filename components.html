@@ -152,7 +152,7 @@
       ${st("Hover", card(A, "strong_aid", item(A, "strong_aid", "amherst"), { cls: "is-hover" }), "on-bg panel")}
       ${st("With actions", card(L, "dream", group(L, "dream").items[0], { actions: true }), "on-bg panel")}
       ${st("With actions, added to plan", card(A, "dream", H, { actions: true, added: true }), "on-bg panel")}
-      ${st("No data for this situation (ACC for Ian)", card(I, "lower_cost", group(I, "lower_cost").items[0]), "on-bg panel")}
+      ${st("Cost not confirmed for this situation (only a dream college shows it; other unconfirmed routes are hidden)", card(I, "dream", Object.assign({}, group(I, "dream").items[0], { status: "not_confirmed", netPrice: { status: "not_confirmed", hasEstimate: false }, gap: { label: null } })), "on-bg panel")}
     </div>`));
 
   /* 6. Route group header */

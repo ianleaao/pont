@@ -29,7 +29,8 @@ The page is index.html. Every other file is published at the same relative path,
 | js/ai.js | AI client: Artifact runtime or scripted answers, validation |
 | js/prompts.js | One prompt builder per AI function |
 | js/intake.js | Welcome, intake chat, form, profile confirm |
-| js/app.js | State, app shell, Overview, advisor rail |
+| js/pages.js | My colleges, College detail, Scholarships, Plan and deadlines |
+| js/app.js | State, app shell, navigation, Overview, advisor rail |
 | data/colleges.json | Costs, aid policies, forms, deadlines, document rules, sources |
 | data/fees.json | Government and test fees |
 | data/countries.json | Currency, locale, language per country |
@@ -37,7 +38,7 @@ The page is index.html. Every other file is published at the same relative path,
 | data/ai-scripts.json | Scripted answers and offline notes |
 | assets/favicon.svg | Favicon |
 
-Total about 290 KB. Not published: components.html, tests.html, docs/, tools/, the mockups.
+Total about 340 KB. Not published: components.html, tests.html, docs/, tools/, the mockups.
 
 ## External resources (the only ones)
 - Google Fonts: Plus Jakarta Sans (fonts.googleapis.com stylesheet, fonts.gstatic.com files).
@@ -45,5 +46,6 @@ Total about 290 KB. Not published: components.html, tests.html, docs/, tools/, t
 
 ## What changes inside the Artifact
 - The runtime exists (`window.claude`), so the advisor status reads "Live, powered by Claude" once `claude.use("sample")` resolves. The first question asks the viewer to allow Claude.
+- Query strings and hashes may not reach the page: the demos load from the "Try an example" buttons on the welcome screen, and navigation keeps the current page in memory (the hash is updated only where the browser allows it).
 - External requests are blocked, so js/fx.js does not try the live rate APIs. It uses the snapshot and shows "Could not update the exchange rate. Using the rate from <date>." with the source "Frankfurter (central bank data), snapshot".
 - If the viewer declines, or the runtime does not answer, every AI feature falls back to the scripted answers with the offline banner. The app keeps working.

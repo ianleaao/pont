@@ -5,7 +5,7 @@ The prototype runs live inside a claude.ai Artifact: Claude answers through the 
 ## Before each publish
 1. Refresh the exchange-rate snapshot (Node 18 or later, no key):
    `node tools/fx-snapshot.mjs`
-   It writes data/fx.json "snapshot": a Frankfurter v2 rate (`/v2/rate/usd/{cur}`) for every currency in data/countries.json, with the date of each rate, the source and the day it ran. The official fallbacks in "rates" (BRL PTAX, INR FBIL) stay as they are. Commit the result.
+   If Frankfurter cannot be reached, the script stops with an error and leaves data/fx.json unchanged; a currency that fails alone keeps its previous rate and date. It writes data/fx.json "snapshot": a Frankfurter v2 rate (`/v2/rate/usd/{cur}`) for every currency in data/countries.json, with the date of each rate, the source and the day it ran. The official fallbacks in "rates" (BRL PTAX, INR FBIL) stay as they are. Commit the result.
 2. Run tests.html (Live Server) and check that every test passes.
 3. Check that no file has a long dash (CLAUDE.md rule 8).
 

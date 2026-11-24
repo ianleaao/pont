@@ -57,6 +57,16 @@ for (const cur of currencies) {
 }
 
 const fx = JSON.parse(await readFile(FX, "utf8"));
+// A run that could not reach Frankfurter never replaces a good snapshot.
+if (!Object.keys(rates).length) {
+  console.error("No rate fetched: data/fx.json is unchanged (snapshot from " + ((fx.snapshot && fx.snapshot.fetched_on) || "never") + ").");
+  process.exit(1);
+}
+// A currency that failed this time keeps its previous rate, with that rate's own date.
+const previous = (fx.snapshot && fx.snapshot.rates) || {};
+missing.slice().forEach((cur) => {
+  if (previous[cur]) { rates[cur] = previous[cur]; missing.splice(missing.indexOf(cur), 1); console.warn(`${cur}  kept the previous rate from ${previous[cur].date}`); }
+});
 fx.note = "Exchange rates without the network. js/fx.js tries a live rate first (Frankfurter v2, then ExchangeRate-API); when both fail (always inside the claude.ai Artifact, whose network is blocked) it uses the snapshot below, then the official fallback in 'rates', with the message 'Could not update the exchange rate. Using the rate from DATE.' The snapshot is refreshed before each publish by tools/fx-snapshot.mjs. A currency in neither shows 'Not confirmed'. tests.html uses fixed rates so tests never change.";
 fx.snapshot = {
   source: "Frankfurter (central bank data), snapshot",
@@ -69,4 +79,3 @@ fx.snapshot = {
 };
 await writeFile(FX, JSON.stringify(fx, null, 2) + "\n", "utf8");
 console.log(`data/fx.json snapshot: ${Object.keys(rates).length} rates, ${missing.length} missing.`);
-if (!Object.keys(rates).length) process.exitCode = 1;

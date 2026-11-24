@@ -75,12 +75,12 @@ Each route group has its color, and the color always comes with the group's name
 2. Intake: the advisor conversation in the center (chat with chips, "Use a form instead"), a live profile summary card building up on the right.
 3. Profile confirm.
 4. Overview (dashboard): dream hero, deadlines, routes in group columns, documents progress, advisor rail.
-5. My colleges: filters on the left, college cards grid, sort.
+5. My colleges: filters on the left from 1600 px; below 1600 px (the advisor rail is on screen) the filters sit in a row above the cards, and below 1100 px the panel folds closed. College cards grid (auto-fill, 250 px minimum), sort.
 6. College detail: policy, net price for you, cost by phase, deadlines, forms, documents rules.
 7. Scholarships: college and outside scholarships for this profile.
 8. Plan and deadlines: month timeline grouped by month, with status.
-9. Documents studio: document viewer with AI highlights, extracted fields, USD conversion, flags, drafts.
-10. Family mode: summary for parents in their language and currency.
+9. Documents studio: document viewer with AI highlights, extracted fields, USD conversion, flags, drafts. Built as a document list (ring, status) and the selected document panel; below 1600 px the list sits above the panel. Drafts follow in their own card.
+10. Family mode: summary for parents in their language and currency. The essay coach lives in the advisor rail ("Essay help"). "Export my plan" sits under the profile card in the sidebar and on Plan and deadlines.
 
 ## Real data only (decided 19 Nov 2026)
 The mockup shows sample states. The app shows only what the data and the student's actions support:

@@ -49,6 +49,8 @@
       <nav class="nav" id="nav" aria-label="Pages"></nav>
       <div class="side-foot">
         <div class="profile-card" id="profile-card"></div>
+        <button type="button" class="btn btn-outline btn-sm" data-export>Export my plan</button>
+        <p class="small muted export-msg" id="export-msg" aria-live="polite"></p>
         <button type="button" class="btn btn-link" id="btn-start-over">Start over</button>
       </div>
     </aside>
@@ -62,6 +64,7 @@
       <div class="rail-head">
         <div class="tile t-ink"><svg width="22" height="14" viewBox="0 0 64 40" aria-hidden="true"><path d="M8 32 Q32 0 56 32" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round"/><circle cx="56" cy="32" r="7" fill="#F5B740"/></svg></div>
         <div><b>Your advisor</b><span class="rail-status" id="rail-status" data-ai-status>Sample answers</span></div>
+        <button type="button" class="btn btn-link rail-mode" id="btn-essay" aria-pressed="false">Essay help</button>
         <button type="button" class="icon-btn rail-close" id="btn-rail-close" aria-label="Close the advisor">
           <i data-lucide="x" class="icon" aria-hidden="true"></i>
         </button>
@@ -85,7 +88,8 @@
   </button>
   <div class="backdrop" id="backdrop" hidden></div>
 
-  <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+  <!-- Icons load without blocking the page; they are drawn when the script arrives (a slow CDN never holds up the app). -->
+  <script id="lucide-js" async src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
   <script src="js/engine.js"></script>
   <script src="js/fx.js"></script>
   <script src="js/ui.js"></script>
@@ -93,6 +97,7 @@
   <script src="js/prompts.js"></script>
   <script src="js/intake.js"></script>
   <script src="js/pages.js"></script>
+  <script src="js/studio.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

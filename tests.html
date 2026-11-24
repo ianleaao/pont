@@ -578,6 +578,30 @@ function runPontTests(E, data) {
     check(lc.some((i) => i.collegeId === "ut-austin"), "no public university with merit aid");
   });
 
+  // --- Documents (task 7): amounts as written, USD conversion, rule checks ---
+  t("parseAmount reads each family's number format (pt-BR, en-IN, en-US); no digits gives null", () => {
+    check(E.parseAmount("R$ 420.000,00", "pt-BR") === 420000, "pt-BR");
+    check(E.parseAmount("1.234,56", "pt-BR") === 1234.56, "pt-BR decimals");
+    check(E.parseAmount("₹18,50,000.00", "en-IN") === 1850000, "en-IN lakh grouping");
+    check(E.parseAmount("$12,500.75", "en-US") === 12500.75, "en-US");
+    check(E.parseAmount(9000, "pt-BR") === 9000, "number passthrough");
+    check(E.parseAmount("SAMPLE", "en-US") === null, "no digits");
+  });
+  t("toUsd divides by the rate (units per 1 USD): R$ 420,000 at 5.5146 = $76,161.46; no rate gives null", () => {
+    check(near(E.toUsd(420000, FX), 76161.46), String(E.toUsd(420000, FX)));
+    check(E.toUsd(420000, null) === null && E.toUsd(null, FX) === null, "null cases");
+  });
+  t("documentChecks: UT's 6-month rule flags a statement from Mar 15, 2026 on Nov 24, 2026; a recent one passes; pages over 10 flag", () => {
+    const rules = ut.i20.document_rules;
+    const old = E.documentChecks({ date: "2026-03-15" }, rules, "2026-11-24");
+    check(old.length === 1 && old[0].rule === "max_age_months" && old[0].limitMonths === 6 && old[0].text === rules.max_age_rule, JSON.stringify(old));
+    check(E.documentChecks({ date: "2026-11-10" }, rules, "2026-11-24").length === 0, "recent flagged");
+    check(E.documentChecks({ date: "2026-05-24" }, rules, "2026-11-24").length === 0, "exactly 6 months is still current");
+    const pages = E.documentChecks({ date: "2026-11-10", pages: 12 }, rules, "2026-11-24");
+    check(pages.length === 1 && pages[0].rule === "max_pages" && pages[0].maxPages === 10, JSON.stringify(pages));
+    check(E.documentChecks({ date: "15/03/2026" }, rules, "2026-11-24").length === 0 && E.documentChecks({ date: "2026-03-15" }, null, "2026-11-24").length === 0, "no ISO date or no rules: no engine flag");
+  });
+
   // --- Overview helpers (task D): deadline list and funding bar ---
   const OV_TODAY = "2026-11-19";
   const dlFor = (ans, fx) => E.deadlineList(E.routes(ans, data, { fxRate: fx, today: OV_TODAY }), data, { term: ans.term, today: OV_TODAY });
@@ -720,7 +744,8 @@ function runFxTests(F, data) {
 <script id="ai-tests">
 // AI layer tests (docs/ai.md). A fake Artifact runtime stands in for claude.use("sample"): no real calls.
 // Takes (AI = PontAI, P = PontPrompts) and resolves [{ name, pass, detail }].
-async function runAiTests(AI, P) {
+async function runAiTests(AI, P, data) {
+  const E = (typeof window !== "undefined" && window.PontEngine) || (data && data.E);
   const out = [];
   const t = async (name, fn) => {
     try {
@@ -945,6 +970,40 @@ async function runAiTests(AI, P) {
     return built.length + " builders";
   });
 
+  if (data && data.scripts && data.colleges) {
+    const col = (id) => data.colleges.colleges.find((c) => c.id === id);
+    const S = data.scripts.documents.samples;
+    const rulesFor = { "in-bank-statement": col("harvard").document_rules, "br-bank-statement": col("ut-austin").i20.document_rules, "br-income-statement": {} };
+    await t("Scripted readings of the three SAMPLE documents pass the document reader's JSON shape", async () => {
+      Object.keys(S).forEach((k) => {
+        const v = AI.validate("document", S[k].reading, { ruleIds: Object.keys(rulesFor[k] || {}) });
+        check(v && v.fields.length >= 5 && v.translation.length > 50, k + ": " + JSON.stringify(v && v.fields));
+      });
+      return Object.keys(S).join(", ");
+    });
+    await t("Sample amounts: the engine reads them in each country's format and converts them with the rate (AI never does it)", async () => {
+      const amount = (k, f) => S[k].reading.fields.find((x) => x.name === f).value;
+      check(E.parseAmount(amount("in-bank-statement", "balance"), "en-IN") === 1850000, "INR");
+      check(E.parseAmount(amount("br-bank-statement", "balance"), "pt-BR") === 420000, "BRL balance");
+      check(E.parseAmount(amount("br-income-statement", "income"), "pt-BR") === 186000, "BRL income");
+      check(Math.round(E.toUsd(420000, 5.5146)) === 76161, "USD");
+    });
+    await t("Lucas's sample statement (Mar 15, 2026) is older than UT's 6 months on Nov 24, 2026: the engine flags it", async () => {
+      const date = S["br-bank-statement"].reading.fields.find((x) => x.name === "date").value;
+      const flags = E.documentChecks({ date }, col("ut-austin").i20.document_rules, "2026-11-24");
+      check(flags.length === 1 && flags[0].rule === "max_age_months", JSON.stringify(flags));
+      const inDate = S["in-bank-statement"].reading.fields.find((x) => x.name === "date").value;
+      check(E.documentChecks({ date: inDate }, col("ut-austin").i20.document_rules, "2026-11-24").length === 0, "Ananya's sample flagged");
+    });
+    await t("Drafts and family mode accept the family language by prefix (pt and pt-BR) and never another language", async () => {
+      const d = AI.validate("drafts", { drafts: [{ kind: "bank_letter", language: "pt", text: "Prezados, solicito uma carta." }], note: null }, { language: "pt-BR", dataText: "" });
+      check(d && d.drafts[0].language === "pt-BR", JSON.stringify(d));
+      check(AI.validate("drafts", { drafts: [{ kind: "bank_letter", language: "es", text: "Hola" }] }, { language: "pt-BR", dataText: "" }) === null, "Spanish accepted");
+      const f = AI.validate("family", { language: "hi-IN", summary: "सारांश", steps: ["a", "b", "c"] }, { language: "hi", dataText: "" });
+      check(f && f.language === "hi", JSON.stringify(f));
+    });
+  }
+
   await settle();
   return out;
 }
@@ -986,12 +1045,12 @@ async function runSnapshotTests(F, data) {
   const load = (p) => fetch(p, { cache: "no-store" }).then((r) => r.json());
   const summary = document.getElementById("summary");
   try {
-    const [colleges, fees, fx, countries] = await Promise.all(
-      ["data/colleges.json", "data/fees.json", "data/fx.json", "data/countries.json"].map(load));
+    const [colleges, fees, fx, countries, scripts] = await Promise.all(
+      ["data/colleges.json", "data/fees.json", "data/fx.json", "data/countries.json", "data/ai-scripts.json"].map(load));
     const results = runPontTests(window.PontEngine, { colleges, fees, fx, countries })
       .concat(runFxTests(window.PontFx, { countries, fx }))
       .concat(await runSnapshotTests(window.PontFx, { countries, fx }))
-      .concat(await runAiTests(window.PontAI, window.PontPrompts));
+      .concat(await runAiTests(window.PontAI, window.PontPrompts, { colleges, scripts }));
     const list = document.getElementById("results");
     results.forEach((r) => {
       const li = document.createElement("li");

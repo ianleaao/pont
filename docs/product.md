@@ -25,7 +25,7 @@ D. Routes, named for money, not admission chances: "Your dream" (the dream colle
 E. Plan: timeline with tests, applications, aid forms, scholarships, I-20, visa.
 F. Documents studio: upload, AI reads and translates, engine converts to USD, AI flags problems against the college's rules, drafts requests to the bank.
 G. Family mode: summary for parents in their language and currency.
-H. Save plan (login only here).
+H. Save plan (login only here; the prototype exports an HTML summary instead, with no login and no server).
 
 ## Intake questions (AI asks them in conversation; the confirm screen shows them as a form)
 1. Dream colleges (one or more) and program, or "help me choose" (then: what do you want to study; the routes come from the profile alone, docs/funding-and-currency.md section 5).

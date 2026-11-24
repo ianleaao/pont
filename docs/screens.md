@@ -12,10 +12,10 @@ docs/design-campus.md decides the pages and the layout; this file keeps the flow
 | 6 College detail | 5 My colleges (filters, cards) and 6 College detail | task 6 (done) |
 | 7 Scholarships | 7 Scholarships | task 6 (done) |
 | 8 Plan timeline | 8 Plan and deadlines | task 6 (done) |
-| 9 Upload + 10 Document result + 11 Drafts | 9 Documents studio | task 7 |
-| 12 Essay coach | Advisor rail (essay help inside the chat) | task 7 |
-| 13 Family mode | 10 Family mode | task 8 |
-| 14 Save plan | Sidebar profile card | task 8 |
+| 9 Upload + 10 Document result + 11 Drafts | 9 Documents studio | task 7 (done) |
+| 12 Essay coach | Advisor rail ("Essay help" in the rail header) | task 8 (done) |
+| 13 Family mode | 10 Family mode | task 8 (done) |
+| 14 Save plan | "Export my plan" in the sidebar and on Plan and deadlines | task 8 (done) |
 
 App frame: the Campus app shell (left sidebar, top bar with search and currency switch, content grid, AI advisor rail) replaces the header, progress and footer described below for every page after the intake. The intake keeps the progress and the Back and Continue buttons.
 
@@ -63,12 +63,16 @@ App frame (index.html, every screen):
    Extracted fields (holder name, date, currency, balance or income), working English translation (labeled "Working translation, not certified"), USD value with rate and date (engine), flags against the college's rules (age, liquidity, name, language, page limit). Low-confidence fields highlighted with "Please confirm this value."
 11. Drafts
    Bank letter request in the family language; message to the college aid office in English. Copy and share buttons. The AI never sends anything.
+   Built in task 7 (js/studio.js), one page "Documents": the list of the dream college's documents with the progress ring and live status (not started, uploaded, flagged, ready; forms are ticked "I filed it"); for the selected document: the notice, upload (PNG or JPG; a PDF shows "Upload a photo or screenshot of the page."), "Or use a sample document" (SAMPLE images in assets/samples/), "Read and check"; the result: fields with confidence ("Please confirm this value" with an editable field for low confidence), the amount in USD converted by the engine with the rate line, flags (age and pages checked by the engine, the other rules by the AI) against i20.document_rules for the I-20 statement and document_rules for aid documents ("Not confirmed" with the official page when the college has none), the working translation; then Drafts with Copy. Offline: the scripted reading of each sample with the offline banner; an uploaded image offline shows "We cannot read this document right now." and the rules. The Overview documents card and the Documents menu badge (documents to check) use the same status.
 12. Essay coach
    Student pastes a draft; AI suggests what to highlight and what to cut. A request to write the essay is declined: "I can help you plan and review your ideas, but I can't write your essay. Colleges require it to be your own work."
+   Built in task 8: "Essay help" in the advisor rail header switches the rail to the coach (draft, optional question, "Get suggestions", up to 6 suggestions typed highlight, cut, structure or English). Offline: the note and the decline example.
 13. Family mode
    Plan summary for parents in their language and currency: dream school, what it would cost the family, the next three steps.
    Language selector with the country's family languages (data/countries.json). The Ananya demo uses Hindi (lang="hi").
+   Built in task 8: the default language is the country's family language, or its first alternative when the family language is English (India: Hindi). "Write it in <language>" asks the AI; the English summary built from engine data is always one click away and is the offline version, with the offline banner. Amounts in the family currency, converted by the engine.
 14. Save plan
    "Save your plan to come back later." Email login only here.
+   Prototype (task 8): no login and no server. "Export my plan" (sidebar and Plan and deadlines) saves a clean HTML summary: profile, routes, deadlines, documents status and sources. The screen says: "No login and no server in this prototype. Your plan stays in this browser tab until you close it. Export it to keep a copy." Email login comes with the E-11 rebuild.
 
 Global: currency toggle (USD and family currencies) in the header after the country is known; offline AI banner when live Claude is not available ("AI is offline. Showing a prepared answer."). The first AI action asks the viewer to allow Claude (Artifact consent dialog).

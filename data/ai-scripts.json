@@ -99,7 +99,7 @@
     "routes": "Each route shows the numbers and sources without an AI explanation.",
     "document": "We cannot read this document right now. The college document rules are below.",
     "drafts": "Here is a prepared request you can adapt.",
-    "essay": "Essay help needs live AI. Try again later.",
+    "essay": "Essay help needs live AI. Try again when Claude is available.",
     "family": "Here is the summary in English, without an AI translation."
   },
   "outputs": [
@@ -168,5 +168,176 @@
       "confidence": "high",
       "text": "I can help you plan and review your ideas, but I can't write your essay. Colleges require it to be your own work."
     }
-  ]
+  ],
+  "documents": {
+    "note": "Scripted readings of the three SAMPLE documents in assets/samples/ (fake data). Used when live AI is not available, with the offline banner. Amounts as written on the page; the engine reads and converts them. Engine checks (age, pages) are added by js/engine.js, not here.",
+    "samples": {
+      "in-bank-statement": {
+        "label": "Indian bank statement (SAMPLE)",
+        "file": "assets/samples/in-bank-statement.png",
+        "kind": "bank_statement",
+        "country": "IN",
+        "reading": {
+          "fields": [
+            {
+              "name": "holder",
+              "value": "Meera Rao (SAMPLE)",
+              "confidence": "low"
+            },
+            {
+              "name": "date",
+              "value": "2026-11-10",
+              "confidence": "high"
+            },
+            {
+              "name": "currency",
+              "value": "INR",
+              "confidence": "high"
+            },
+            {
+              "name": "balance",
+              "value": "₹18,50,000.00",
+              "confidence": "high"
+            },
+            {
+              "name": "issuer",
+              "value": "Bharat Sample Bank (SAMPLE)",
+              "confidence": "high"
+            },
+            {
+              "name": "language",
+              "value": "English, header in Hindi",
+              "confidence": "high"
+            },
+            {
+              "name": "pages",
+              "value": "1",
+              "confidence": "high"
+            }
+          ],
+          "translation": "Bharat Sample Bank. Account statement. Account holder: Meera Rao (SAMPLE). Statement date: 10 November 2026. Period: 1 October 2026 to 31 October 2026. Currency: INR. Opening balance ₹17,95,000.00. Salary credit ₹1,20,000.00. School fees ₹40,000.00. Household expenses ₹25,000.00. Closing balance: ₹18,50,000.00. Savings account, funds available for withdrawal. Page 1 of 1.",
+          "flags": [],
+          "confidence": "high"
+        }
+      },
+      "br-bank-statement": {
+        "label": "Brazilian bank statement (SAMPLE)",
+        "file": "assets/samples/br-bank-statement.png",
+        "kind": "bank_statement",
+        "country": "BR",
+        "reading": {
+          "fields": [
+            {
+              "name": "holder",
+              "value": "Carlos Exemplo (AMOSTRA)",
+              "confidence": "high"
+            },
+            {
+              "name": "date",
+              "value": "2026-03-15",
+              "confidence": "high"
+            },
+            {
+              "name": "currency",
+              "value": "BRL",
+              "confidence": "high"
+            },
+            {
+              "name": "balance",
+              "value": "R$ 420.000,00",
+              "confidence": "medium"
+            },
+            {
+              "name": "issuer",
+              "value": "Banco Exemplo S.A. (AMOSTRA)",
+              "confidence": "high"
+            },
+            {
+              "name": "language",
+              "value": "Portuguese",
+              "confidence": "high"
+            },
+            {
+              "name": "pages",
+              "value": "1",
+              "confidence": "high"
+            }
+          ],
+          "translation": "Banco Exemplo S.A. (SAMPLE). Checking account statement. Account holder: Carlos Exemplo (SAMPLE). Issue date: 03/15/2026. Period: 02/01/2026 to 02/28/2026. Currency: Brazilian real (BRL). Previous balance R$ 405.000,00. Salary (EMPRESA EXEMPLO) R$ 28.000,00. Card bill payment R$ 9.000,00. Household expenses R$ 4.000,00. Available balance: R$ 420.000,00. Checking account with withdrawal available. Page 1 of 1.",
+          "flags": [
+            {
+              "rule": "name",
+              "text": "The holder is Carlos Exemplo, not the student. The statement must show the student's name, or the sponsor must also sign a Statement of Financial Support."
+            },
+            {
+              "rule": "language",
+              "text": "The statement is in Portuguese. It must be in English, or come with a separate signed translation."
+            }
+          ],
+          "confidence": "high"
+        }
+      },
+      "br-income-statement": {
+        "label": "Brazilian parents' income statement (SAMPLE)",
+        "file": "assets/samples/br-income-statement.png",
+        "kind": "income",
+        "country": "BR",
+        "reading": {
+          "fields": [
+            {
+              "name": "holder",
+              "value": "Ana Exemplo (AMOSTRA)",
+              "confidence": "high"
+            },
+            {
+              "name": "date",
+              "value": "2026-02-20",
+              "confidence": "high"
+            },
+            {
+              "name": "currency",
+              "value": "BRL",
+              "confidence": "high"
+            },
+            {
+              "name": "income",
+              "value": "R$ 186.000,00",
+              "confidence": "high"
+            },
+            {
+              "name": "issuer",
+              "value": "Empresa Exemplo Ltda. (AMOSTRA)",
+              "confidence": "high"
+            },
+            {
+              "name": "language",
+              "value": "Portuguese",
+              "confidence": "high"
+            },
+            {
+              "name": "pages",
+              "value": "1",
+              "confidence": "high"
+            }
+          ],
+          "translation": "Income statement (SAMPLE). Income report for calendar year 2025. Paying source: Empresa Exemplo Ltda. (SAMPLE). Issue date: 02/20/2026. Beneficiary: Ana Exemplo (SAMPLE). Type of income: salaried work. Currency: Brazilian real (BRL). Total taxable income R$ 186.000,00. Official social security contribution R$ 11.000,00. Income tax withheld at source R$ 32.000,00. Thirteenth salary R$ 15.500,00. Sample document, no legal value. Page 1 of 1.",
+          "flags": [],
+          "confidence": "high"
+        }
+      }
+    },
+    "cannot_read": "We cannot read this document right now. Here are the college's rules for it. You can still check them yourself.",
+    "notice": "Do not upload real account numbers in this prototype.",
+    "pdf": "Upload a photo or screenshot of the page.",
+    "confirm_value": "Please confirm this value"
+  },
+  "drafts": {
+    "note": "Scripted drafts used when live AI is not available. Blanks in square brackets are for the student. Pont never sends anything.",
+    "bank_letter": {
+      "pt-BR": "Prezados,\n\nSolicito uma carta do banco em inglês, em papel timbrado, assinada por um representante, com o nome do titular da conta, a data de emissão, a moeda e o saldo disponível. A carta será usada no processo de emissão do formulário I-20 de [nome do estudante] em [nome da faculdade].\n\nObrigado,\n[nome do titular da conta]",
+      "en": "Dear [bank name],\n\nPlease issue a letter in English, on letterhead and signed by a bank officer, showing the account holder's name, the date, the currency and the available balance. The letter is for [student name]'s I-20 application at [college name].\n\nThank you,\n[account holder name]"
+    },
+    "aid_office": "Dear [college] financial aid office,\n\nMy name is [your name], and I am applying for [start term]. My family lives in [country] and our financial documents are in [language] and in [currency]. Could you confirm which documents you need from my parents, and whether you accept my own English translation?\n\nThank you,\n[your name]",
+    "offline_other_language": "A version in {language} needs live AI. Here is the English version you can adapt."
+  }
 }

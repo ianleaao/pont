@@ -22,7 +22,7 @@
   const E = window.PontEngine;
   const U = window.PontUI;
   const KEY = { answers: "pont.answers", screen: "pont.screen", step: "pont.step", ticks: "pont.ticks", display: "pont.display",
-    intake: "pont.intake", planOut: "pont.planOut", filters: "pont.filters" };
+    intake: "pont.intake", planOut: "pont.planOut", filters: "pont.filters", docs: "pont.docs" };
 
   /* ---------- Demo answers (CLAUDE.md, "Demo paths") ---------- */
   const DEMOS = {
@@ -109,6 +109,13 @@
     filters: Object.assign({ groups: [], policy: [], types: [], estimate: false, q: "", sort: "fit" }, load(KEY.filters, {})),
     routesAi: null,                    // routes explainer result (My colleges)
     fundingAi: {},                     // funding explainer result per college (College detail)
+    docs: load(KEY.docs, {}),          // document readings and statuses, this tab only (images are never stored)
+    docSel: null, docBusy: null, docError: null,
+    drafts: {}, draftQuestion: "",     // drafts written in this page view
+    family: {}, familyLang: null,      // family mode summaries per language
+    railMode: "chat",                  // advisor rail: "chat" or "essay"
+    essay: {},                         // essay coach input and result
+    exportMsg: "",
   };
 
   /* ---------- DOM ---------- */
@@ -222,8 +229,10 @@
   function renderNav(res) {
     const page = currentPage();
     const soon = res ? res.deadlines.filter((d) => d.status === "to_do" && !state.ticks[d.id] && d.daysLeft <= 30).length : 0;
+    const flagged = res ? documentsFor(res).filter((d) => d.status === "flagged").length : 0;
     $("nav").innerHTML = PAGES.map((p) => {
-      const count = p.id === "plan" && soon ? `<span class="nav-count" aria-label="${soon} deadlines in the next 30 days">${soon}</span>` : "";
+      let count = p.id === "plan" && soon ? `<span class="nav-count" aria-label="${soon} deadlines in the next 30 days">${soon}</span>` : "";
+      if (p.id === "documents" && flagged) count = `<span class="nav-count" aria-label="${flagged} document${flagged > 1 ? "s" : ""} to check">${flagged}</span>`;
       const active = p.id === page || (page === "college" && p.id === "colleges");
       return `<a class="nav-item" href="#${p.id}"${active ? ' aria-current="page"' : ""}>${U.icon(p.icon)}${U.esc(p.label)}${count}</a>`;
     }).join("");
@@ -234,6 +243,7 @@
     const where = a.status === "citizen_or_pr"
       ? `U.S. citizen, parents in ${(a.parentCountries || []).map(country).join(" and ")}`
       : `${country((a.passports || [])[0])}${curs.length ? ", " + curs.join(" and ") : ""}`;
+    $("export-msg").textContent = state.exportMsg || "";
     $("profile-card").innerHTML = `<div class="avatar" aria-hidden="true">${U.esc((a.name || "You")[0])}</div>
       <div><b>${U.esc(a.name || "Your profile")}</b><small>${U.esc(where)}. ${U.esc(U.termLabel(a.term))}</small></div>`;
   }
@@ -261,6 +271,8 @@
       colleges: "Every route for your profile, with its source.",
       scholarships: "College and outside scholarships. Never counted in your totals.",
       plan: "Every deadline for the colleges in your plan, month by month.",
+      documents: "Read, translate and check your family's documents. Pont converts the amounts to USD.",
+      family: "A summary for your parents, in their language and currency.",
     };
     if (SUBS[page]) sub = SUBS[page];
     if (page === "college" && state.data) {
@@ -294,27 +306,9 @@
   }
 
   /* ---------- Overview ---------- */
-  function documentsFor(res, dream) {
-    if (!dream) return [];
-    const profile = res.routes.profile;
-    const docs = [];
-    const pc = profile.colleges.find((c) => c.collegeId === dream.id) || { forms: [] };
-    if (profile.visaStudent) {
-      const rules = dream.i20 && dream.i20.document_rules;
-      docs.push({ title: "Bank statement for the I-20", icon: "landmark",
-        sub: rules && rules.max_pages ? `${U.collegeUi(dream).short} accepts up to ${rules.max_pages} pages.` : "Shows the money for the first year." });
-    }
-    const dr = dream.document_rules || {};
-    if (dr.tax_documents) docs.push({ title: "Parents' 2025 tax return", icon: "file-text", sub: dr.channel && dr.channel.channel ? `Through ${dr.channel.channel}` : "" });
-    if (profile.audience === "us" && (state.answers.parentCountries || []).some((c) => c !== "US")) {
-      const names = state.answers.parentCountries.filter((c) => c !== "US").map((c) => state.countries.countries[c].name);
-      docs.push({ title: "Parents' income documents", icon: "file-text", sub: `From ${names.join(" and ")}, converted to USD in the studio` });
-    }
-    const where = { css_profile: "On the College Board site", fafsa: "On studentaid.gov", isfaa: "College form", college_form: "College form" };
-    pc.forms.filter((f) => f !== "idoc" && !(f === "tasfa" && pc.forms.includes("fafsa"))).forEach((f) => {
-      docs.push({ title: U.FORM[f], icon: "clipboard-list", sub: where[f] || "" });
-    });
-    return docs.map((d) => Object.assign({ status: "not_started" }, d));
+  // Documents with their live status (not started, uploaded, flagged, ready) come from js/studio.js.
+  function documentsFor(res) {
+    return studio.docs(res);
   }
 
   function nextCard(res) {
@@ -369,7 +363,7 @@
   const pickDreamHtml = () => `<div class="empty">${U.icon("sparkles")}Pick a dream school anytime.<br><button type="button" class="btn btn-outline btn-sm" data-action="pick-dream" style="margin-top:10px">Choose a dream school</button></div>`;
 
   function docsCard(res, dream) {
-    const docs = documentsFor(res, dream);
+    const docs = documentsFor(res);
     if (!dream) {
       return `<section class="card span-5" aria-labelledby="docs-title">
       <div class="card-head"><div class="tile t-gap">${U.icon("file-search")}</div><h2 id="docs-title">Documents</h2></div>
@@ -413,6 +407,8 @@
     if (page === "college") return pages.collegeHtml(res, routeArg());
     if (page === "scholarships") return pages.scholarshipsHtml(res);
     if (page === "plan") return pages.planHtml(res);
+    if (page === "documents") return studio.documentsHtml(res);
+    if (page === "family") return studio.familyHtml(res);
     return placeholderHtml(page);
   }
 
@@ -571,7 +567,7 @@
         date: U.fullDate(d.date), what: U.deadlineTitle(d), college: U.collegeUi(findCollege(d.collegeId)).short,
         detail: U.deadlineSub(d), days_left: d.daysLeft, source: sid(d.source),
       })),
-      documents: documentsFor(res, dream).map((d) => d.title + (d.sub ? ": " + d.sub : "") + " (not started)"),
+      documents: documentsFor(res).map((d) => d.title + (d.sub ? ": " + d.sub : "") + " (" + U.DOC_STATUS[d.status].text.toLowerCase() + ")"),
       i20_show_first_year: i20 ? { amount: both(i20.amount), note: i20.label || null, source: sid(i20.source) } : null,
       dream_school: dream ? dream.name : "not chosen yet (help me choose)",
       residency_rule: (dream && dream.residency_rule) || null,
@@ -599,6 +595,11 @@
     const s = script();
     updateAiStatus();
     $("ai-label").querySelector("span").textContent = s ? s.all.ai_label : "";
+    const essay = state.railMode === "essay";
+    $("btn-essay").textContent = essay ? "Back to the advisor" : "Essay help";
+    $("btn-essay").setAttribute("aria-pressed", String(essay));
+    $("compose").hidden = essay;
+    if (essay) { $("msgs").innerHTML = state.data ? studio.essayHtml() : ""; icons(); return; }
     if (!s || !res) { $("msgs").innerHTML = U.typing(); return; }
     const v = scriptVars(res);
     const opening = fill(s.path.opening.text, v);
@@ -746,6 +747,11 @@
     navigate("overview");
   }
   function savePlan() { save(KEY.planOut, state.planOut); }
+  function saveDocs() { save(KEY.docs, state.docs); }
+  function resetStudio() {
+    Object.assign(state, { docs: {}, docSel: null, docBusy: null, docError: null, drafts: {}, draftQuestion: "", family: {}, familyLang: null,
+      railMode: "chat", essay: {}, exportMsg: "" });
+  }
   function saveFilters() { save(KEY.filters, state.filters); }
   function startOver() {
     if (railCtl) railCtl.abort();
@@ -767,6 +773,7 @@
     state.filters = { groups: [], policy: [], types: [], estimate: false, q: "", sort: "fit" };
     state.routesAi = null;
     state.fundingAi = {};
+    resetStudio();
     closeDrawers();
     history.replaceState(null, "", location.pathname);
     render(true); // rates already fetched stay cached: one request per currency per session
@@ -782,6 +789,7 @@
       if (r) { e.preventDefault(); closeDrawers(); navigate(r); return; }
     }
     if ($("page").contains(e.target) && pages.onClick(e)) return;
+    if (($("page").contains(e.target) || $("rail").contains(e.target) || $("side").contains(e.target)) && studio.onClick(e)) return;
     const t = e.target.closest("[data-currency],[data-action],[data-chip]");
     if (!t) return;
     if (t.dataset.currency) {
@@ -811,7 +819,7 @@
   });
 
   document.addEventListener("change", (e) => {
-    if ($("intake").hidden && $("page").contains(e.target) && pages.onChange(e)) return;
+    if ($("intake").hidden && $("page").contains(e.target) && (pages.onChange(e) || studio.onChange(e))) return;
     const id = e.target.dataset && e.target.dataset.tick;
     if (!id) return;
     if (e.target.checked) state.ticks[id] = true; else delete state.ticks[id];
@@ -846,6 +854,12 @@
   $("fab").addEventListener("click", openAdvisor);
   $("btn-rail-close").addEventListener("click", closeDrawers);
   $("btn-stop").addEventListener("click", () => { if (railCtl) railCtl.abort(); });
+  $("btn-essay").addEventListener("click", () => {
+    state.railMode = state.railMode === "essay" ? "chat" : "essay";
+    renderRail(compute());
+    const first = state.railMode === "essay" ? $("essay-draft") : $("ask");
+    if (first) first.focus();
+  });
   $("backdrop").addEventListener("click", closeDrawers);
   $("btn-menu").addEventListener("click", openMenu);
   $("btn-side-close").addEventListener("click", closeDrawers);
@@ -873,6 +887,7 @@
     state.planOut = {};
     state.routesAi = null;
     state.fundingAi = {};
+    resetStudio();
     state.route = null;
     state.display = "USD";
     state.screen = "confirm";
@@ -921,12 +936,19 @@
     saveChat: () => save(KEY.intake, state.intakeChat.slice(-60)),
   });
 
+  const studio = PontStudio.create({
+    state, ai, render, renderRail: (res) => renderRail(res), compute, findCollege, rateOf, todayIso, planFacts, factsForPrompt, saveDocs,
+  });
+
   const pages = PontPages.create({
     state, ai, render, navigate, compute, findCollege, moneyCtx, planFacts, factsForPrompt, sourcesFor,
     savePlan, saveFilters,
   });
 
   document.getElementById("intake-logo").innerHTML = U.logoSvg();
+  // Lucide loads async (index.html): draw the icons when it arrives.
+  const lucideJs = document.getElementById("lucide-js");
+  if (lucideJs) lucideJs.addEventListener("load", icons);
   applyDemo();
   render(false);
   loadData().then(() => { if (state.answers.parentCountries) ensureRates(); render(false); });

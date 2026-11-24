@@ -10,8 +10,9 @@ The prototype runs live inside a claude.ai Artifact: Claude answers through the 
 3. Check that no file has a long dash (CLAUDE.md rule 8).
 
 ## Manifest
-`capabilities: {sample: {images: true}}`
-- `sample`: live Claude for the advisor rail, the intake interviewer and, later, the other AI functions.
+`capabilities: {sample: {images: true}, downloads: true}`
+- `sample`: live Claude for the advisor rail, the intake interviewer, the explainers, the document reader, drafts, essay coach and family mode.
+- `downloads: true`: "Export my plan" saves an HTML file through the runtime (the viewer confirms the save). Without it the export falls back to a browser download, which the Artifact frame may block.
 - `images: true`: the document reader sends one page image per call (task 7). Every viewer is told the page can send images to Claude.
 No other capability. Answers stay in the browser tab (sessionStorage); nothing is stored on a server.
 
@@ -30,6 +31,7 @@ The page is index.html. Every other file is published at the same relative path,
 | js/prompts.js | One prompt builder per AI function |
 | js/intake.js | Welcome, intake chat, form, profile confirm |
 | js/pages.js | My colleges, College detail, Scholarships, Plan and deadlines |
+| js/studio.js | Documents studio and drafts, Family mode, essay coach, Export my plan |
 | js/app.js | State, app shell, navigation, Overview, advisor rail |
 | data/colleges.json | Costs, aid policies, forms, deadlines, document rules, sources |
 | data/fees.json | Government and test fees |
@@ -37,8 +39,11 @@ The page is index.html. Every other file is published at the same relative path,
 | data/fx.json | Exchange-rate snapshot and official fallbacks |
 | data/ai-scripts.json | Scripted answers and offline notes |
 | assets/favicon.svg | Favicon |
+| assets/samples/in-bank-statement.png | SAMPLE Indian bank statement (Ananya), fake data |
+| assets/samples/br-bank-statement.png | SAMPLE Brazilian bank statement (Lucas), fake data, dated Mar 15, 2026 on purpose (UT's 6-month rule flags it) |
+| assets/samples/br-income-statement.png | SAMPLE Brazilian parents' income statement (Ian), fake data |
 
-Total about 340 KB. Not published: components.html, tests.html, docs/, tools/, the mockups.
+Total about 700 KB (the three sample images are about 285 KB). Not published: components.html, tests.html, docs/, tools/, the mockups.
 
 ## External resources (the only ones)
 - Google Fonts: Plus Jakarta Sans (fonts.googleapis.com stylesheet, fonts.gstatic.com files).

@@ -327,7 +327,7 @@
       if (!i20) return "";
       const rows = (i20.breakdown || []).map((b) => `<div class="line-row"><span>${U.esc(b.label)}</span><b class="num">${U.esc(U.money(b.amount, ctx))}</b></div>`).join("");
       return card("Show for the I-20", "landmark", "primary", `<div class="big-num"><b class="num">${U.esc(U.money(i20.amount, ctx))}</b><span>for the first year${i20.year ? ", " + U.esc(i20.year) : ""}</span></div>
-        <p class="small">This is what you show, not what you pay.</p>${rows}${i20.label ? `<p class="small muted">${U.esc(i20.label)}</p>` : ""}${U.sourceLine(i20.source)}`, { span: "span-5" });
+        <p class="small">This is what you show, not what you pay.</p>${rows}${i20.label ? `<p class="small muted">${U.esc(i20.label)}</p>` : ""}${U.sourceLine(i20.source || (i20.estimate && x.it.cost.annual && x.it.cost.annual.lines[0] ? x.it.cost.annual.lines[0].source : null), i20.estimate ? "Estimate from the first-year cost of attendance." : "")}`, { span: "span-5" });
     }
 
     function deadlinesFormsCard(x, c, res) {
@@ -425,7 +425,8 @@
           const txt = { none: "No merit scholarships: all aid is need-based.", limited: "Merit scholarships are limited: possible, not guaranteed.", yes: "Merit scholarships: possible, not guaranteed." }[v];
           rows.push(`<li>${txt ? U.esc(txt) : notConfirmed(srcOf(c, a.merit_aid_intl.source))}${a.merit_aid_intl.source ? `<span class="kv-src">Source: ${srcLink(srcOf(c, a.merit_aid_intl.source, a.merit_aid_intl.checked_on))}.</span>` : ""}</li>`);
         }
-        if (typeof c.scholarships === "string") rows.push(`<li>${U.esc(c.scholarships)}<span class="kv-src">Source not recorded in our data. Confirm with ${U.esc(short(c))}.</span></li>`);
+        const sch = c.scholarships;
+        if (sch && sch.text) rows.push(`<li>${U.esc(sch.text)}${sch.source ? `<span class="kv-src">Source: ${srcLink(srcOf(c, sch.source, sch.checked_on))}.</span>` : ""}</li>`);
         const isss = c.isss_scholarships;
         if (isss && audience !== "us") {
           const w = isss.window || {};
@@ -554,6 +555,12 @@
           <div class="progress" aria-hidden="true"><span style="width:${todo.length ? (done / todo.length) * 100 : 0}%"></span></div>
           <p class="small"><b>${done} of ${todo.length}</b> upcoming steps done. Ticks stay only in this browser tab.</p>
           <p class="small muted">Colleges in your plan: ${U.esc(U.listText(inPlanList.map((id) => short(findCollege(id)))))}.${out.length ? ` Not in your plan: ${U.esc(U.listText(out))}.` : ""} <a href="#colleges">Change in My colleges</a></p>
+          <div class="save-plan">
+            <h3 class="phase">Save your plan</h3>
+            <p class="small">No login and no server in this prototype. Your plan stays in this browser tab until you close it. Export it to keep a copy with your routes, deadlines, documents and sources.</p>
+            <button type="button" class="btn btn-outline btn-sm" data-export>${U.icon("download")}Export my plan</button>
+            <p class="small muted" aria-live="polite">${U.esc(st.exportMsg || "")}</p>
+          </div>
         </section>
         ${situationSteps(res, ctx) || ""}
         <section class="span-12 timeline" aria-labelledby="tl-title">

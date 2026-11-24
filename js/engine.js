@@ -909,6 +909,53 @@
     };
   }
 
+  /* ---------- 10. Documents (task 7): read an amount, convert to USD, check the college's rules ---------- */
+
+  // Reads an amount as written on a document, in that document's number format (locale):
+  // "R$ 420.000,00" with "pt-BR" -> 420000; "18,50,000.00" with "en-IN" -> 1850000. Numbers pass through.
+  function parseAmount(text, locale) {
+    if (typeof text === "number") return isFinite(text) ? text : null;
+    const raw = String(text == null ? "" : text).replace(/[^\d.,-]/g, "");
+    if (!/\d/.test(raw)) return null;
+    let dec = ".";
+    try {
+      const part = new Intl.NumberFormat(locale || "en-US").formatToParts(1.5).find((x) => x.type === "decimal");
+      if (part) dec = part.value;
+    } catch (e) { /* unknown locale: "." */ }
+    const group = dec === "," ? "." : ",";
+    let t = raw.split(group).join("");
+    if (dec === ",") t = t.replace(",", ".");
+    const n = Number(t);
+    return isFinite(n) ? n : null;
+  }
+
+  // Family-currency amount to USD with the rate (units of that currency per 1 USD). Never the AI.
+  function toUsd(amount, rate) {
+    if (typeof amount !== "number" || !isFinite(amount) || !(rate > 0)) return null;
+    return amount / rate;
+  }
+
+  // Deterministic checks against the college's document rules (UT i20.document_rules):
+  // max_age_months (the document date) and max_pages. doc: { date: "YYYY-MM-DD", pages }.
+  // Returns [{ rule, date?, limitMonths?, pages?, maxPages?, text }]. The AI adds the rules it can only read.
+  function documentChecks(doc, rules, today) {
+    const out = [];
+    if (!doc || !rules) return out;
+    if (rules.max_age_months && /^\d{4}-\d{2}-\d{2}$/.test(doc.date || "") && /^\d{4}-\d{2}-\d{2}$/.test(today || "")) {
+      const [y, m, d] = doc.date.split("-").map(Number);
+      const limit = new Date(Date.UTC(y, m - 1 + rules.max_age_months, d));
+      const [ty, tm, td] = today.split("-").map(Number);
+      if (Date.UTC(ty, tm - 1, td) > limit.getTime()) {
+        out.push({ rule: "max_age_months", date: doc.date, limitMonths: rules.max_age_months, text: rules.max_age_rule || null });
+      }
+    }
+    const pages = Number(doc.pages);
+    if (rules.max_pages && isFinite(pages) && pages > rules.max_pages) {
+      out.push({ rule: "max_pages", pages, maxPages: rules.max_pages, text: null });
+    }
+    return out;
+  }
+
   const api = {
     DEFAULTS,
     range,
@@ -937,6 +984,9 @@
     daysBetween,
     deadlineList,
     fundingBar,
+    parseAmount,
+    toUsd,
+    documentChecks,
   };
 
   if (typeof module !== "undefined" && module.exports) module.exports = api;

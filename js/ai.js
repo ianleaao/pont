@@ -49,6 +49,8 @@
   const clean = (s) => String(s).replace(LONG_DASH, ", ").replace(RANGE_DASH, "$1 to $2").replace(EN_DASH, "-").trim();
   const isText = (s, max) => typeof s === "string" && s.trim().length > 0 && s.length <= (max || 2000);
   const CONF = ["high", "medium", "low"];
+  // "pt" and "pt-BR" are the same language for a draft or a summary.
+  const sameLang = (a, b) => typeof a === "string" && typeof b === "string" && a.split("-")[0].toLowerCase() === b.split("-")[0].toLowerCase();
 
   // Every number written in the answer must exist in the data the prompt sent.
   // "$31,514" and "31514" are the same number; small counts (0 to 12) are always allowed.
@@ -138,11 +140,11 @@
     // Drafts: bank letter request in the family language, message to the aid office in English.
     drafts(v, ctx, ok) {
       if (!v || !Array.isArray(v.drafts) || !v.drafts.length) return null;
-      const langs = ["en"].concat(ctx.language ? [ctx.language] : []);
-      const good = v.drafts.every((d) => d && ["bank_letter", "aid_office"].includes(d.kind) && langs.includes(d.language) && isText(d.text, 3000) && ok(d.text));
+      const langOk = (l) => sameLang(l, "en") || (ctx.language && sameLang(l, ctx.language));
+      const good = v.drafts.every((d) => d && ["bank_letter", "aid_office"].includes(d.kind) && langOk(d.language) && isText(d.text, 3000) && ok(d.text));
       if (!good) return null;
       return {
-        drafts: v.drafts.map((d) => ({ kind: d.kind, language: d.language, text: scrubIds(clean(d.text)) })),
+        drafts: v.drafts.map((d) => ({ kind: d.kind, language: sameLang(d.language, ctx.language) ? ctx.language : "en", text: scrubIds(clean(d.text)) })),
         note: isText(v.note, 400) ? clean(v.note) : null,
       };
     },
@@ -158,10 +160,10 @@
 
     // Family mode: summary in the family language and currency, next three steps.
     family(v, ctx, ok) {
-      if (!v || v.language !== ctx.language || !isText(v.summary, 1500) || !ok(v.summary)) return null;
+      if (!v || !sameLang(v.language, ctx.language) || !isText(v.summary, 1500) || !ok(v.summary)) return null;
       if (!Array.isArray(v.steps) || v.steps.length !== 3 || !v.steps.every((s) => isText(s, 300) && ok(s))) return null;
       const kept = Array.isArray(v.kept_terms) ? v.kept_terms.filter((k) => k && isText(k.term, 80) && isText(k.explanation, 300)) : [];
-      return { language: v.language, summary: clean(v.summary), steps: v.steps.map(clean), keptTerms: kept.map((k) => ({ term: k.term, explanation: clean(k.explanation) })) };
+      return { language: ctx.language, summary: clean(v.summary), steps: v.steps.map(clean), keptTerms: kept.map((k) => ({ term: k.term, explanation: clean(k.explanation) })) };
     },
   };
 

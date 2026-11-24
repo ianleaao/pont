@@ -159,7 +159,7 @@
           "max_pages": 10
         }
       },
-      "scholarships": "Admitted freshmen are automatically considered for university and college scholarships; notifications February to April.",
+      "scholarships": { "text": "There is no separate scholarship application.", "source": "ut-onestop-apply", "checked_on": "2026-11-13" },
       "after_graduation": {
         "opt_admin_fee": 150,
         "stem_extension_admin_fee": 300,

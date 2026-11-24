@@ -26,6 +26,7 @@ index.html
 components.html        design system proof (the 14 Campus components in every state, engine values)
 tests.html             engine tests (console + page)
 assets/                favicon and images
+assets/samples/        three fake SAMPLE documents for the documents studio (PNG, fake names and banks)
 css/tokens.css         brand variables (copy of docs/brand.md)
 css/app.css            layout and components
 js/engine.js           pure functions only: costs, funding profile, net price, gap, routes
@@ -34,6 +35,7 @@ js/ai.js               AI client: Artifact runtime (claude.use("sample")) when a
 js/ui.js               component renderers (HTML strings) shared by the app and components.html; no math
 js/intake.js           welcome, intake chat (live interviewer), form fallback, profile confirm, reload guard
 js/pages.js            My colleges, College detail, Scholarships, Plan and deadlines (funding and routes explainers)
+js/studio.js           Documents studio and drafts, Family mode, essay coach (advisor rail), Export my plan
 js/app.js              state, app shell (sidebar, top bar, advisor rail), pages, navigation
 data/colleges.json     costs, aid policies, forms, deadlines, document rules, sources, dates
 data/fees.json         government and test fees

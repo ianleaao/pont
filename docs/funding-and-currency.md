@@ -84,6 +84,11 @@ Next aid deadline: "MM-DD" dates fall in the application cycle (August to Decemb
 A window with an opening date runs forward from it: ACC opens 01-15, priority 05-01, closes 12-15, so for Fall 2027 they are 2027-01-15, 2027-05-01 and 2027-12-15. An opening date anchors only the keys that share its name prefix ("isss_scholarships_open" anchors "isss_scholarships_close"; a bare "opens" anchors the whole group).
 Forms per profile: F-1 students never get the FAFSA. FAFSA filers do not get the TASFA (it is for students without a FAFSA).
 
+## 5c. Documents (task 7)
+- `parseAmount(text, locale)`: reads an amount as written on a document in that country's number format ("R$ 420.000,00" with pt-BR is 420000; "18,50,000.00" with en-IN is 1850000).
+- `toUsd(amount, rate)`: amount divided by the rate (units per 1 USD). The studio shows it with the rate line, source and date.
+- `documentChecks({ date, pages }, rules, today)`: the rules the engine can check itself: `max_age_months` (UT: older than 6 months is flagged; Lucas's sample, Mar 15, 2026, is flagged on Nov 24, 2026) and `max_pages`.
+
 ## 5b. Overview helpers (task D)
 - `deadlineList(routes, data, { term, today })`: every admission and aid deadline of the route colleges, sorted by date, each with kind (admission or aid), round, forms and codes, status ("to_do" or "passed"), days left and source. Opening dates and decision release dates are not deadlines. Routes without data for the student's situation add no dates; ISSS dates are for international students only.
 - `fundingBar(net, gap)`: segments per year for the funding bar: aid (full cost minus what the family pays), family (what the family pays, or what it can cover when there is a gap), gap (only with a gap) and not_confirmed (fixed 6% width, no amount). No bar when there is no estimate.
